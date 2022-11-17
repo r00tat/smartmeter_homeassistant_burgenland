@@ -1,0 +1,17 @@
+mqtt:
+  # device_id: "smartmeter"
+  # name: "Smart Meter"
+  host: ""
+  # port: 1883
+  user: ""
+  password: ""
+  # keepalive: 60
+  # prefix: ""
+
+dlms:
+  port: "/dev/ttyUSB0"
+  # baudrate: 9600,
+  # bytesize: 8
+  # # parity: "NONE" # TODO needs to be parsed
+  # stopbits: 1
+  key: "" # hex key to decrypt message

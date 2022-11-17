@@ -1,19 +1,17 @@
 # Smart Meter Reader Burgenland - AT
 
-
 ## Development
 
-Initialize virutal environment:
+Initialize virtual environment:
 
 ```bash
 python3 -m venv .
 source bin/activate
+pip3 install -r requirements.txt
 ```
 
-Save the current installed dependencies to `requirements.txt`: 
-`pip freeze -l > requirements.txt`
-
-
+If you install additional pacakges, save the current installed dependencies to `requirements.txt` with:
+`pip freeze -l | grep -v flake8 > requirements.txt`
 
 ## useful links
 
@@ -52,6 +50,7 @@ Security Suite 0 nach HLS5.
 Port Einstellungen
 Mit einem beliebigen seriellen Terminal Programm, kann der Datenstrom der PushNachrichten aufgezeichnet werden. Nachfolgend sind die Einstellungen angeführt, mit
 denen sich die Daten auslesen lassen.
+
 - COM-Port: je nach lokaler Einstellung
 - Baud Rate: 9600
 - Parity: None
@@ -59,5 +58,3 @@ denen sich die Daten auslesen lassen.
 - Stop Bits: 1
 - Hardware Flow Control: None
 - Anzeige der Daten im hexadezimalen Format
-
-
