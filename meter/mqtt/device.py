@@ -48,6 +48,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.total_consumed }}",
                 "unit_of_measurement": "Wh",
                 "device_class": "energy",
+                "state_class": "total_increasing",
             },
             {
                 'name': "Total Energy provided",
@@ -55,6 +56,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.total_provided }}",
                 "unit_of_measurement": "Wh",
                 "device_class": "energy",
+                "state_class": "total_increasing",
             },
             {
                 'name': "Power consumed",
