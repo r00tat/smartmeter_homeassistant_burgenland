@@ -1,0 +1,14 @@
+[Unit]
+Description=Smartmeter Homeassistant connector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/home/pi/smartmeter
+ExecStart=/home/pi/smartmeter/smartmeter.sh
+Restart=always
+RestartSec=3
+User=pi
+
+[Install]
+WantedBy=default.target
