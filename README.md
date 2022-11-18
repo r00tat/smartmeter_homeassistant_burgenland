@@ -26,6 +26,8 @@ sudo ln -s "$(pwd)/smartmeter.service" /etc/systemd/system/smartmeter.service &&
 
 To view the status of the service you can use `sudo systemctl status smartmeter` and to restart it `sudo systemctl restart smartmeter`
 
+To follow the output of the program you can use `tail -f /var/log/daemon.log`.
+
 ## Development
 
 Initialize virtual environment:
