@@ -12,4 +12,4 @@ if [[ ! -d bin || ! -d lib ]]; then
 fi
 
 source bin/activate
-python3 -m meter -c $PWD/config.yaml
+python3 -m meter -c $PWD/smartmeter-config.yaml
