@@ -41,6 +41,24 @@ pip3 install -r requirements.txt
 If you install additional pacakges, save the current installed dependencies to `requirements.txt` with:
 `pip freeze -l | grep -v flake8 > requirements.txt`
 
+### Addon Development
+
+Building a version and pushing to docker hub:
+
+```bash
+ARCH=$(uname -m)
+if [[ "$ARCH" =~ "armv7.*" ]]; then
+  ARCH="armv7"
+fi
+
+VERSION=$(yq -r '.version' config.yaml)
+docker build -t paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION --build-arg BUILD_FROM=homeassistant/${ARCH}-base:latest .
+docker tag paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest
+docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION
+docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest
+
+```
+
 ## useful links
 
 - [Netz Burgenland Zählerbeschreibung](https://www.netzburgenland.at/kundenservice/smart-metering/smart-metering/zaehlerbeschreibung.html)

@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("meter.main")
 
 parser = argparse.ArgumentParser(
-    description="Connect the smart meter via MQTT to Home Assisstant")
+    description="Connect the smart meter via MQTT to Home Assistant")
 parser.add_argument("--config",
                     "-c",
                     help="config file to load",
