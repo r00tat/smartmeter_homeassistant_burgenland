@@ -11,11 +11,12 @@ RUN apk --no-cache --no-progress upgrade && \
 WORKDIR /app
 
 # Copy data for add-on
-COPY run.sh requirements.txt ./
+COPY requirements.txt ./
 RUN python3 -m venv . && \
     source bin/activate && \
     pip3 install -r requirements.txt
 
+COPY run.sh ./
 COPY  meter ./meter/
 
 CMD [ "/app/run.sh" ]
