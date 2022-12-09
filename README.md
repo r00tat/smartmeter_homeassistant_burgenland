@@ -7,6 +7,26 @@ Assistant via MQTT. It has been tested with a Raspberry Pi Zero W 2 with a
 
 ## Quickstart
 
+### Homeassistant Addon
+
+To use this program on the homeassistant raspberry pi as addon follow this steps:
+
+1. Request the [activation of the customer interface](https://www.netzburgenland.at/kundenservice/smart-metering/smart-metering/kundenschnittstelle.html) and select IR as transport.
+2. Connect the IR reader to the smart meter
+3. Connect the IR reader to your raspberry pi
+4. Open homeassistant web ui and go to Settings -> Add-ons -> Add-on Store
+5. Click on the 3 dots on the top right and click on Repositories
+6. Add `https://github.com/r00tat/smartmeter_homeassistant_burgenland` as a repository.
+7. Reload the page
+8. Install the Smartmeter Burgenland MQTT Addon
+9. Configure the smartmeter connection in `/config/smartmeter-config.yaml` from the [smartmeter-config-template.yaml](smartmeter-config-template.yaml).
+10. start the addon 
+
+
+### Standalone
+
+To use this program on an external raspberry pi follow this steps:
+
 1. Request the [activation of the customer interface](https://www.netzburgenland.at/kundenservice/smart-metering/smart-metering/kundenschnittstelle.html) and select IR as transport.
 2. Connect the IR reader to the smart meter
 3. Connect the IR reader to your raspberry pi
