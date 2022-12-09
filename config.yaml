@@ -7,8 +7,8 @@ description: |
 url: "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
 arch: 
   # works theoretically, but no images have been pushed
-  # - "armhf"
-  # - "armv7"
+  - "armhf"
+  - "armv7"
   - "aarch64"
   # - "amd64"
   # - "i386"
