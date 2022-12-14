@@ -5,6 +5,8 @@ Assistant via MQTT. It has been tested with a Raspberry Pi Zero W 2 with a
 [Weidmann Elektronik IR Schreib/Lesekopf](https://shop.weidmann-elektronik.de/index.php?page=product&info=24) and the
 [Landis+Gyr E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf).
 
+The addon uses Mosquitto MQTT server to manage the connection from the addon to HomeAssistant. You need to install the addon first. 
+
 ## Quickstart
 
 ### Homeassistant Addon
@@ -15,12 +17,15 @@ To use this program on the homeassistant raspberry pi as addon follow this steps
 2. Connect the IR reader to the smart meter
 3. Connect the IR reader to your raspberry pi
 4. Open homeassistant web ui and go to Settings -> Add-ons -> Add-on Store
-5. Click on the 3 dots on the top right and click on Repositories
-6. Add `https://github.com/r00tat/smartmeter_homeassistant_burgenland` as a repository.
-7. Reload the page
-8. Install the Smartmeter Burgenland MQTT Addon
-9. Configure the smartmeter connection in `/config/smartmeter-config.yaml` from the [smartmeter-config-template.yaml](smartmeter-config-template.yaml).
-10. start the addon 
+5. Install and start `Mosquitto broker` to setup the MQTT server.
+6. Go back to the Addon store
+7. Click on the 3 dots on the top right and click on Repositories
+8. Add `https://github.com/r00tat/smartmeter_homeassistant_burgenland` as a repository.
+9. Reload the page
+10. Install the Smartmeter Burgenland MQTT Addon
+11. Configure the smartmeter connection. 
+    As hostname use the homeassistant address. As username / password use a normal home assistant user or configure credentials in the Mosquitto broker.
+12. start the addon 
 
 
 ### Standalone
