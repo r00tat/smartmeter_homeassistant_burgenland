@@ -10,7 +10,7 @@ mqtt:
 
 dlms:
   port: "/dev/ttyUSB0"
-  # baudrate: 9600,
+  # baudrate: 9600
   # bytesize: 8
   # # parity: "NONE" # TODO needs to be parsed
   # stopbits: 1

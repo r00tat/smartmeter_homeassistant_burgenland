@@ -5,7 +5,7 @@ description: |
   This addon allows you to connect your smartmeter in Burgenland, AT to 
   homeassistant.
 url: "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
-image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
+# image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
 arch: 
   # - "armhf"
   - "armv7"
@@ -20,9 +20,39 @@ boot: "auto"
 # privileged:
 #  - "NET_ADMIN"
 options:
-  configfile: "/config/smartmeter-config.yaml"
+  mqtt:
+    device_id: "smartmeter"
+    name: "Smart Meter"
+    host: ""
+    port: 1883
+    user: ""
+    password: ""
+    keepalive: 60
+    prefix: ""
+  dlms:
+    port: "/dev/ttyUSB0"
+    baudrate: 9600
+    bytesize: 8
+    # parity: "NONE" # TODO needs to be parsed
+    stopbits: 1
+    key: "" # hex key to decrypt message
 schema:
-  configfile: "str"
+  mqtt:
+    device_id: "str?"
+    name: "str?"
+    host: "str"
+    port: "int?"
+    user: "str"
+    password: "str"
+    keepalive: "int?"
+    prefix: "str?"
+  dlms:
+    port: "str"
+    baudrate: "int?"
+    bytesize: "int?"
+    # parity: "NONE" # TODO needs to be parsed
+    stopbits: "int?"
+    key: "str" # hex key to decrypt message
 map:
   - "share:ro"
   - "config:ro"
