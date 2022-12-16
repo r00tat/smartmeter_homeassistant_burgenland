@@ -1,11 +1,12 @@
-
 import logging
-from gurux_dlms import *
-from gurux_dlms.enums import *
-from gurux_common import *
-from gurux_dlms.secure import *
+from gurux_dlms import (GXByteBuffer, GXDLMSSecureClient, GXReplyData,
+                        GXDLMSTranslator, TranslatorOutputType)
+from gurux_dlms.enums import InterfaceType, Security
+from gurux_common import GXCommon
+# from gurux_dlms.secure import Gxdlmstr
 
 log = logging.getLogger("meter.dlms.read")
+
 
 def parse_dlms_data(data: bytes, key: str):
     bb = GXByteBuffer(data)
@@ -17,15 +18,17 @@ def parse_dlms_data(data: bytes, key: str):
     cl.ciphering.security = Security.ENCRYPTION
     # key as hex str
     cl.ciphering.blockCipherKey = GXCommon.hexToBytes(key)
-    plaintext = cl.getData(bb, data, notify)
+    # plaintext = cl.getData(bb, data, notify)
+    cl.getData(bb, data, notify)
     # notify.value is an instance of type GXStructure, which is a list
     # log.info("notify.value: %s", notify.value)
     # notify.data are the decryted hex values of the body
     # log.info("notify data: %s", notify.data)
     # log.info("plain: %s", plaintext)
-    
+
     # or plaintext?
     return notify
+
 
 def convert_to_xml(notify: GXReplyData):
     """

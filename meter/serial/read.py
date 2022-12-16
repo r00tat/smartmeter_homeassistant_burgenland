@@ -65,7 +65,7 @@ class MeterReader():
             log.debug("values: %s", decrypted_data.value)
             if decrypted_data.value:
                 data = MeterData(decrypted_data)
-                log.info("received meter data: %s", data)
+                log.debug("received meter data: %s", data)
                 if self.callback:
                     self.callback(data)
 

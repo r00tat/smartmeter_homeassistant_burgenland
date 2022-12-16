@@ -18,6 +18,9 @@ class MeterData():
     - Wirkleistung -P
     - Wirkenergietotal +A
     - Wirkenergietotal -A
+    - int16 unkown value?
+    - int16 unkown value?
+    - int16 unkown value?
     - Zähleridentifikationsnummern des Netzbetreibers
     """
 
@@ -40,6 +43,10 @@ class MeterData():
 
         self.meter_id = None
 
+        self.x_1 = 0
+        self.x_2 = 0
+        self.x_3 = 0
+
         self.parse()
 
     def parse(self):
@@ -50,15 +57,23 @@ class MeterData():
         (self.voltage_l1, self.voltage_l2, self.voltage_l3, self.current_l1,
          self.current_l2, self.current_l3, self.power_consumed,
          self.power_provided, self.total_consumed, self.total_provided,
-         self.meter_id, *rest) = self.dlms_data.value
+         *rest) = self.dlms_data.value
+
+        if len(rest) >= 3:
+            (self.x_1, self.x_2, self.x_3, *rest2) = rest
+        if len(rest) > 3:
+            self.meter_id = str(rest[3], 'UTF-8')
 
     def __str__(self) -> str:
-        return (f"MeterData["
-                f"V({self.voltage_l1},{self.voltage_l2},{self.voltage_l3}),"
-                f"I({self.current_l1},{self.current_l2},{self.current_l3}),"
-                f"P({self.power_consumed},-{self.power_provided}),"
-                f"W({self.total_consumed},-{self.total_provided}),"
-                f"id({self.meter_id})]")
+        return (
+            f"MeterData["
+            f"U({self.voltage_l1}V,{self.voltage_l2}V,{self.voltage_l3}V),"
+            f"I({self.current_l1}A,{self.current_l2}A,{self.current_l3}A),"
+            f"P({self.power_consumed}W,-{self.power_provided}W),"
+            f"W({self.total_consumed}Wh,-{self.total_provided}Wh),"
+            # f"?({self.x_1},{self.x_2},{self.x_3})"
+            # f"id({self.meter_id})"
+            f"]")
 
     def to_dict(self) -> dict:
         """return item as dict"""
