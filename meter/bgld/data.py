@@ -70,7 +70,7 @@ class MeterData():
             f"U({self.voltage_l1}V,{self.voltage_l2}V,{self.voltage_l3}V),"
             f"I({self.current_l1}A,{self.current_l2}A,{self.current_l3}A),"
             f"P({self.power_consumed}W,-{self.power_provided}W),"
-            f"W({self.total_consumed}Wh,-{self.total_provided}Wh),"
+            f"W({self.total_consumed}Wh,-{self.total_provided}Wh)"
             # f"?({self.x_1},{self.x_2},{self.x_3})"
             # f"id({self.meter_id})"
             f"]")

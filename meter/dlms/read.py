@@ -1,9 +1,9 @@
 import logging
-from gurux_dlms import (GXByteBuffer, GXDLMSSecureClient, GXReplyData,
-                        GXDLMSTranslator, TranslatorOutputType)
+from gurux_dlms import (GXByteBuffer, GXReplyData, GXDLMSTranslator,
+                        TranslatorOutputType)
 from gurux_dlms.enums import InterfaceType, Security
 from gurux_common import GXCommon
-# from gurux_dlms.secure import Gxdlmstr
+from gurux_dlms.secure import GXDLMSSecureClient
 
 log = logging.getLogger("meter.dlms.read")
 
