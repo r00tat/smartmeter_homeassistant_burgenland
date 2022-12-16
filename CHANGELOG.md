@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+Use image instead of manually building the addon
+
 ## 0.1.4
 
 Bugfix: use the options file as input for the python program
