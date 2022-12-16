@@ -1,17 +1,17 @@
 name: "Smartmeter Burgenland MQTT"
-version: "0.1.4"
+version: "0.1.5"
 slug: "smartmeter_bgld_mqtt"
 description: |
   This addon allows you to connect your smartmeter in Burgenland, AT to 
   homeassistant.
 url: "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
-# image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
+image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
 arch:
-  - "armhf"
-  - "armv7"
-  # - "aarch64"
-  # works theoretically, but no images have been pushed
+  - "aarch64"
   - "amd64"
+  # works theoretically, but no images have been pushed
+  # - "armhf"
+  # - "armv7"
   # - "i386"
 
 startup: "application"
