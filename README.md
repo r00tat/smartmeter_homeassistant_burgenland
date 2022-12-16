@@ -5,7 +5,7 @@ Assistant via MQTT. It has been tested with a Raspberry Pi Zero W 2 with a
 [Weidmann Elektronik IR Schreib/Lesekopf](https://shop.weidmann-elektronik.de/index.php?page=product&info=24) and the
 [Landis+Gyr E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf).
 
-The addon uses Mosquitto MQTT server to manage the connection from the addon to HomeAssistant. You need to install the addon first. 
+The addon uses Mosquitto MQTT server to manage the connection from the addon to HomeAssistant. You need to install the addon first.
 
 ## Quickstart
 
@@ -23,10 +23,9 @@ To use this program on the homeassistant raspberry pi as addon follow this steps
 8. Add `https://github.com/r00tat/smartmeter_homeassistant_burgenland` as a repository.
 9. Reload the page
 10. Install the Smartmeter Burgenland MQTT Addon
-11. Configure the smartmeter connection. 
+11. Configure the smartmeter connection.
     As hostname use the homeassistant address. As username / password use a normal home assistant user or configure credentials in the Mosquitto broker.
-12. start the addon 
-
+12. start the addon
 
 ### Standalone
 
@@ -74,10 +73,12 @@ Building a version and pushing to docker hub:
 ARCH=$(uname -m)
 if [[ "$ARCH" =~ "armv7.*" ]]; then
   ARCH="armv7"
+elif [[ "$ARCH" == "x86_64" ]]; then
+  ARCH="amd64"
 fi
 
 VERSION=$(yq -r '.version' config.yaml)
-docker build -t paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION --build-arg BUILD_FROM=homeassistant/${ARCH}-base:latest .
+docker build -t paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION --build-arg BUILD_FROM=homeassistant/${ARCH}-base-python:latest .
 docker tag paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest
 docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION
 docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest

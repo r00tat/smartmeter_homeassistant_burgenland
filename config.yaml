@@ -1,5 +1,5 @@
 name: "Smartmeter Burgenland MQTT"
-version: "0.1.3"
+version: "0.1.4"
 slug: "smartmeter_bgld_mqtt"
 description: |
   This addon allows you to connect your smartmeter in Burgenland, AT to 
@@ -7,11 +7,11 @@ description: |
 url: "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
 # image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
 arch:
-  # - "armhf"
+  - "armhf"
   - "armv7"
-  - "aarch64"
+  # - "aarch64"
   # works theoretically, but no images have been pushed
-  # - "amd64"
+  - "amd64"
   # - "i386"
 
 startup: "application"
@@ -23,7 +23,7 @@ options:
   mqtt:
     device_id: "smartmeter"
     name: "Smart Meter"
-    host: ""
+    host: "homeassistant.local"
     port: 1883
     user: ""
     password: ""

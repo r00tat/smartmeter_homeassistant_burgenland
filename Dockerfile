@@ -5,7 +5,7 @@ ENV LANG C.UTF-8
 
 # Install requirements for add-on
 RUN apk --no-cache --no-progress upgrade && \
-    apk --no-cache --no-progress add jq python3 py3-pip && \
+    apk --no-cache --no-progress add jq && \
     rm -rf /tmp/*
 
 WORKDIR /app
