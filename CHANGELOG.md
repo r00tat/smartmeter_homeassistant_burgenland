@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+Update python imports and parsing of smartmeter values
+
 ## 0.1.5
 
 Use image instead of manually building the addon
