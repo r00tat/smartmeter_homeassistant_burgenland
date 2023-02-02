@@ -1,9 +1,8 @@
 # Smart Meter Reader Burgenland - AT
 
 This python program connects your Smart Meter from Netz Burgenland to Home
-Assistant via MQTT. It has been tested with a Raspberry Pi Zero W 2 with a
-[Weidmann Elektronik IR Schreib/Lesekopf](https://shop.weidmann-elektronik.de/index.php?page=product&info=24) and the
-[Landis+Gyr E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf).
+Assistant via MQTT. It has been developed for the
+[Landis+Gyr E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf) Smartmeter. It has been tested with a Raspberry Pi Zero 2 W as a standalone device and with a Raspberry Pi 4 as Home Assistant Addon.
 
 The addon uses Mosquitto MQTT server to manage the connection from the addon to HomeAssistant. You need to install the addon first.
 

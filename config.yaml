@@ -1,5 +1,5 @@
 name: "Smartmeter Burgenland MQTT"
-version: "0.1.6"
+version: "0.1.7"
 slug: "smartmeter_bgld_mqtt"
 description: |
   This addon allows you to connect your smartmeter in Burgenland, AT to 
@@ -64,3 +64,5 @@ devices:
 usb: true
 uart: true
 init: false
+services:
+  - mqtt:need
