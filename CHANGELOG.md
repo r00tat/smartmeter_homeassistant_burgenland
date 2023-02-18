@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8
+
+Set `state_class` to `measurement` to enable longtime statistics.
+
+## 0.1.7
+
+Add mqtt as required service
+
 ## 0.1.6
 
 Update python imports and parsing of smartmeter values
