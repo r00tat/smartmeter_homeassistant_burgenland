@@ -64,6 +64,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.power_consumed }}",
                 "unit_of_measurement": "W",
                 "device_class": "power",
+                "state_class": "measurement",
             },
             {
                 'name': "Power provided",
@@ -71,6 +72,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.power_provided }}",
                 "unit_of_measurement": "W",
                 "device_class": "power",
+                "state_class": "measurement",
             },
             {
                 'name': "Voltage L1",
@@ -78,6 +80,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.voltage_l1 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
             {
                 'name': "Voltage L1",
@@ -85,6 +88,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.voltage_l1 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
             {
                 'name': "Voltage L2",
@@ -92,6 +96,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.voltage_l2 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
             {
                 'name': "Voltage L3",
@@ -99,6 +104,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.voltage_l3 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
             {
                 'name': "Current L1",
@@ -106,6 +112,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.current_l1 }}",
                 "unit_of_measurement": "A",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
             {
                 'name': "Current L2",
@@ -113,6 +120,7 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.current_l2 }}",
                 "unit_of_measurement": "A",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
             {
                 'name': "Current L3",
@@ -120,5 +128,6 @@ class SmartMeterDevice(MqttClient):
                 'value_template': "{{ value_json.current_l3 }}",
                 "unit_of_measurement": "A",
                 "device_class": "voltage",
+                "state_class": "measurement",
             },
         ]
