@@ -17,12 +17,12 @@ if [[ -z "$CONFIGFILE" || "$CONFIGFILE" == "null" ]]; then
     exit 1
 fi
 
-MQTT_HOST=$(bashio::services mqtt "host")
-MQTT_USER=$(bashio::services mqtt "username")
-MQTT_PASSWORD=$(bashio::services mqtt "password")
-
-CONFIGFILE=$(mktemp)
-jq ".mqtt.host=\"${MQTT_HOST}\" | .mqtt.user=\"${MQTT_USER}\" | .mqtt.password=\"${MQTT_PASSWORD}\"" "$CONFIG_PATH" > $CONFIGFILE
+# MQTT_HOST=$(bashio::services mqtt "host")
+# MQTT_USER=$(bashio::services mqtt "username")
+# MQTT_PASSWORD=$(bashio::services mqtt "password")
+# 
+# CONFIGFILE=$(mktemp)
+# jq ".mqtt.host=\"${MQTT_HOST}\" | .mqtt.user=\"${MQTT_USER}\" | .mqtt.password=\"${MQTT_PASSWORD}\"" "$CONFIG_PATH" > $CONFIGFILE
 
 
 # start the programm
