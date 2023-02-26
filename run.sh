@@ -17,11 +17,20 @@ if [[ -z "$CONFIGFILE" || "$CONFIGFILE" == "null" ]]; then
     exit 1
 fi
 
+set -x
+bashio::log.info "getting raw config"
+service="mqtt"
+config=$(bashio::api.supervisor GET "/services/${service}" false)
+echo "${config}"
+
+bashio::log.info "requesting mqtt config"
 MQTT_HOST=$(bashio::services mqtt "host")
 MQTT_USER=$(bashio::services mqtt "username")
 MQTT_PASSWORD=$(bashio::services mqtt "password")
+bashio::log.info "MQTT ${MQTT_HOST} ${MQTT_USER}"
 
 CONFIGFILE=$(mktemp)
+bashio::log.info "generating config file ${CONFIGFILE}"
 jq ".mqtt.host=\"${MQTT_HOST}\" | .mqtt.user=\"${MQTT_USER}\" | .mqtt.password=\"${MQTT_PASSWORD}\"" "$CONFIG_PATH" > $CONFIGFILE
 
 
