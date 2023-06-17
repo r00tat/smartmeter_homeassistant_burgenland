@@ -111,7 +111,7 @@ class SmartMeterDevice(MqttClient):
                 "unique_id": f"{self.device_id}_current_l1",
                 'value_template': "{{ value_json.current_l1 }}",
                 "unit_of_measurement": "A",
-                "device_class": "voltage",
+                "device_class": "current",
                 "state_class": "measurement",
             },
             {
@@ -119,7 +119,7 @@ class SmartMeterDevice(MqttClient):
                 "unique_id": f"{self.device_id}_current_l2",
                 'value_template': "{{ value_json.current_l2 }}",
                 "unit_of_measurement": "A",
-                "device_class": "voltage",
+                "device_class": "current",
                 "state_class": "measurement",
             },
             {
@@ -127,7 +127,7 @@ class SmartMeterDevice(MqttClient):
                 "unique_id": f"{self.device_id}_current_l3",
                 'value_template': "{{ value_json.current_l3 }}",
                 "unit_of_measurement": "A",
-                "device_class": "voltage",
+                "device_class": "current",
                 "state_class": "measurement",
             },
         ]
