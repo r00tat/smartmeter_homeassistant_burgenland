@@ -14,7 +14,7 @@ key = os.environ['DLMS_ENCRYPTION_KEY']
 
 
 def reader_callback(data: MeterData):
-    """callback for meter data"""
+    """Callback for meter data"""
     pass
 
 

@@ -3,9 +3,8 @@ import json
 from gurux_dlms import GXReplyData
 
 
-class MeterData():
-    """
-    Smart meter reply data parsed
+class MeterData:
+    """Smart meter reply data parsed
 
     Values provided
     - Momentanspannung L1
@@ -50,19 +49,28 @@ class MeterData():
         self.parse()
 
     def parse(self):
-        """"parse dlms data"""
+        """ "parse dlms data"""
         if not self.dlms_data:
             return
 
-        (self.voltage_l1, self.voltage_l2, self.voltage_l3, self.current_l1,
-         self.current_l2, self.current_l3, self.power_consumed,
-         self.power_provided, self.total_consumed, self.total_provided,
-         *rest) = self.dlms_data.value
+        (
+            self.voltage_l1,
+            self.voltage_l2,
+            self.voltage_l3,
+            self.current_l1,
+            self.current_l2,
+            self.current_l3,
+            self.power_consumed,
+            self.power_provided,
+            self.total_consumed,
+            self.total_provided,
+            *rest,
+        ) = self.dlms_data.value
 
         if len(rest) >= 3:
             (self.x_1, self.x_2, self.x_3, *rest2) = rest
         if len(rest) > 3:
-            self.meter_id = str(rest[3], 'UTF-8')
+            self.meter_id = str(rest[3], "UTF-8")
 
     def __str__(self) -> str:
         return (
@@ -73,10 +81,11 @@ class MeterData():
             f"W({self.total_consumed}Wh,-{self.total_provided}Wh)"
             # f"?({self.x_1},{self.x_2},{self.x_3})"
             # f"id({self.meter_id})"
-            f"]")
+            f"]"
+        )
 
     def to_dict(self) -> dict:
-        """return item as dict"""
+        """Return item as dict"""
         return {
             "voltage_l1": self.voltage_l1,
             "voltage_l2": self.voltage_l2,
@@ -92,5 +101,5 @@ class MeterData():
         }
 
     def to_json(self) -> str:
-        """return item as json"""
+        """Return item as json"""
         return json.dumps(self.to_dict())
