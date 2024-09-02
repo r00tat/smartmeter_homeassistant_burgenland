@@ -1,0 +1,37 @@
+name: "Pull Request Pipeline Trigger"
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  pull_request:
+    name: "Lint and Test"
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/pipeline') && github.event.comment.author_association == 'OWNER' }}
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v4.1.4"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: "Install requirements"
+        run: python3 -m pip install -r requirements.txt
+
+      - name: "Lint"
+        run: python3 -m ruff check
+
+      # - name: 'Test'
+      #   run: python3 -m unittest discover -v
+      #   env:
+      #     BLAULICHTSMS_CUSTOMERID: '${{ secrets.BLAULICHTSMS_CUSTOMERID }}'
+      #     BLAULICHTSMS_USERNAME: '${{ secrets.BLAULICHTSMS_USERNAME }}'
+      #     BLAULICHTSMS_PASSWORD: '${{ secrets.BLAULICHTSMS_PASSWORD }}'
