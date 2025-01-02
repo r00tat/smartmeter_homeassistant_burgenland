@@ -33,6 +33,9 @@ class SmartMqttMeter:
             baudrate=dlms_config.get("baudrate", 9600),
             bytesize=dlms_config.get("bytesize", serial.EIGHTBITS),
             stopbits=dlms_config.get("stopbits", serial.STOPBITS_ONE),
+            parity=serial.PARITY_NAMES.get(
+                dlms_config.get("parity", serial.PARITY_NONE), serial.PARITY_NONE
+            ),
             callback=self.got_meter_data,
         )
         log.info("connecting to serial port")

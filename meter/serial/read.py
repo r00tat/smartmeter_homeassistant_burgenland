@@ -9,6 +9,9 @@ from ..bgld.data import MeterData
 
 log = logging.getLogger("meter.serial.read")
 
+PARITY_VALUES = serial.PARITY_NAMES.keys()
+PARITY_NAME_VALUES = {v.upper(): k for k, v in serial.PARITY_NAMES}
+
 
 class MeterReader:
     """Read smart meter data and parse it."""
@@ -31,6 +34,8 @@ class MeterReader:
         self.baudrate = baudrate
         self.bytesize = bytesize
         self.parity = parity
+        if self.parity not in PARITY_VALUES:
+            self.parity = PARITY_NAME_VALUES.get(parity, serial.PARITY_NONE)
         self.stopbits = stopbits
 
         self.should_run = True

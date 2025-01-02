@@ -75,10 +75,12 @@ if [[ "$ARCH" =~ "armv7.*" ]]; then
   ARCH="armv7"
 elif [[ "$ARCH" == "x86_64" ]]; then
   ARCH="amd64"
+elif [[ "$ARCH" == "arm64" ]]; then
+  ARCH="aarch64"
 fi
 
 VERSION=$(yq -r '.version' config.yaml)
-docker build -t paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION --build-arg BUILD_FROM=homeassistant/${ARCH}-base-python:latest .
+docker buildx build -t paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION --build-arg BUILD_FROM=homeassistant/${ARCH}-base-python:latest --platform linux/${ARCH} .
 docker tag paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest
 docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION
 docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest

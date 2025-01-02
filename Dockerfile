@@ -1,7 +1,7 @@
-ARG BUILD_FROM=homeassistant/aarch64-base:latest
+ARG BUILD_FROM=homeassistant/aarch64-base-python:latest
 FROM $BUILD_FROM
 
-ENV LANG C.UTF-8
+ENV LANG=C.UTF-8
 
 # Install requirements for add-on
 RUN apk --no-cache --no-progress upgrade && \

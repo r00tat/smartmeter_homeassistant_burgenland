@@ -12,6 +12,6 @@ dlms:
   port: "/dev/ttyUSB0"
   # baudrate: 9600
   # bytesize: 8
-  # # parity: "NONE" # TODO needs to be parsed
+  # parity: "NONE"
   # stopbits: 1
   key: "" # hex key to decrypt message

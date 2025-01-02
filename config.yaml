@@ -1,5 +1,5 @@
 name: "Smartmeter Burgenland MQTT"
-version: "0.1.10"
+version: "0.2.0"
 slug: "smartmeter_bgld_mqtt"
 description: |
   This addon allows you to connect your smartmeter in Burgenland, AT to 
@@ -33,7 +33,7 @@ options:
     port: "/dev/ttyUSB0"
     baudrate: 9600
     bytesize: 8
-    # parity: "NONE" # TODO needs to be parsed
+    parity: "NONE"
     stopbits: 1
     key: "" # hex key to decrypt message
 schema:
@@ -50,7 +50,7 @@ schema:
     port: "str"
     baudrate: "int?"
     bytesize: "int?"
-    # parity: "NONE" # TODO needs to be parsed
+    parity: "NONE"
     stopbits: "int?"
     key: "str" # hex key to decrypt message
 map:
