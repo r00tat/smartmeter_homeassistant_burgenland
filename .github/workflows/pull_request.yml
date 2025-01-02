@@ -24,13 +24,21 @@ jobs:
           cache: "pip"
 
       - name: "Install requirements"
-        run: python3 -m pip install uv && uv pip install -r requirements.txt
+        run: |
+          python3 -m pip install uv && 
+          uv venv &&
+          source .venv/bin/activate &&
+          uv pip install -r requirements.txt
 
       - name: "Lint"
-        run: python3 -m ruff check
+        run: |
+          source .venv/bin/activate &&
+          python3 -m ruff check
 
       # - name: 'Test'
-      #   run: python3 -m unittest discover -v
+      #   run: |
+      #     source .venv/bin/activate &&
+      #     python3 -m unittest discover -v
       #   env: # Or as an environment variable
       #     BLAULICHTSMS_CUSTOMERID: '${{ secrets.BLAULICHTSMS_CUSTOMERID }}'
       #     BLAULICHTSMS_USERNAME: '${{ secrets.BLAULICHTSMS_USERNAME }}'
