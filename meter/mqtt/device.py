@@ -8,9 +8,7 @@ log = logging.getLogger("meter.mqtt.device")
 
 
 class SmartMeterDevice(MqttClient):
-    """SmartMeterDevice extends the functionality to publish the values at once
-    with json
-    """
+    """SmartMeterDevice extends the functionality to publish the values at once with json."""
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)

@@ -1,5 +1,4 @@
-"""combine the serial read functionality with the mqtt functionality
-"""
+"""combine the serial read functionality with the mqtt functionality"""
 
 import logging
 import threading
@@ -13,8 +12,7 @@ log = logging.getLogger("meter.smartmeter")
 
 
 class SmartMqttMeter:
-    """Connect the smart meter from serial to MQTT
-    """
+    """Connect the smart meter from serial to MQTT."""
 
     def __init__(self, config: dict) -> None:
         self.config = config
@@ -46,11 +44,9 @@ class SmartMqttMeter:
 
     def got_meter_data(self, data: MeterData):
         log.info(
-
-                "got meter data, "
-                f"{'publishing to mqtt' if self.counter % 6 == 0 else 'skipping'}"
-                f": {data}"
-
+            "got meter data, "
+            f"{'publishing to mqtt' if self.counter % 6 == 0 else 'skipping'}"
+            f": {data}"
         )
         if self.counter % 6 == 0:
             self.mqtt.publish_status(data)

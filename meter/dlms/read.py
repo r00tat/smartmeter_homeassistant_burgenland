@@ -8,6 +8,7 @@ log = logging.getLogger("meter.dlms.read")
 
 
 def parse_dlms_data(data: bytes, key: str):
+    """Parse DLMS data."""
     bb = GXByteBuffer(data)
     cl = GXDLMSSecureClient()
     data = GXReplyData()
@@ -30,8 +31,7 @@ def parse_dlms_data(data: bytes, key: str):
 
 
 def convert_to_xml(notify: GXReplyData):
-    """Convert parsed data to xml
-    """
+    """Convert parsed data to xml."""
     t = GXDLMSTranslator(TranslatorOutputType.SIMPLE_XML)
     xml = t.dataToXml(notify.data)
     # log.info("xml: %s", xml)

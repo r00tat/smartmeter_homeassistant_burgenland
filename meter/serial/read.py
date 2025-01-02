@@ -11,17 +11,18 @@ log = logging.getLogger("meter.serial.read")
 
 
 class MeterReader:
-    """read smart meter data and parse it
-    """
+    """Read smart meter data and parse it."""
 
-    def __init__(self,
-                 key: str,
-                 port: str = "/dev/ttyUSB0",
-                 baudrate=9600,
-                 bytesize=serial.EIGHTBITS,
-                 parity=serial.PARITY_NONE,
-                 stopbits=serial.STOPBITS_ONE,
-                 callback: Callable[[MeterData], None] = None):
+    def __init__(
+        self,
+        key: str,
+        port: str = "/dev/ttyUSB0",
+        baudrate=9600,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        callback: Callable[[MeterData], None] = None,
+    ):
         """Create a meter reader"""
         self.key = key
 
@@ -38,12 +39,16 @@ class MeterReader:
 
     def connect(self):
         """Connect serial port"""
-        log.info("connecting to serial port %s with %s%s%s", self.port,
-                 self.baudrate,
-                 "N" if self.parity == serial.PARITY_NONE else "Y",
-                 self.stopbits)
-        self.ser = serial.Serial(self.port, self.baudrate, self.bytesize,
-                                 self.parity, self.stopbits)
+        log.info(
+            "connecting to serial port %s with %s%s%s",
+            self.port,
+            self.baudrate,
+            "N" if self.parity == serial.PARITY_NONE else "Y",
+            self.stopbits,
+        )
+        self.ser = serial.Serial(
+            self.port, self.baudrate, self.bytesize, self.parity, self.stopbits
+        )
 
     def disconnect(self):
         """Disconnect from serial port"""

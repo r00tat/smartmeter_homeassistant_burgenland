@@ -2,6 +2,10 @@
 
 target-version = "py310"
 
+line-length = 88
+
+[lint]
+
 select = [
     "B007", # Loop control variable {name} not used within loop body
     "B014", # Exception handler with duplicate exception
@@ -36,15 +40,24 @@ ignore = [
     "D411",  # Missing blank line before section
     "E501",  # line too long
     "E731",  # do not assign a lambda expression, use a def
+    "D400", # First line should end with a period
+    "D415", # First line should end with a period, question mark, or exclamation point
+    "T201",  # `print` found
+    "D102", # Missing docstring in public method
+    "D100", # Missing docstring in public module
+    "D107", # Missing docstring in `__init__`
+    "D104", # Missing docstring in public package
+    "D401", # First line of docstring should be in imperative mood: "Callback for meter data"
+    "PGH004", # Use specific rule codes when using `noqa`,
+    "D105", # Missing docstring in magic method
 ]
 
-line-length = 88
 
-[flake8-pytest-style]
+[lint.flake8-pytest-style]
 fixture-parentheses = false
 
-[pyupgrade]
+[lint.pyupgrade]
 keep-runtime-typing = true
 
-[mccabe]
+[lint.mccabe]
 max-complexity = 25

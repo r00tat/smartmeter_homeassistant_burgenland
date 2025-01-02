@@ -49,7 +49,7 @@ class MeterData:
         self.parse()
 
     def parse(self):
-        """ "parse dlms data"""
+        """Parse dlms data."""
         if not self.dlms_data:
             return
 

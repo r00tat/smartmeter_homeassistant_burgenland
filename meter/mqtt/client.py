@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class MqttClient:
+    """MQTT client."""
+
     def __init__(self, config: dict) -> None:
         self.config = config
         self.connect_mqtt()

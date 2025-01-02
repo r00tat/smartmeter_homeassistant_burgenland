@@ -10,11 +10,11 @@ log = logging.getLogger("meter.serial.test")
 
 log.info("starting communication")
 
-key = os.environ['DLMS_ENCRYPTION_KEY']
+key = os.environ["DLMS_ENCRYPTION_KEY"]
 
 
 def reader_callback(data: MeterData):
-    """Callback for meter data"""
+    """Callback method for meter data."""
     pass
 
 
