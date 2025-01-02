@@ -2,7 +2,7 @@
 import serial
 import logging
 from time import sleep
-from typing import Callable
+from collections.abc import Callable
 
 from ..dlms.read import parse_dlms_data
 from ..bgld.data import MeterData
@@ -10,20 +10,20 @@ from ..bgld.data import MeterData
 log = logging.getLogger("meter.serial.read")
 
 
-class MeterReader():
-    """
-    read smart meter data and parse it
-    """
+class MeterReader:
+    """Read smart meter data and parse it."""
 
-    def __init__(self,
-                 key: str,
-                 port: str = "/dev/ttyUSB0",
-                 baudrate=9600,
-                 bytesize=serial.EIGHTBITS,
-                 parity=serial.PARITY_NONE,
-                 stopbits=serial.STOPBITS_ONE,
-                 callback: Callable[[MeterData], None] = None):
-        """create a meter reader"""
+    def __init__(
+        self,
+        key: str,
+        port: str = "/dev/ttyUSB0",
+        baudrate=9600,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        callback: Callable[[MeterData], None] = None,
+    ):
+        """Create a meter reader"""
         self.key = key
 
         self.ser: serial.Serial = None
@@ -38,21 +38,25 @@ class MeterReader():
         self.callback = callback
 
     def connect(self):
-        """connect serial port"""
-        log.info("connecting to serial port %s with %s%s%s", self.port,
-                 self.baudrate,
-                 "N" if self.parity == serial.PARITY_NONE else "Y",
-                 self.stopbits)
-        self.ser = serial.Serial(self.port, self.baudrate, self.bytesize,
-                                 self.parity, self.stopbits)
+        """Connect serial port"""
+        log.info(
+            "connecting to serial port %s with %s%s%s",
+            self.port,
+            self.baudrate,
+            "N" if self.parity == serial.PARITY_NONE else "Y",
+            self.stopbits,
+        )
+        self.ser = serial.Serial(
+            self.port, self.baudrate, self.bytesize, self.parity, self.stopbits
+        )
 
     def disconnect(self):
-        """disconnect from serial port"""
+        """Disconnect from serial port"""
         if self.ser and not self.ser.closed:
             self.ser.close()
 
     def start(self):
-        """start the read process"""
+        """Start the read process"""
         self.is_running = True
         self.connect()
         while self.should_run:
@@ -73,5 +77,5 @@ class MeterReader():
         self.disconnect()
 
     def stop(self):
-        """stop the read process"""
+        """Stop the read process"""
         self.should_run = False

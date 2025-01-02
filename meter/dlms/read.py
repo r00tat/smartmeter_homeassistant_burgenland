@@ -1,6 +1,5 @@
 import logging
-from gurux_dlms import (GXByteBuffer, GXReplyData, GXDLMSTranslator,
-                        TranslatorOutputType)
+from gurux_dlms import GXByteBuffer, GXReplyData, GXDLMSTranslator, TranslatorOutputType
 from gurux_dlms.enums import InterfaceType, Security
 from gurux_common import GXCommon
 from gurux_dlms.secure import GXDLMSSecureClient
@@ -9,6 +8,7 @@ log = logging.getLogger("meter.dlms.read")
 
 
 def parse_dlms_data(data: bytes, key: str):
+    """Parse DLMS data."""
     bb = GXByteBuffer(data)
     cl = GXDLMSSecureClient()
     data = GXReplyData()
@@ -31,9 +31,7 @@ def parse_dlms_data(data: bytes, key: str):
 
 
 def convert_to_xml(notify: GXReplyData):
-    """
-    convert parsed data to xml
-    """
+    """Convert parsed data to xml."""
     t = GXDLMSTranslator(TranslatorOutputType.SIMPLE_XML)
     xml = t.dataToXml(notify.data)
     # log.info("xml: %s", xml)

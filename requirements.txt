@@ -1,5 +1,6 @@
-gurux-common==1.0.13
-gurux-dlms==1.0.137
-paho-mqtt==1.6.1
-pyserial==3.5
-PyYAML==6.0
+gurux-common~=1.0.13
+gurux-dlms~=1.0.137
+paho-mqtt~=1.6.1
+pyserial~=3.5
+PyYAML~=6.0
+ruff~=0.5.1

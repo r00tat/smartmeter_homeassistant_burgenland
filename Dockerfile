@@ -12,9 +12,9 @@ WORKDIR /app
 
 # Copy data for add-on
 COPY requirements.txt ./
-RUN python3 -m venv . && \
-    source bin/activate && \
-    pip3 install -r requirements.txt
+RUN python3 -m pip install uv && uv venv && \
+    source .venv/bin/activate && \
+    uv pip install -r requirements.txt
 
 COPY run.sh ./
 COPY  meter ./meter/
