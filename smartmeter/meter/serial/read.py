@@ -3,6 +3,7 @@ import serial
 import logging
 from time import sleep
 from collections.abc import Callable
+import json
 
 from ..dlms.read import parse_dlms_data
 from ..bgld.data import MeterData
@@ -11,6 +12,9 @@ log = logging.getLogger("meter.serial.read")
 
 PARITY_VALUES = serial.PARITY_NAMES.keys()
 PARITY_NAME_VALUES = {v.upper(): k for k, v in serial.PARITY_NAMES.items()}
+
+log.info("parity values: %s", ",".join(PARITY_VALUES))
+log.info("parity name values: %s", json.dumps(PARITY_NAME_VALUES))
 
 
 class MeterReader:
@@ -34,8 +38,15 @@ class MeterReader:
         self.baudrate = baudrate
         self.bytesize = bytesize
         self.parity = parity
+        log.info("initial parity: %s", parity)
         if self.parity not in PARITY_VALUES:
-            self.parity = PARITY_NAME_VALUES.get(parity, serial.PARITY_NONE)
+            log.info(
+                "searching for parity %s in name values: %s",
+                parity,
+                PARITY_NAME_VALUES.get(parity.upper(), serial.PARITY_NONE),
+            )
+            self.parity = PARITY_NAME_VALUES.get(parity.upper(), serial.PARITY_NONE)
+        log.info("final parity: %s", self.parity)
         self.stopbits = stopbits
 
         self.should_run = True
