@@ -38,16 +38,16 @@ class MeterReader:
         self.baudrate = baudrate
         self.bytesize = bytesize
         self.parity = parity
-        log.info("initial parity: %s", parity)
         if self.parity not in PARITY_VALUES:
-            log.info(
-                "searching for parity %s in name values: %s",
-                parity,
-                PARITY_NAME_VALUES.get(parity.upper(), serial.PARITY_NONE),
-            )
             self.parity = PARITY_NAME_VALUES.get(parity.upper(), serial.PARITY_NONE)
-        log.info("final parity: %s", self.parity)
         self.stopbits = stopbits
+        log.info(
+            "serial port config: %s %s%s%s",
+            self.port,
+            self.baudrate,
+            self.parity,
+            self.stopbits,
+        )
 
         self.should_run = True
         self.is_running = False
