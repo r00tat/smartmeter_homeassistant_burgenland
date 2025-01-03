@@ -28,22 +28,20 @@ class SmartMqttMeter:
     def setup(self):
         log.info("starting setup")
         dlms_config = self.config.get("dlms", {})
-        log.info("dlms config %s", yaml.safe_dump(dlms_config))
+        log.info("dlms config \n%s", yaml.safe_dump(dlms_config))
         self.reader = MeterReader(
             dlms_config.get("key"),
             dlms_config.get("port", "/dev/ttyUSB0"),
             baudrate=dlms_config.get("baudrate", 9600),
             bytesize=dlms_config.get("bytesize", serial.EIGHTBITS),
             stopbits=dlms_config.get("stopbits", serial.STOPBITS_ONE),
-            parity=serial.PARITY_NAMES.get(
-                dlms_config.get("parity", serial.PARITY_NONE), serial.PARITY_NONE
-            ),
+            parity=dlms_config.get("parity", serial.PARITY_NONE),
             callback=self.got_meter_data,
         )
         log.info("connecting to serial port")
         self.reader.connect()
 
-        log.info("mqtt config: %s", yaml.safe_dump(self.config.get("mqtt", {})))
+        log.info("mqtt config: \n%s", yaml.safe_dump(self.config.get("mqtt", {})))
         self.mqtt = SmartMeterDevice(self.config.get("mqtt", {}))
 
         log.info("setup complete")
