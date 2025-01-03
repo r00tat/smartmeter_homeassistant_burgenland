@@ -3,6 +3,7 @@
 import logging
 import threading
 import serial
+import yaml
 
 from .bgld.data import MeterData
 from .mqtt.device import SmartMeterDevice
@@ -27,6 +28,7 @@ class SmartMqttMeter:
     def setup(self):
         log.info("starting setup")
         dlms_config = self.config.get("dlms", {})
+        log.info("dlms config %s", yaml.safe_dump(dlms_config))
         self.reader = MeterReader(
             dlms_config.get("key"),
             dlms_config.get("port", "/dev/ttyUSB0"),
@@ -41,6 +43,7 @@ class SmartMqttMeter:
         log.info("connecting to serial port")
         self.reader.connect()
 
+        log.info("mqtt config: %s", yaml.safe_dump(self.config.get("mqtt", {})))
         self.mqtt = SmartMeterDevice(self.config.get("mqtt", {}))
 
         log.info("setup complete")
