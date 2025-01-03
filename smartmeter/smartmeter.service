@@ -4,8 +4,8 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-WorkingDirectory=/home/pi/smartmeter
-ExecStart=/home/pi/smartmeter/smartmeter.sh
+WorkingDirectory=/home/pi/smartmeter/smartmeter
+ExecStart=/home/pi/smartmeter/smartmeter/smartmeter.sh
 Restart=always
 RestartSec=3
 User=pi

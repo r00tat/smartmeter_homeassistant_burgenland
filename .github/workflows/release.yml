@@ -17,19 +17,13 @@ jobs:
       - name: "Checkout the repository"
         uses: "actions/checkout@v4.2.2"
 
-      - name: "Adjust version number"
-        shell: "bash"
-        run: |
-          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
-            "${{ github.workspace }}/custom_components/blaulichtsms/manifest.json"
-
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |
-          cd "${{ github.workspace }}/custom_components/blaulichtsms"
-          zip hassio_blaulichtsms.zip -r ./
+          cd "${{ github.workspace }}/smartmeter"
+          zip smartmeter.zip -r ./
 
       - name: "Upload the ZIP file to the release"
         uses: softprops/action-gh-release@v2.2.0
         with:
-          files: ${{ github.workspace }}/custom_components/blaulichtsms/hassio_blaulichtsms.zip
+          files: ${{ github.workspace }}/smartmeter/smartmeter.zip

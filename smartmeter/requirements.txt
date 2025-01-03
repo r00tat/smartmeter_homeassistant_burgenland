@@ -4,3 +4,4 @@ paho-mqtt~=1.6.1
 pyserial~=3.5
 PyYAML~=6.0
 ruff~=0.5.1
+setuptools
