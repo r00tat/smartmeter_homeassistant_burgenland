@@ -23,17 +23,6 @@ jobs:
           yq -i '.version="${{ github.event.release.tag_name }}"' \
             "${{ github.workspace }}/smartmeter/config.yaml"
 
-      - name: "ZIP the integration directory"
-        shell: "bash"
-        run: |
-          cd "${{ github.workspace }}/smartmeter"
-          zip smartmeter.zip -r ./
-
-      - name: "Upload the ZIP file to the release"
-        uses: softprops/action-gh-release@v2.2.0
-        with:
-          files: ${{ github.workspace }}/smartmeter/smartmeter.zip
-
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
