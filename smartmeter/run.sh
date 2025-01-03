@@ -17,14 +17,11 @@ if [[ -z "$CONFIGFILE" || "$CONFIGFILE" == "null" ]]; then
     exit 1
 fi
 
-# config file is broken, fix it
-echo "}" >>$CONFIGFILE
+# MQTT_HOST=$(bashio::services mqtt "host")
+# MQTT_USER=$(bashio::services mqtt "username")
+# MQTT_PASSWORD=$(bashio::services mqtt "password")
 
-MQTT_HOST=$(bashio::services mqtt "host")
-MQTT_USER=$(bashio::services mqtt "username")
-MQTT_PASSWORD=$(bashio::services mqtt "password")
-
-echo "MQTT config: $MQTT_HOST $MQTT_USER $MQTT_PASSWORD"
+# echo "MQTT config: $MQTT_HOST $MQTT_USER $MQTT_PASSWORD"
 #
 # CONFIGFILE=$(mktemp)
 # jq ".mqtt.host=\"${MQTT_HOST}\" | .mqtt.user=\"${MQTT_USER}\" | .mqtt.password=\"${MQTT_PASSWORD}\"" "$CONFIG_PATH" > $CONFIGFILE
