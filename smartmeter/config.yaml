@@ -50,7 +50,7 @@ schema:
     port: "str"
     baudrate: "int?"
     bytesize: "int?"
-    parity: "NONE"
+    parity: "str?"
     stopbits: "int?"
     key: "str" # hex key to decrypt message
 map:
