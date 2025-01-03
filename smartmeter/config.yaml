@@ -5,7 +5,7 @@ description: |
   This addon allows you to connect your smartmeter in Burgenland, AT to 
   homeassistant.
 url: "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
-image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
+# image: paulwoelfel/smartmeter_homeassistant_burgenland_{arch}
 arch:
   - "aarch64"
   - "amd64"
