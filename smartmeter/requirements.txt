@@ -1,7 +1,7 @@
 gurux-common~=1.0.13
-gurux-dlms~=1.0.137
-paho-mqtt~=1.6.1
+gurux-dlms~=1.0.166
+paho-mqtt~=2.1.0
 pyserial~=3.5
 PyYAML~=6.0
-ruff~=0.5.1
+ruff~=0.8.5
 setuptools
