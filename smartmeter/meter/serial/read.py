@@ -10,7 +10,7 @@ from ..bgld.data import MeterData
 log = logging.getLogger("meter.serial.read")
 
 PARITY_VALUES = serial.PARITY_NAMES.keys()
-PARITY_NAME_VALUES = {v.upper(): k for k, v in serial.PARITY_NAMES}
+PARITY_NAME_VALUES = {v.upper(): k for k, v in serial.PARITY_NAMES.items()}
 
 
 class MeterReader:
