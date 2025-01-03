@@ -23,7 +23,9 @@ class MqttClient:
         log.debug("setup of mqtt connection")
         self.topic_prefix: str = self.config.get("prefix", "")
         self.device_id: str = self.config.get("device_id", "smartmeter")
-        self.client: mqtt.Client = mqtt.Client()
+        self.client: mqtt.Client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2
+        )
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.username_pw_set(
@@ -40,11 +42,13 @@ class MqttClient:
         """Get the base topic"""
         return f"{self.topic_prefix}/{self.device_id}".lstrip("/")
 
-    def on_connect(self, client: mqtt.Client, userdata: Any, flags, rc):
+    def on_connect(
+        self, client: mqtt.Client, userdata: Any, flags, reason_code, properties
+    ):
         """On connect"""
-        log.info("Connected to MQTT with result code " + str(rc))
-        if rc != 0:
-            raise RuntimeError(f"MQTT connection failed with error {rc}")
+        log.info("Connected to MQTT with result code " + str(reason_code))
+        if reason_code != 0:
+            raise RuntimeError(f"MQTT connection failed with error {reason_code}")
         self.message_callbacks: dict[str, Callable[[], None]] = {}
 
         # Subscribing in on_connect() means that if we lose the connection and
