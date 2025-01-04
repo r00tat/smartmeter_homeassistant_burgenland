@@ -19,9 +19,13 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         working-directory: smartmeter
         run: |
+          set -x
           echo "Current changelog:"
           echo "$CHANGELOG"
+          ls -lha CHANGELOG.md
+          echo "writing log file"
           echo "$CHANGELOG" > CHANGELOG.md
+          echo "CHANGELOG updated."
 
       - name: Commit CHANGELOG.md
         uses: stefanzweifel/git-auto-commit-action@v4
