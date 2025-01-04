@@ -1,8 +1,6 @@
 name: Changelog
 on:
-  push:
-    branches:
-      - **
+  push: {}
   # release:
   #   types:
   #     - created
@@ -13,4 +11,4 @@ jobs:
       - name: "✏️ Generate release changelog"
         uses: janheinrichmerker/action-github-changelog-generator@v2.3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} 
+          token: ${{ secrets.GITHUB_TOKEN }}
