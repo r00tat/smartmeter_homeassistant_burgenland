@@ -8,6 +8,9 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v4.2.2"
+
       - name: "✏️ Generate release changelog"
         id: changelog
         uses: janheinrichmerker/action-github-changelog-generator@v2.3
@@ -22,7 +25,7 @@ jobs:
           set -x
           echo "Current changelog:"
           echo "$CHANGELOG"
-          ls -lha . ..
+          ls -lha .
           pwd
           echo "writing log file"
           echo "$CHANGELOG" > smartmeter/CHANGELOG.md
