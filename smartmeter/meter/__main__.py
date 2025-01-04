@@ -19,6 +19,9 @@ try:
     with open(args.config) as stream:
         config = yaml.safe_load(stream)
 
+    logging.getLogger().setLevel(
+        logging.getLevelNamesMapping().get(config.get("logging", "INFO"), logging.INFO)
+    )
     log.info("initializing smart meter")
     meter = SmartMqttMeter(config)
     log.info("starting smart meter")
