@@ -22,7 +22,7 @@ jobs:
           set -x
           echo "Current changelog:"
           echo "$CHANGELOG"
-          ls -lha .
+          ls -lha . ..
           pwd
           echo "writing log file"
           echo "$CHANGELOG" > smartmeter/CHANGELOG.md
