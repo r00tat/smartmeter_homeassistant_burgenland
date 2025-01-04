@@ -17,10 +17,11 @@ jobs:
       - name: "show changelog"
         env:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
+        working-directory: smartmeter
         run: |
           echo "Current changelog:"
           echo "$CHANGELOG"
-          echo "$CHANGELOG" > smartmeter/CHANGELOG.md
+          echo "$CHANGELOG" > CHANGELOG.md
 
       - name: Commit CHANGELOG.md
         uses: stefanzweifel/git-auto-commit-action@v4
