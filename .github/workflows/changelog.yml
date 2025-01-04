@@ -17,14 +17,15 @@ jobs:
       - name: "show changelog"
         env:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
-        working-directory: smartmeter
+        # working-directory: smartmeter
         run: |
           set -x
           echo "Current changelog:"
           echo "$CHANGELOG"
-          ls -lha CHANGELOG.md
+          ls -lha smartmeter/CHANGELOG.md
+          ls -lha .
           echo "writing log file"
-          echo "$CHANGELOG" > CHANGELOG.md
+          echo "$CHANGELOG" > smartmeter/CHANGELOG.md
           echo "CHANGELOG updated."
 
       - name: Commit CHANGELOG.md
