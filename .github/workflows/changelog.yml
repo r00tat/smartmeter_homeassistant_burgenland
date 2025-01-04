@@ -1,9 +1,8 @@
 name: Changelog
 on:
-  push: {}
-  # release:
-  #   types:
-  #     - created
+  release:
+    types:
+      - created
 jobs:
   changelog:
     runs-on: ubuntu-latest
@@ -17,16 +16,13 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "show changelog"
+      - name: "write changelog"
         env:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
-        # working-directory: smartmeter
         run: |
           set -x
           echo "Current changelog:"
           echo "$CHANGELOG"
-          ls -lha .
-          pwd
           echo "writing log file"
           echo "$CHANGELOG" > smartmeter/CHANGELOG.md
           echo "CHANGELOG updated."
@@ -34,6 +30,6 @@ jobs:
       - name: Commit CHANGELOG.md
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          branch: ${{ github.ref_name }}
+          branch: main
           commit_message: "docs: update CHANGELOG.md for ${{ github.ref_name }}"
           file_pattern: smartmeter/CHANGELOG.md
