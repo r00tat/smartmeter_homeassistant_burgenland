@@ -1,0 +1,35 @@
+name: Changelog
+on:
+  release:
+    types:
+      - created
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v4.2.2"
+
+      - name: "✏️ Generate release changelog"
+        id: changelog
+        uses: janheinrichmerker/action-github-changelog-generator@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "write changelog"
+        env:
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
+        run: |
+          set -x
+          echo "Current changelog:"
+          echo "$CHANGELOG"
+          echo "writing log file"
+          echo "$CHANGELOG" > smartmeter/CHANGELOG.md
+          echo "CHANGELOG updated."
+
+      - name: Commit CHANGELOG.md
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: main
+          commit_message: "docs: update CHANGELOG.md for ${{ github.ref_name }}"
+          file_pattern: smartmeter/CHANGELOG.md
