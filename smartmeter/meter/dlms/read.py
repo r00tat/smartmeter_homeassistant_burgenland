@@ -9,6 +9,7 @@ from gurux_dlms import (
 from gurux_dlms.enums import InterfaceType, Security
 from gurux_common import GXCommon
 from gurux_dlms.secure import GXDLMSSecureClient
+from bs4 import BeautifulSoup
 
 log = logging.getLogger("meter.dlms.read")
 
@@ -58,3 +59,26 @@ def convert_to_xml(notify: GXReplyData):
     xml = t.dataToXml(notify.data)
     # log.info("xml: %s", xml)
     return xml
+
+
+def parse_xml(xml: str):
+    """Parsing xml response"""
+    soup = BeautifulSoup(xml, "xml")
+    struct = soup.find("Structure")
+
+    all_values = []
+
+    log.debug("struct: %s", struct)
+    for child in struct.findChildren():
+        parsed_value = None
+        if child.name.startswith("UInt"):
+            parsed_value = int(child["Value"], 16)
+
+        if child.name.startswith("OctetString"):
+            parsed_value = str(bytearray.fromhex(child["Value"]), encoding="utf-8")
+
+        if parsed_value is not None:
+            all_values.append(parsed_value)
+
+    log.debug("all values: %s", all_values)
+    return all_values

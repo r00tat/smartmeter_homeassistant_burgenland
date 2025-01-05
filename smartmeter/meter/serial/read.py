@@ -5,7 +5,7 @@ from time import sleep
 from collections.abc import Callable
 import json
 
-from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data
+from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from ..bgld.data import MeterData
 
 log = logging.getLogger("meter.serial.read")
@@ -99,6 +99,12 @@ class MeterReader:
             log.debug("received: %s", received_data)
             parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
             log.info("XML Result for phyiscal interface:\n%s", parsed_xml)
+            values = parse_xml(parsed_xml)
+            if values and len(values) > 0:
+                data = MeterData(values)
+                log.debug("received meter data: %s", data)
+                if self.callback:
+                    self.callback(data)
 
     def start(self):
         """Start the read process"""
