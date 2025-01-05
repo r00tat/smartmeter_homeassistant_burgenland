@@ -20,6 +20,7 @@ boot: "auto"
 # privileged:
 #  - "NET_ADMIN"
 options:
+  interface_type: OPTICAL
   logging: INFO
   mqtt:
     device_id: "smartmeter"
@@ -38,6 +39,7 @@ options:
     stopbits: 1
     key: "" # hex key to decrypt message
 schema:
+  interface_type: list(OPTICAL|PHYSICAL)?
   logging: list(INFO|WARNING|ERROR|CRITICAL|DEBUG)?
   mqtt:
     device_id: "str?"

@@ -1,3 +1,6 @@
+logging: INFO
+interface_type: OPTICAL
+
 mqtt:
   # device_id: "smartmeter"
   # name: "Smart Meter"

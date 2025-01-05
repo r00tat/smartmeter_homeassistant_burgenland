@@ -43,7 +43,7 @@ This are the commands to get started:
 ```bash
 git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter
 cd smartmeter
-cp config-template.yaml config.yaml
+cp smartmeter-config-template.yaml smartmeter-config.yaml
 # now edit the config
 sudo ln -s "$(pwd)/smartmeter.service" /etc/systemd/system/smartmeter.service && sudo systemctl enable smartmeter && sudo systemctl start smartmeter
 ```

@@ -1,5 +1,11 @@
 import logging
-from gurux_dlms import GXByteBuffer, GXReplyData, GXDLMSTranslator, TranslatorOutputType
+from gurux_dlms import (
+    GXByteBuffer,
+    GXReplyData,
+    GXDLMSTranslator,
+    TranslatorOutputType,
+    GXDLMSTranslatorMessage,
+)
 from gurux_dlms.enums import InterfaceType, Security
 from gurux_common import GXCommon
 from gurux_dlms.secure import GXDLMSSecureClient
@@ -28,6 +34,22 @@ def parse_dlms_data(data: bytes, key: str):
 
     # or plaintext?
     return notify
+
+
+def parse_pyhiscal_dlms_data(data: bytes, key: str):
+    """Parse DLMS data from an phyisical interface."""
+    tr = GXDLMSTranslator()
+    tr.blockCipherKey = GXByteBuffer(key)
+    tr.comments = True
+    msg = GXDLMSTranslatorMessage()
+    msg.message = GXByteBuffer(data)
+    xml = ""
+    pdu = GXByteBuffer()
+    tr.completePdu = True
+    while tr.findNextFrame(msg, pdu):
+        pdu.clear()
+        xml += tr.messageToXml(msg)
+    return xml
 
 
 def convert_to_xml(notify: GXReplyData):
