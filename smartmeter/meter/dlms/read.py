@@ -75,7 +75,7 @@ def parse_xml(xml: str):
             parsed_value = int(child["Value"], 16)
 
         if child.name.startswith("OctetString"):
-            parsed_value = str(bytearray.fromhex(child["Value"]), encoding="utf-8")
+            parsed_value = bytearray.fromhex(child["Value"])
 
         if parsed_value is not None:
             all_values.append(parsed_value)
