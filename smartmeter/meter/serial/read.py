@@ -92,7 +92,8 @@ class MeterReader:
     def phyiscal_loop(self):
         """Read data from the pyhsical serial port and parse it."""
         while self.should_run:
-            received_data = self.ser.read(111)
+            received_data = self.ser.read()
+            sleep(0.5)
             data_left = self.ser.inWaiting()  # check for remaining byte
             received_data += self.ser.read(data_left)
             log.debug("received: %s", received_data)
