@@ -5,11 +5,11 @@
 cd $(dirname "$0")
 
 # make sure we have a valid python venv
-if [[ ! -d bin || ! -d lib ]]; then
-  python3 -m venv .
-  source bin/activate
-  pip3 install -r requirements.txt
+if [[ ! -d .venv ]]; then
+  uv venv
+  source .venv/bin/activate
+  uv pip install -r requirements.txt
 fi
 
-source bin/activate
+source .venv/bin/activate
 python3 -m meter -c $PWD/smartmeter-config.yaml
