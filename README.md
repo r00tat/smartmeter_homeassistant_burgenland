@@ -43,8 +43,10 @@ This are the commands to get started:
 ```bash
 git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter
 cd smartmeter
-cp config-template.yaml config.yaml
+cp smartmeter-config-template.yaml smartmeter-config.yaml
 # now edit the config
+# if you are on debian make sure you got everything you need:
+curl -LsSf https://astral.sh/uv/install.sh | sh
 sudo ln -s "$(pwd)/smartmeter.service" /etc/systemd/system/smartmeter.service && sudo systemctl enable smartmeter && sudo systemctl start smartmeter
 ```
 
@@ -57,8 +59,8 @@ To follow the output of the program you can use `tail -f /var/log/daemon.log`.
 Initialize virtual environment:
 
 ```bash
-python3 -m venv .
-source bin/activate
+uv venv
+source .venv/bin/activate
 pip3 install -r requirements.txt
 ```
 

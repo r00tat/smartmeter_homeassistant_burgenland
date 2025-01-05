@@ -5,7 +5,7 @@ from time import sleep
 from collections.abc import Callable
 import json
 
-from ..dlms.read import parse_dlms_data
+from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from ..bgld.data import MeterData
 
 log = logging.getLogger("meter.serial.read")
@@ -28,6 +28,7 @@ class MeterReader:
         bytesize=serial.EIGHTBITS,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
+        interface_type="OPTICAL",
         callback: Callable[[MeterData], None] = None,
     ):
         """Create a meter reader"""
@@ -48,6 +49,7 @@ class MeterReader:
             self.parity,
             self.stopbits,
         )
+        self.is_optical_inteface = interface_type == "OPTICAL"
 
         self.should_run = True
         self.is_running = False
@@ -59,7 +61,7 @@ class MeterReader:
             "connecting to serial port %s with %s%s%s",
             self.port,
             self.baudrate,
-            "N" if self.parity == serial.PARITY_NONE else "Y",
+            self.parity,
             self.stopbits,
         )
         self.ser = serial.Serial(
@@ -71,10 +73,8 @@ class MeterReader:
         if self.ser and not self.ser.closed:
             self.ser.close()
 
-    def start(self):
-        """Start the read process"""
-        self.is_running = True
-        self.connect()
+    def optical_loop(self):
+        """Read data from serial port and parse it."""
         while self.should_run:
             received_data = self.ser.read()  # read serial port
             sleep(0.5)
@@ -84,10 +84,37 @@ class MeterReader:
             decrypted_data = parse_dlms_data(received_data, self.key)
             log.debug("values: %s", decrypted_data.value)
             if decrypted_data.value:
-                data = MeterData(decrypted_data)
+                data = MeterData(decrypted_data.value)
                 log.debug("received meter data: %s", data)
                 if self.callback:
                     self.callback(data)
+
+    def phyiscal_loop(self):
+        """Read data from the pyhsical serial port and parse it."""
+        while self.should_run:
+            received_data = self.ser.read()
+            sleep(0.5)
+            data_left = self.ser.inWaiting()  # check for remaining byte
+            received_data += self.ser.read(data_left)
+            log.debug("received: %s", received_data)
+            parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
+            log.debug("XML Result:\n%s", parsed_xml)
+            values = parse_xml(parsed_xml)
+            if values and len(values) > 0:
+                data = MeterData(values)
+                log.debug("received meter data: %s", data)
+                if self.callback:
+                    self.callback(data)
+
+    def start(self):
+        """Start the read process"""
+        self.is_running = True
+        self.connect()
+
+        if self.is_optical_inteface:
+            self.optical_loop()
+        else:
+            self.phyiscal_loop()
 
         self.is_running = False
         self.disconnect()

@@ -1,6 +1,6 @@
-import json
+"""Data structure definition for burgenland smartmeter"""
 
-from gurux_dlms import GXReplyData
+import json
 
 
 class MeterData:
@@ -23,7 +23,7 @@ class MeterData:
     - Zähleridentifikationsnummern des Netzbetreibers
     """
 
-    def __init__(self, dlms_data: GXReplyData):
+    def __init__(self, dlms_data: list[any]):
         self.dlms_data = dlms_data
 
         self.voltage_l1 = 0
@@ -65,7 +65,7 @@ class MeterData:
             self.total_consumed,
             self.total_provided,
             *rest,
-        ) = self.dlms_data.value
+        ) = self.dlms_data
 
         if len(rest) >= 3:
             (self.x_1, self.x_2, self.x_3, *rest2) = rest

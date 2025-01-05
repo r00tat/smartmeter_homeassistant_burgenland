@@ -5,3 +5,5 @@ pyserial~=3.5
 PyYAML~=6.0
 ruff~=0.8.5
 setuptools
+lxml
+beautifulsoup4
