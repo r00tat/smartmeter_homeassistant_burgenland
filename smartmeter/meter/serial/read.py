@@ -107,7 +107,7 @@ class MeterReader:
         if self.is_optical_inteface:
             self.optical_loop()
         else:
-            pass
+            self.phyiscal_loop()
 
         self.is_running = False
         self.disconnect()
