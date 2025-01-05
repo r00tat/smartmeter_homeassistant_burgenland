@@ -98,7 +98,7 @@ class MeterReader:
             received_data += self.ser.read(data_left)
             log.debug("received: %s", received_data)
             parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
-            log.info("XML Result for phyiscal interface:\n%s", parsed_xml)
+            log.debug("XML Result:\n%s", parsed_xml)
             values = parse_xml(parsed_xml)
             if values and len(values) > 0:
                 data = MeterData(values)
