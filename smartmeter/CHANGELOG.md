@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.5](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.2.5) (2025-01-05)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.2.4...0.2.5)
+
+**Implemented enhancements:**
+
+- Add support for Phyisical connection interface [\#17](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/17) ([r00tat](https://github.com/r00tat))
+- Add auto changelog [\#16](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/16) ([r00tat](https://github.com/r00tat))
+
 ## [0.2.4](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.2.4) (2025-01-04)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.2.3...0.2.4)
