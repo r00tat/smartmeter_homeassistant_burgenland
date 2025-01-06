@@ -97,14 +97,18 @@ class MeterReader:
             data_left = self.ser.inWaiting()  # check for remaining byte
             received_data += self.ser.read(data_left)
             log.debug("received: %s", received_data)
-            parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
-            log.debug("XML Result:\n%s", parsed_xml)
-            values = parse_xml(parsed_xml)
-            if values and len(values) > 0:
-                data = MeterData(values)
-                log.debug("received meter data: %s", data)
-                if self.callback:
-                    self.callback(data)
+            try:
+                parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
+                log.debug("XML Result:\n%s", parsed_xml)
+                if parsed_xml and len(parsed_xml) > 0:
+                    values = parse_xml(parsed_xml)
+                    if values and len(values) > 0:
+                        data = MeterData(values)
+                        log.debug("received meter data: %s", data)
+                        if self.callback:
+                            self.callback(data)
+            except Exception as e:
+                log.exception("failed to parse data from serial port: %s", e)
 
     def start(self):
         """Start the read process"""
