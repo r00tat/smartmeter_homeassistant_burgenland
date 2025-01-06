@@ -21,10 +21,10 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         run: |
           set -x
-          echo "Current changelog:"
-          echo "$CHANGELOG"
           echo "writing log file"
-          echo "$CHANGELOG" > smartmeter/CHANGELOG.md
+          echo "$CHANGELOG" | sed 's@%0A@\n@g' > smartmeter/CHANGELOG.md
+          echo "Current changelog:"
+          cat smartmeter/CHANGELOG.md
           echo "CHANGELOG updated."
 
       - name: Commit CHANGELOG.md
