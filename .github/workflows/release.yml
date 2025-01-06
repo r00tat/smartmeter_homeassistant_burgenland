@@ -23,6 +23,13 @@ jobs:
           yq -i '.version="${{ github.event.release.tag_name }}"' \
             "${{ github.workspace }}/smartmeter/config.yaml"
 
+      - name: Commit config.yaml
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "Update version to ${{ github.event.release.tag_name }}"
+          file_pattern: smartmeter/config.yaml
+
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
