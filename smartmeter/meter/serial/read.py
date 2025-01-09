@@ -81,13 +81,16 @@ class MeterReader:
             data_left = self.ser.inWaiting()  # check for remaining byte
             received_data += self.ser.read(data_left)
             log.debug("received: %s", received_data)
-            decrypted_data = parse_dlms_data(received_data, self.key)
-            log.debug("values: %s", decrypted_data.value)
-            if decrypted_data.value:
-                data = MeterData(decrypted_data.value)
-                log.debug("received meter data: %s", data)
-                if self.callback:
-                    self.callback(data)
+            try:
+                decrypted_data = parse_dlms_data(received_data, self.key)
+                log.debug("values: %s", decrypted_data.value)
+                if decrypted_data.value:
+                    data = MeterData(decrypted_data.value)
+                    log.debug("received meter data: %s", data)
+                    if self.callback:
+                        self.callback(data)
+            except Exception as e:
+                log.exception("failed to parse data from serial port: %s", e)
 
     def phyiscal_loop(self):
         """Read data from the pyhsical serial port and parse it."""
