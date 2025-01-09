@@ -16,7 +16,7 @@ RUN python3 -m pip install uv && uv venv && \
     source .venv/bin/activate && \
     uv pip install -r requirements.txt
 
-COPY -r patches/ ./patches/
+COPY patches/ ./patches/
 RUN cd .venv/lib/python3.*/site-packages/gurux_dlms && patch -p1 < /app/patches/gxdlms.patch && cd -
 
 COPY run.sh ./
