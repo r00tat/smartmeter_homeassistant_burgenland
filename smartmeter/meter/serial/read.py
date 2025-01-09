@@ -89,6 +89,8 @@ class MeterReader:
                     log.debug("received meter data: %s", data)
                     if self.callback:
                         self.callback(data)
+            except KeyboardInterrupt:
+                raise
             except Exception as e:
                 log.exception("failed to parse data from serial port: %s", e)
 
@@ -112,6 +114,8 @@ class MeterReader:
                         log.debug("received meter data: %s", data)
                         if self.callback:
                             self.callback(data)
+            except KeyboardInterrupt:
+                raise
             except Exception as e:
                 log.exception("failed to parse data from serial port: %s", e)
 
