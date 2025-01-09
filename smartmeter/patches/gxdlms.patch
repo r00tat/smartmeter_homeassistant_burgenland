@@ -1,8 +1,6 @@
-diff --git a/Gurux.DLMS.python/gurux_dlms/GXDLMS.py b/Gurux.DLMS.python/gurux_dlms/GXDLMS.py
-index 49798a3..868bf6c 100644
---- a/Gurux.DLMS.python/gurux_dlms/GXDLMS.py
-+++ b/Gurux.DLMS.python/gurux_dlms/GXDLMS.py
-@@ -1402,7 +1402,7 @@ class GXDLMS:
+--- GXDLMS_orig.py
++++ GXDLMS.py
+@@ -1402,7 +1402,7 @@
              return
          len_ = buff.getUInt8()
          index = buff.position

@@ -17,7 +17,7 @@ RUN python3 -m pip install uv && uv venv && \
     uv pip install -r requirements.txt
 
 COPY patches/ ./patches/
-RUN cd .venv/lib/python3.*/site-packages/gurux_dlms && patch -p1 < /app/patches/gxdlms.patch && cd -
+RUN cd .venv/lib/python3.*/site-packages/gurux_dlms && (patch -p0 < /app/patches/gxdlms.patch)
 
 COPY run.sh ./
 COPY  meter ./meter/
