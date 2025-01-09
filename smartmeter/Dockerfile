@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 # Install requirements for add-on
 RUN apk --no-cache --no-progress upgrade && \
-    apk --no-cache --no-progress add jq && \
+    apk --no-cache --no-progress add jq patch && \
     rm -rf /tmp/*
 
 WORKDIR /app
