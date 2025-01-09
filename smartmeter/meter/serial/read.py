@@ -93,9 +93,11 @@ class MeterReader:
         """Read data from the pyhsical serial port and parse it."""
         while self.should_run:
             received_data = self.ser.read()
-            sleep(0.5)
-            data_left = self.ser.inWaiting()  # check for remaining byte
-            received_data += self.ser.read(data_left)
+            # a frame should be 120 bytes
+            while len(received_data) < 120:
+                sleep(0.5)
+                data_left = self.ser.inWaiting()  # check for remaining byte
+                received_data += self.ser.read(data_left)
             log.debug("received: %s", received_data)
             try:
                 parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
