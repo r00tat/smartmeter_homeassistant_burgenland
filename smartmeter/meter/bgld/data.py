@@ -17,9 +17,9 @@ class MeterData:
     - Wirkleistung -P
     - Wirkenergietotal +A
     - Wirkenergietotal -A
-    - int16 unkown value?
-    - int16 unkown value?
-    - int16 unkown value?
+    - Winkel Spannung L1 zu Strom L1
+    - Winkel Spannung L2 zu Strom L3
+    - Winkel Spannung L3 zu Strom L3
     - Zähleridentifikationsnummern des Netzbetreibers
     """
 
@@ -42,8 +42,11 @@ class MeterData:
 
         self.meter_id = None
 
+        # Winkel Spannung L1 zu Strom L1
         self.x_1 = 0
+        # Winkel Spannung L2 zu Strom L3
         self.x_2 = 0
+        # Winkel Spannung L3 zu Strom L3
         self.x_3 = 0
 
         self.parse()
