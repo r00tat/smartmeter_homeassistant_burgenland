@@ -29,6 +29,7 @@ class MeterReader:
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         interface_type="OPTICAL",
+        hdlc_frame_size=120,
         callback: Callable[[MeterData], None] = None,
     ):
         """Create a meter reader"""
@@ -53,6 +54,7 @@ class MeterReader:
 
         self.should_run = True
         self.is_running = False
+        self.hdlc_frame_size = hdlc_frame_size
         self.callback = callback
 
     def connect(self):
@@ -99,7 +101,7 @@ class MeterReader:
         while self.should_run:
             received_data = self.ser.read()
             # a frame should be 120 bytes
-            while len(received_data) < 120:
+            while len(received_data) < self.hdlc_frame_size:
                 sleep(0.5)
                 data_left = self.ser.inWaiting()  # check for remaining byte
                 received_data += self.ser.read(data_left)

@@ -35,6 +35,7 @@ options:
     parity: "NONE"
     stopbits: 1
     key: "" # hex key to decrypt message
+    hdlc_frame_size: 120
 schema:
   interface_type: list(OPTICAL|PHYSICAL)?
   logging: list(INFO|WARNING|ERROR|CRITICAL|DEBUG)?
@@ -54,6 +55,7 @@ schema:
     parity: "list(NONE|EVEN|ODD|MARK|SPACE)?"
     stopbits: "int?"
     key: "str" # hex key to decrypt message
+    hdlc_frame_size: "int?"
 map:
   - "share:ro"
   - "config:ro"
