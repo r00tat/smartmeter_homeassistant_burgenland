@@ -70,6 +70,11 @@ class MeterData:
             *rest,
         ) = self.dlms_data
 
+        # the value seems to be in 10mA
+        self.current_l1 = self.current_l1 / 100
+        self.current_l2 = self.current_l2 / 100
+        self.current_l3 = self.current_l3 / 100
+
         if len(rest) >= 3:
             (self.x_1, self.x_2, self.x_3, *rest2) = rest
         if len(rest) > 3:
