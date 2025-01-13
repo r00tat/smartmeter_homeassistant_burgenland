@@ -17,6 +17,17 @@ class SmartMeterDevice(MqttClient):
         """Publish the current status from meter data"""
         self.publish(self.topic_with_prefix("state"), data.to_json())
 
+    @property
+    def mqtt_device(self):
+        return (
+            {
+                "ids": [self.device_id],
+                "name": "Smart Meter",
+                "mf": "Landis+Gyr",
+                "mdl": "E450",
+            },
+        )
+
     def ha_discovery(self) -> None:
         super().ha_discovery()
 
@@ -47,37 +58,26 @@ class SmartMeterDevice(MqttClient):
                             f"{device.get('name')}"
                         ),
                         "migrate_discovery": True,
-                        "device": {
-                            "ids": [self.device_id],
-                            "name": "Smart Meter",
-                        },
+                        "device": self.mqtt_device,
                     }
                 ),
             )
 
-        # log.info("publishing home assistant auto discovery")
-        # self.publish(
-        #     f"homeassistant/device/{self.device_id}/config",
-        #     json.dumps(
-        #         {
-        #             "dev": {
-        #                 "ids": self.device_id,
-        #                 "name": "Smart Meter",
-        #                 "mf": "Bla electronics",
-        #                 "mdl": "L+G450",
-        #                 "sw": "1.0",
-        #                 "sn": self.device_id,
-        #                 # "hw": "1.0rev2",
-        #             },
-        #             "o": {
-        #                 "name": "smartmeter_homeassistant_burgenland",
-        #                 "sw": "0.2.0",
-        #                 "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
-        #             },
-        #             "cmps": components,
-        #         }
-        #     ),
-        # )
+        log.info("publishing home assistant auto discovery")
+        self.publish(
+            f"homeassistant/device/{self.device_id}/config",
+            json.dumps(
+                {
+                    "dev": self.mqtt_device,
+                    "o": {
+                        "name": "smartmeter_homeassistant_burgenland",
+                        "sw": "0.2.0",
+                        "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
+                    },
+                    "cmps": components,
+                }
+            ),
+        )
 
     def devices(self):
         """List devices"""
