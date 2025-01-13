@@ -21,7 +21,16 @@ class SmartMeterDevice(MqttClient):
         super().ha_discovery()
 
         log.info("publishing additional sensors")
+        components = {}
         for device in self.devices():
+            components[device.get("unique_id")] = device | {
+                "~": self.base_topic,
+                "state_topic": "~/state",
+                #  'retain': True,
+                "name": (
+                    f"{self.config.get('name','Smart Meter')} " f"{device.get('name')}"
+                ),
+            }
             self.publish(
                 (
                     f"homeassistant/sensor/f{self.device_id}"
@@ -37,9 +46,38 @@ class SmartMeterDevice(MqttClient):
                             f"{self.config.get('','Smart Meter')} "
                             f"{device.get('name')}"
                         ),
+                        "migrate_discovery": True,
+                        "device": {
+                            "ids": [self.device_id],
+                            "name": "Smart Meter",
+                        },
                     }
                 ),
             )
+
+        # log.info("publishing home assistant auto discovery")
+        # self.publish(
+        #     f"homeassistant/device/{self.device_id}/config",
+        #     json.dumps(
+        #         {
+        #             "dev": {
+        #                 "ids": self.device_id,
+        #                 "name": "Smart Meter",
+        #                 "mf": "Bla electronics",
+        #                 "mdl": "L+G450",
+        #                 "sw": "1.0",
+        #                 "sn": self.device_id,
+        #                 # "hw": "1.0rev2",
+        #             },
+        #             "o": {
+        #                 "name": "smartmeter_homeassistant_burgenland",
+        #                 "sw": "0.2.0",
+        #                 "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
+        #             },
+        #             "cmps": components,
+        #         }
+        #     ),
+        # )
 
     def devices(self):
         """List devices"""
