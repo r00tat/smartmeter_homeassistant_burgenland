@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.9](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.2.9) (2025-01-13)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.2.8...0.2.9)
+
+**Implemented enhancements:**
+
+- Add more config options and correct current value [\#25](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/25) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- Update ruff requirement from ~=0.8.6 to ~=0.9.1 in the dependencies group [\#24](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/24) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.2.8](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.2.8) (2025-01-09)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.2.7...0.2.8)
