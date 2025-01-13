@@ -62,6 +62,7 @@ Initialize virtual environment:
 uv venv
 source .venv/bin/activate
 pip3 install -r requirements.txt
+
 ```
 
 If you install additional pacakges, save the current installed dependencies to `requirements.txt` with:
@@ -72,28 +73,14 @@ If you install additional pacakges, save the current installed dependencies to `
 Building a version and pushing to docker hub:
 
 ```bash
-ARCH=$(uname -m)
-if [[ "$ARCH" =~ "armv7.*" ]]; then
-  ARCH="armv7"
-elif [[ "$ARCH" == "x86_64" ]]; then
-  ARCH="amd64"
-elif [[ "$ARCH" == "arm64" ]]; then
-  ARCH="aarch64"
-fi
-
-VERSION=$(yq -r '.version' config.yaml)
-docker buildx build -t paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION --build-arg BUILD_FROM=homeassistant/${ARCH}-base-python:latest --platform linux/${ARCH} .
-docker tag paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest
-docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:$VERSION
-docker push paulwoelfel/smartmeter_homeassistant_burgenland_${ARCH}:latest
-
+./smartmeter/build_images.sh
 ```
 
 ## useful links
 
-- [Netz Burgenland Zählerbeschreibung](https://www.netzburgenland.at/kundenservice/smart-metering/smart-metering/zaehlerbeschreibung.html)
-- [Netz Burgenland Kundenschnittstelle](https://www.netzburgenland.at/kundenservice/smart-metering/smart-metering/kundenschnittstelle.html)
-- [Optische Schnittstelle](https://www.netzburgenland.at/fileadmin/user_upload/Netz_Burgenland_Beschreibung_Endkundenschnittstelle_02.pdf)
+- [Netz Burgenland Zählerbeschreibung](https://www.netzburgenland.at/smart-meter/)
+- [Netz Burgenland Kundenschnittstelle](https://www.netzburgenland.at/smart-meter/)
+- [Optische Schnittstelle](https://assets.netzburgenland.at/Netz_Burgenland_Beschreibung_Endkundenschnittstelle_02_c72d3973e9.pdf)
 
 ### Interface description
 
@@ -103,7 +90,7 @@ The programm has been tested with the Landis+Gyr E450 Smart Meter, but not with
 the wired connection, but with the IR interface. If you order the customer
 interface, you can select the optical interface as the desired option.
 
-Source: [Spezifikation Kundenschnittstelle L+G E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf)
+Source: [Spezifikation Kundenschnittstelle L+G E450](https://assets.netzburgenland.at/Spezifikation_Kundenschnittstelle_E450_korr_2_009418889e.pdf)
 
 ##### Datenausgabe und Zeitintervall
 
@@ -122,17 +109,22 @@ Zeitintervall von 5sek ausgegeben:
 - Wirkleistung –P
 - Wirkenergietotal +A
 - Wirkenergietotal –A
+- Winkel Spannung L1 zu Strom L1
+- Winkel Spannung L2 zu Strom L3
+- Winkel Spannung L3 zu Strom L3
 - Zähleridentifikationsnummern des Netzbetreibers
-  Verschlüsselung und Authentifizierung
-  Die Datenausgabe wird mit individuellen kundenbezogenen Schlüsseln verschlüsselt und
-  authentisiert. Zur Anwendung kommt dabei die dlms/COSEM Security Suite 0, die entsprechend dem
-  Datenmodel durch die IEC 62056 Normenreihe spezifiziert ist.
+
+Verschlüsselung und Authentifizierung
+
+Die Datenausgabe wird mit individuellen kundenbezogenen Schlüsseln verschlüsselt und
+authentisiert. Zur Anwendung kommt dabei die dlms/COSEM Security Suite 0, die entsprechend dem
+Datenmodel durch die IEC 62056 Normenreihe spezifiziert ist.
 
 #### Spezifikation Kundenschnittstelle KAIFA MA309
 
 The KAIFA interface defines how the IR interface transmission is defined. The format of the message is different in KAIFA dann in Landis+Gyr.
 
-Source: [Optische Schnittstelle](https://www.netzburgenland.at/fileadmin/user_upload/Netz_Burgenland_Beschreibung_Endkundenschnittstelle_02.pdf)
+Source: [Optische Schnittstelle](https://assets.netzburgenland.at/Netz_Burgenland_Beschreibung_Endkundenschnittstelle_02_c72d3973e9.pdf)
 
 Als Kundenschnittstelle wird die optische Schnittstelle des Zählers verwendet. Es wird alle
 15 Sekunden eine Nachricht dieser optischen Schnittstelle ausgegeben. Der Aufbau sowie

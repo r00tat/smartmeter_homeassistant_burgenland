@@ -17,9 +17,9 @@ class MeterData:
     - Wirkleistung -P
     - Wirkenergietotal +A
     - Wirkenergietotal -A
-    - int16 unkown value?
-    - int16 unkown value?
-    - int16 unkown value?
+    - Winkel Spannung L1 zu Strom L1
+    - Winkel Spannung L2 zu Strom L3
+    - Winkel Spannung L3 zu Strom L3
     - Zähleridentifikationsnummern des Netzbetreibers
     """
 
@@ -42,8 +42,11 @@ class MeterData:
 
         self.meter_id = None
 
+        # Winkel Spannung L1 zu Strom L1
         self.x_1 = 0
+        # Winkel Spannung L2 zu Strom L3
         self.x_2 = 0
+        # Winkel Spannung L3 zu Strom L3
         self.x_3 = 0
 
         self.parse()
@@ -66,6 +69,11 @@ class MeterData:
             self.total_provided,
             *rest,
         ) = self.dlms_data
+
+        # the value seems to be in 10mA
+        self.current_l1 = self.current_l1 / 100
+        self.current_l2 = self.current_l2 / 100
+        self.current_l3 = self.current_l3 / 100
 
         if len(rest) >= 3:
             (self.x_1, self.x_2, self.x_3, *rest2) = rest
