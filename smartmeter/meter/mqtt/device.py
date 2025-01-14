@@ -19,48 +19,77 @@ class SmartMeterDevice(MqttClient):
 
     @property
     def mqtt_device(self):
-        return (
-            {
-                "ids": [self.device_id],
-                "name": "Smart Meter",
-                "mf": "Landis+Gyr",
-                "mdl": "E450",
-                "sw": "1.0",
-            },
-        )
+        return {
+            "identifiers": [self.device_id],
+            "name": "Smart Meter",
+            "mf": "Landis+Gyr",
+            "mdl": "E450",
+            "sw": "1.0",
+        }
 
     def ha_discovery(self) -> None:
-        super().ha_discovery()
+        # super().ha_discovery()
 
         log.info("publishing additional sensors")
         components = {}
+
         for device in self.devices():
             components[device.get("unique_id")] = device | {
-                "~": self.base_topic,
-                "state_topic": "~/state",
+                # "~": self.base_topic,
+                "state_topic": f"{self.base_topic}/state",
                 "p": "sensor",
                 #  'retain': True,
                 "name": (
                     f"{self.config.get('name','Smart Meter')} " f"{device.get('name')}"
                 ),
+                "device": self.mqtt_device,
             }
+
+        log.info("migrating old sensors")
+        # to be removed later on
+        self.publish(
+            f"homeassistant/sensor/{self.device_id}/config",
+            json.dumps(
+                {
+                    "migrate_discovery": True,
+                    # "unique_id": self.device_id,
+                    "device": self.mqtt_device,
+                    "state_topic": f"{self.base_topic}/state",
+                }
+            ),
+        )
+        self.publish(
+            f"homeassistant/sensor/{self.device_id}/config",
+            json.dumps(
+                {
+                    "migrate_discovery": True,
+                }
+            ),
+        )
+        for device in list(components.values())[1:]:
             self.publish(
                 (
                     f"homeassistant/sensor/f{self.device_id}"
                     f"{device.get('unique_id')}/config"
                 ),
                 json.dumps(
-                    device
-                    | {
-                        "~": self.base_topic,
-                        "state_topic": "~/state",
-                        #  'retain': True,
-                        "name": (
-                            f"{self.config.get('','Smart Meter')} "
-                            f"{device.get('name')}"
-                        ),
+                    {
                         "migrate_discovery": True,
+                        "unique_id": device["unique_id"],
                         "device": self.mqtt_device,
+                        "state_topic": f"{self.base_topic}/state",
+                        "value_template": device["value_template"],
+                    }
+                ),
+            )
+            self.publish(
+                (
+                    f"homeassistant/sensor/f{self.device_id}"
+                    f"{device.get('unique_id')}/config"
+                ),
+                json.dumps(
+                    {
+                        "migrate_discovery": True,
                     }
                 ),
             )
@@ -70,20 +99,32 @@ class SmartMeterDevice(MqttClient):
             f"homeassistant/device/{self.device_id}/config",
             json.dumps(
                 {
-                    "dev": self.mqtt_device,
+                    "device": self.mqtt_device,
                     "o": {
                         "name": "smartmeter_homeassistant_burgenland",
                         "sw": "0.2.0",
                         "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
                     },
-                    "cmps": components,
+                    "components": components,
+                    # "migrate_discovery": True
                 }
             ),
         )
 
+        log.info("setting sensor to online")
+        self.publish(f"{self.base_topic}/availability", "online")
+
     def devices(self):
         """List devices"""
         return [
+            {
+                # "~": self.base_topic,
+                "name": "Raw Data",
+                "state_topic": f"{self.base_topic}/state",
+                "availability_topic": f"{self.base_topic}/availability",
+                # "retain": True,
+                "unique_id": self.device_id,
+            },
             {
                 "name": "Total Energy consumed",
                 "unique_id": f"{self.device_id}_total_energy_consumed",
