@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.3.0) (2025-01-14)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.2.9...0.3.0)
+
+**Implemented enhancements:**
+
+- Home Assistant device [\#26](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/26) ([r00tat](https://github.com/r00tat))
+
 ## [0.2.9](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.2.9) (2025-01-13)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.2.8...0.2.9)
