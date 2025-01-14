@@ -16,7 +16,12 @@ def get_config_file_contents():
         return f.read()
 
 
+def get_config() -> dict:
+    """Get the config from config.yaml."""
+    return yaml.safe_load(get_config_file_contents())
+
+
 def get_sw_version() -> str:
     """Get the current software version."""
-    config = yaml.load(get_config_file_contents())
+    config = get_config()
     return config.get("version", "")
