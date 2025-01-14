@@ -13,6 +13,8 @@ class SmartMeterDevice(MqttClient):
     def __init__(self, config: dict) -> None:
         super().__init__(config)
 
+        self.sensors_migrated = config.get("sensors_migrated", False)
+
     def publish_status(self, data: MeterData):
         """Publish the current status from meter data"""
         self.publish(self.topic_with_prefix("state"), data.to_json())
@@ -45,6 +47,31 @@ class SmartMeterDevice(MqttClient):
                 "device": self.mqtt_device,
             }
 
+        if not self.sensors_migrated:
+            self.migrate_old_sensors()
+
+        log.info("publishing home assistant auto discovery")
+        self.publish(
+            f"homeassistant/device/{self.device_id}/config",
+            json.dumps(
+                {
+                    "device": self.mqtt_device,
+                    "o": {
+                        "name": "smartmeter_homeassistant_burgenland",
+                        "sw": "0.2.0",
+                        "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
+                    },
+                    "components": components,
+                    # "migrate_discovery": True
+                }
+            ),
+        )
+
+        log.info("setting sensor to online")
+        self.publish(f"{self.base_topic}/availability", "online")
+
+    def migrate_old_sensors(self):
+        """Migrate sensors to a device."""
         log.info("migrating old sensors")
         # to be removed later on
         self.publish(
@@ -66,7 +93,7 @@ class SmartMeterDevice(MqttClient):
                 }
             ),
         )
-        for device in list(components.values())[1:]:
+        for device in self.devices()[1:]:
             self.publish(
                 (
                     f"homeassistant/sensor/f{self.device_id}"
@@ -93,26 +120,6 @@ class SmartMeterDevice(MqttClient):
                     }
                 ),
             )
-
-        log.info("publishing home assistant auto discovery")
-        self.publish(
-            f"homeassistant/device/{self.device_id}/config",
-            json.dumps(
-                {
-                    "device": self.mqtt_device,
-                    "o": {
-                        "name": "smartmeter_homeassistant_burgenland",
-                        "sw": "0.2.0",
-                        "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
-                    },
-                    "components": components,
-                    # "migrate_discovery": True
-                }
-            ),
-        )
-
-        log.info("setting sensor to online")
-        self.publish(f"{self.base_topic}/availability", "online")
 
     def devices(self):
         """List devices"""

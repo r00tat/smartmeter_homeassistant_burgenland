@@ -28,6 +28,7 @@ options:
     password: ""
     keepalive: 60
     prefix: ""
+    sensors_migrated: false
   dlms:
     port: "/dev/ttyUSB0"
     baudrate: 9600
@@ -48,6 +49,7 @@ schema:
     password: "str"
     keepalive: "int?"
     prefix: "str?"
+    sensors_migrated: bool?
   dlms:
     port: "str"
     baudrate: "int?"
