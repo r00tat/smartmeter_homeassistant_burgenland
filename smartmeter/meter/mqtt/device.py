@@ -1,11 +1,9 @@
 import json
 import logging
-import os
 
 from ..bgld.data import MeterData
-from .client import MqttClient
 from ..config import get_sw_version
-
+from .client import MqttClient
 
 log = logging.getLogger("meter.mqtt.device")
 
