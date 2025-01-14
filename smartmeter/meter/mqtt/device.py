@@ -25,6 +25,7 @@ class SmartMeterDevice(MqttClient):
                 "name": "Smart Meter",
                 "mf": "Landis+Gyr",
                 "mdl": "E450",
+                "sw": "1.0",
             },
         )
 
@@ -37,6 +38,7 @@ class SmartMeterDevice(MqttClient):
             components[device.get("unique_id")] = device | {
                 "~": self.base_topic,
                 "state_topic": "~/state",
+                "p": "sensor",
                 #  'retain': True,
                 "name": (
                     f"{self.config.get('name','Smart Meter')} " f"{device.get('name')}"
