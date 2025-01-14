@@ -58,7 +58,7 @@ class MqttClient:
         # self.subscribe(self.topic_with_prefix("set"), self.set_display)
         # self.subscribe(self.topic_with_prefix("backlight/set"),
         #                self.display_backlight)
-        self.publish(self.topic_with_prefix("availability"), "online")
+        # self.publish(self.topic_with_prefix("availability"), "online")
 
         self.ha_discovery()
 
