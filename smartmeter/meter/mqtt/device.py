@@ -1,8 +1,11 @@
 import json
 import logging
+import os
 
 from ..bgld.data import MeterData
 from .client import MqttClient
+from ..config import get_sw_version
+
 
 log = logging.getLogger("meter.mqtt.device")
 
@@ -14,10 +17,15 @@ class SmartMeterDevice(MqttClient):
         super().__init__(config)
 
         self.sensors_migrated = config.get("sensors_migrated", False)
+        self.serial_number = ""
+        self.sw_version = get_sw_version()
 
     def publish_status(self, data: MeterData):
         """Publish the current status from meter data"""
         self.publish(self.topic_with_prefix("state"), data.to_json())
+        if self.serial_number == "" and data.meter_id:
+            self.serial_number = data.meter_id
+            self.ha_discovery()
 
     @property
     def mqtt_device(self):
@@ -26,7 +34,8 @@ class SmartMeterDevice(MqttClient):
             "name": "Smart Meter",
             "mf": "Landis+Gyr",
             "mdl": "E450",
-            "sw": "1.0",
+            "sw": self.sw_version,
+            "sn": self.serial_number,
         }
 
     def ha_discovery(self) -> None:
@@ -58,7 +67,7 @@ class SmartMeterDevice(MqttClient):
                     "device": self.mqtt_device,
                     "o": {
                         "name": "smartmeter_homeassistant_burgenland",
-                        "sw": "0.2.0",
+                        "sw": self.sw_version,
                         "url": "https://github.com/r00tat/smartmeter_homeassistant_burgenland",
                     },
                     "components": components,
