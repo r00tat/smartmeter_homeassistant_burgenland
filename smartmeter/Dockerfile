@@ -16,10 +16,9 @@ RUN python3 -m pip install uv && uv venv && \
     source .venv/bin/activate && \
     uv pip install -r requirements.txt
 
-COPY patches/ ./patches/
 RUN cd .venv/lib/python3.*/site-packages/gurux_dlms && sed -i 's@if buff.available < len_:@if buff.available() < len_:@g' GXDLMS.py
 
-COPY run.sh ./
+COPY run.sh config.yaml ./
 COPY  meter ./meter/
 
 CMD [ "/app/run.sh" ]
