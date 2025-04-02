@@ -49,7 +49,7 @@ class SmartMeterDevice(MqttClient):
                 "p": "sensor",
                 #  'retain': True,
                 "name": (
-                    f"{self.config.get('name','Smart Meter')} " f"{device.get('name')}"
+                    f"{self.config.get('name', 'Smart Meter')} {device.get('name')}"
                 ),
                 "device": self.mqtt_device,
             }
@@ -225,6 +225,27 @@ class SmartMeterDevice(MqttClient):
                 "value_template": "{{ value_json.current_l3 }}",
                 "unit_of_measurement": "A",
                 "device_class": "current",
+                "state_class": "measurement",
+            },
+            {
+                "name": "Angle between voltage L1 to current L1",
+                "unique_id": f"{self.device_id}_angle_l1",
+                "value_template": "{{ value_json.angle_l1 }}",
+                "unit_of_measurement": "°",
+                "state_class": "measurement",
+            },
+            {
+                "name": "Angle between voltage L2 to current L3",
+                "unique_id": f"{self.device_id}_angle_l2",
+                "value_template": "{{ value_json.angle_l2 }}",
+                "unit_of_measurement": "°",
+                "state_class": "measurement",
+            },
+            {
+                "name": "Angle between voltage L3 to current L3",
+                "unique_id": f"{self.device_id}_angle_l3",
+                "value_template": "{{ value_json.angle_l3 }}",
+                "unit_of_measurement": "°",
                 "state_class": "measurement",
             },
         ]
