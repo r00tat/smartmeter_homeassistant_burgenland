@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.4.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.4.0) (2025-04-02)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.3.1...0.4.0)
+
+**Implemented enhancements:**
+
+- Power\_consumed Wert [\#36](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/36)
+- Serielle Kabelverbindung Parität [\#4](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/4)
+- Winkel Spannung zu Strom im home assistant verfügbar [\#43](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/43) ([r00tat](https://github.com/r00tat))
+
+**Fixed bugs:**
+
+- Standalone installation funktioniert nicht [\#41](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/41)
+- Fix dlms import starting with 1.0.169 [\#42](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/42) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- Bump actions/setup-python from 5.4.0 to 5.5.0 in the dependencies group [\#40](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/40) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.9.10 to ~=0.11.0 in the dependencies group [\#38](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/38) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group across 1 directory with 2 updates [\#37](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/37) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.9.6 to ~=0.9.7 in the dependencies group [\#34](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/34) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.9.4 to ~=0.9.6 in the dependencies group across 1 directory [\#33](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/33) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group across 1 directory with 2 updates [\#31](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/setup-python from 5.3.0 to 5.4.0 in the dependencies group [\#30](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/30) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.3.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.3.1) (2025-01-15)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.3.0...0.3.1)
