@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.4.1) (2025-04-02)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.4.0...0.4.1)
+
+**Implemented enhancements:**
+
+- Disable angle by default [\#44](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/44) ([r00tat](https://github.com/r00tat))
+
 ## [0.4.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.4.0) (2025-04-02)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.3.1...0.4.0)
