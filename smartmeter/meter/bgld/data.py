@@ -43,11 +43,11 @@ class MeterData:
         self.meter_id = None
 
         # Winkel Spannung L1 zu Strom L1
-        self.x_1 = 0
+        self.angle_1 = 0
         # Winkel Spannung L2 zu Strom L3
-        self.x_2 = 0
+        self.angle_2 = 0
         # Winkel Spannung L3 zu Strom L3
-        self.x_3 = 0
+        self.angle_3 = 0
 
         self.parse()
 
@@ -76,7 +76,7 @@ class MeterData:
         self.current_l3 = self.current_l3 / 100
 
         if len(rest) >= 3:
-            (self.x_1, self.x_2, self.x_3, *rest2) = rest
+            (self.angle_1, self.angle_2, self.angle_3, *rest2) = rest
         if len(rest) > 3:
             self.meter_id = str(rest[3], "UTF-8")
 
@@ -87,7 +87,7 @@ class MeterData:
             f"I({self.current_l1}A,{self.current_l2}A,{self.current_l3}A),"
             f"P({self.power_consumed}W,-{self.power_provided}W),"
             f"W({self.total_consumed}Wh,-{self.total_provided}Wh)"
-            # f"?({self.x_1},{self.x_2},{self.x_3})"
+            f"Angle({self.angle_1},{self.angle_2},{self.angle_3})"
             # f"id({self.meter_id})"
             f"]"
         )
@@ -106,6 +106,9 @@ class MeterData:
             "total_consumed": self.total_consumed,
             "total_provided": self.total_provided,
             "meter_id": self.meter_id,
+            "angle_l1": self.angle_1,
+            "angle_l2": self.angle_2,
+            "angle_l3": self.angle_3,
         }
 
     def to_json(self) -> str:
