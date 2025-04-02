@@ -1,15 +1,15 @@
 import logging
+
+from bs4 import BeautifulSoup
+from gurux_common import GXCommon
 from gurux_dlms import (
     GXByteBuffer,
-    GXReplyData,
     GXDLMSTranslator,
-    TranslatorOutputType,
     GXDLMSTranslatorMessage,
+    GXReplyData,
 )
-from gurux_dlms.enums import InterfaceType, Security
-from gurux_common import GXCommon
+from gurux_dlms.enums import InterfaceType, Security, TranslatorOutputType
 from gurux_dlms.secure import GXDLMSSecureClient
-from bs4 import BeautifulSoup
 
 log = logging.getLogger("meter.dlms.read")
 
