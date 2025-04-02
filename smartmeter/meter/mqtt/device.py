@@ -233,6 +233,7 @@ class SmartMeterDevice(MqttClient):
                 "value_template": "{{ value_json.angle_l1 }}",
                 "unit_of_measurement": "°",
                 "state_class": "measurement",
+                "enabled_by_default": False,
             },
             {
                 "name": "Angle between voltage L2 to current L3",
@@ -240,6 +241,7 @@ class SmartMeterDevice(MqttClient):
                 "value_template": "{{ value_json.angle_l2 }}",
                 "unit_of_measurement": "°",
                 "state_class": "measurement",
+                "enabled_by_default": False,
             },
             {
                 "name": "Angle between voltage L3 to current L3",
@@ -247,5 +249,6 @@ class SmartMeterDevice(MqttClient):
                 "value_template": "{{ value_json.angle_l3 }}",
                 "unit_of_measurement": "°",
                 "state_class": "measurement",
+                "enabled_by_default": False,
             },
         ]
