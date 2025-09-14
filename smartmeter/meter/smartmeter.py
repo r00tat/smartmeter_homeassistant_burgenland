@@ -22,6 +22,7 @@ class SmartMqttMeter:
         self.reader_thread: threading.Thread = None
         self.mqtt_thread: threading.Thread = None
         self.counter = 0
+        self.publish_interval = 6
 
         self.setup()
 
@@ -43,18 +44,22 @@ class SmartMqttMeter:
         log.info("connecting to serial port")
         self.reader.connect()
 
-        log.info("mqtt config: \n%s", yaml.safe_dump(self.config.get("mqtt", {})))
-        self.mqtt = SmartMeterDevice(self.config.get("mqtt", {}))
+        mqtt_config = self.config.get("mqtt", {})
+        log.info("mqtt config: \n%s", yaml.safe_dump(mqtt_config))
+        self.mqtt = SmartMeterDevice(mqtt_config)
+        # we get data every 5 seconds, so we publish every 6th time (30s)
+        # unless configured otherwise
+        self.publish_interval = int(self.config.get("publish_interval", 30) / 5)
 
         log.info("setup complete")
 
     def got_meter_data(self, data: MeterData):
         log.info(
             "got meter data, "
-            f"{'publishing to mqtt' if self.counter % 6 == 0 else 'skipping'}"
+            f"{'publishing to mqtt' if self.counter % self.publish_interval == 0 else 'skipping'}"
             f": {data}"
         )
-        if self.counter % 6 == 0:
+        if self.counter % self.publish_interval == 0:
             self.mqtt.publish_status(data)
         self.counter += 1
 
