@@ -29,6 +29,7 @@ options:
     keepalive: 60
     prefix: ""
     sensors_migrated: false
+    publish_interval: 30
   dlms:
     port: "/dev/ttyUSB0"
     baudrate: 9600
@@ -50,6 +51,7 @@ schema:
     keepalive: "int?"
     prefix: "str?"
     sensors_migrated: bool?
+    publish_interval: int?
   dlms:
     port: "str"
     baudrate: "int?"
