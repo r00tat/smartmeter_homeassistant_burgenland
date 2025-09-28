@@ -49,7 +49,12 @@ class SmartMqttMeter:
         self.mqtt = SmartMeterDevice(mqtt_config)
         # we get data every 5 seconds, so we publish every 6th time (30s)
         # unless configured otherwise
-        self.publish_interval = int(self.config.get("publish_interval", 30) / 5)
+        self.publish_interval = int(mqtt_config.get("publish_interval", 30) / 5)
+        log.info(
+            "publishing every %d readings and every %d seconds",
+            self.publish_interval,
+            mqtt_config.get("publish_interval", 30),
+        )
 
         log.info("setup complete")
 
