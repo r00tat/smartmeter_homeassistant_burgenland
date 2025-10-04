@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.5.3](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.3) (2025-10-04)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.2...0.5.3)
+
+**Fixed bugs:**
+
+- Combine changelog and release [\#65](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/65) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- Bump the dependencies group with 2 updates [\#62](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/62) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [0.5.2](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.2) (2025-10-04)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.1...0.5.2)
+
+**Implemented enhancements:**
+
+- Schnellere Abfrageintervalle \(5 sekunden, counter %256 auf 0 setzen können\) [\#58](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/58)
+
+**Merged pull requests:**
+
+- Revert "Bump the dependencies group with 2 updates" [\#64](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/64) ([r00tat](https://github.com/r00tat))
+
+## [0.5.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.1) (2025-09-28)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.0...0.5.1)
+
+**Fixed bugs:**
+
+- reading publish interval from mqtt-config [\#61](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/61) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- Bump the dependencies group with 2 updates [\#60](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/60) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [0.5.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.0) (2025-09-14)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.4.1...0.5.0)
+
+**Implemented enhancements:**
+
+- Add publish interval [\#59](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/59) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- Bump the dependencies group across 1 directory with 2 updates [\#57](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/57) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group with 2 updates [\#55](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/55) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump stefanzweifel/git-auto-commit-action from 5 to 6 in the dependencies group [\#54](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/54) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.11.10 to ~=0.11.13 in the dependencies group [\#53](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/53) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.11.9 to ~=0.11.10 in the dependencies group [\#52](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/52) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group across 1 directory with 2 updates [\#51](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/51) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/setup-python from 5.5.0 to 5.6.0 in the dependencies group [\#49](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/49) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group with 2 updates [\#48](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/48) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.11.5 to ~=0.11.6 in the dependencies group [\#47](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/47) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.11.4 to ~=0.11.5 in the dependencies group [\#46](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/46) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group with 2 updates [\#45](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/45) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.4.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.4.1) (2025-04-02)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.4.0...0.4.1)
