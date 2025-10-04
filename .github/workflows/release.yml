@@ -23,12 +23,29 @@ jobs:
           yq -i '.version="${{ github.event.release.tag_name }}"' \
             "${{ github.workspace }}/smartmeter/config.yaml"
 
+      - name: "✏️ Generate release changelog"
+        id: changelog
+        uses: janheinrichmerker/action-github-changelog-generator@v2.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "write changelog"
+        env:
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
+        run: |
+          set -x
+          echo "writing log file"
+          echo "$CHANGELOG" | sed 's@%0A@\n@g' > smartmeter/CHANGELOG.md
+          echo "Current changelog:"
+          cat smartmeter/CHANGELOG.md
+          echo "CHANGELOG updated."
+
       - name: Commit config.yaml
         uses: stefanzweifel/git-auto-commit-action@v6
         with:
           branch: main
-          commit_message: "Update version to ${{ github.event.release.tag_name }}"
-          file_pattern: smartmeter/config.yaml
+          commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
+          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
