@@ -41,7 +41,7 @@ jobs:
           echo "CHANGELOG updated."
 
       - name: Commit config.yaml
-        uses: stefanzweifel/git-auto-commit-action@v6
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: main
           commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
