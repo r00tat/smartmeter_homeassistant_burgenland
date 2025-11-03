@@ -3,7 +3,7 @@ gurux-dlms==1.0.191
 paho-mqtt~=2.1.0
 pyserial~=3.5
 PyYAML~=6.0
-ruff~=0.14.1
+ruff~=0.14.3
 setuptools
 lxml
 beautifulsoup4
