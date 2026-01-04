@@ -95,20 +95,20 @@ class MeterData:
     def to_dict(self) -> dict:
         """Return item as dict"""
         return {
-            "voltage_l1": self.voltage_l1,
-            "voltage_l2": self.voltage_l2,
-            "voltage_l3": self.voltage_l3,
-            "current_l1": self.current_l1,
-            "current_l2": self.current_l2,
-            "current_l3": self.current_l3,
-            "power_consumed": self.power_consumed,
-            "power_provided": self.power_provided,
-            "total_consumed": self.total_consumed,
-            "total_provided": self.total_provided,
-            "meter_id": self.meter_id,
-            "angle_l1": self.angle_1,
-            "angle_l2": self.angle_2,
-            "angle_l3": self.angle_3,
+            "u1": self.voltage_l1,
+            "u2": self.voltage_l2,
+            "u3": self.voltage_l3,
+            "i1": self.current_l1,
+            "i2": self.current_l2,
+            "i3": self.current_l3,
+            "w_con": self.power_consumed,
+            "w_prov": self.power_provided,
+            "total_con": self.total_consumed,
+            "total_prov": self.total_provided,
+            # "meter_id": self.meter_id,
+            "angle1": self.angle_1,
+            "angle2": self.angle_2,
+            "angle3": self.angle_3,
         }
 
     def to_json(self) -> str:

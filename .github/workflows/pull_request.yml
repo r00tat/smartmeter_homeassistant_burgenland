@@ -56,6 +56,6 @@ jobs:
         with:
           args: |
             --test \
-            --all \
+            --amd64 --aarch64 \
             --target smartmeter \
             --docker-hub paulwoelfel
