@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.4](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.4) (2026-01-04)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.3...0.5.4)
+
+**Fixed bugs:**
+
+- MQTT Invalid state message [\#75](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/75)
+- Addon Error nach update von 5.0 auf 5.1 [\#63](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/63)
+- Fix: use shorter mqtt names [\#76](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/76) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- Bump the dependencies group across 1 directory with 2 updates [\#74](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/74) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/checkout from 5.0.0 to 6.0.0 in the dependencies group [\#72](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/72) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group with 2 updates [\#71](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/71) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.14.1 to ~=0.14.3 in the dependencies group [\#70](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/70) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.14.0 to ~=0.14.1 in the dependencies group [\#68](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/68) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.13.3 to ~=0.14.0 in the dependencies group [\#67](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/67) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump stefanzweifel/git-auto-commit-action from 6 to 7 in the dependencies group [\#66](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/66) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.5.3](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.3) (2025-10-04)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.2...0.5.3)
