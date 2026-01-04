@@ -142,7 +142,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Total Energy consumed",
                 "unique_id": f"{self.device_id}_total_energy_consumed",
-                "value_template": "{{ value_json.total_consumed }}",
+                "value_template": "{{ value_json.total_con }}",
                 "unit_of_measurement": "Wh",
                 "device_class": "energy",
                 "state_class": "total_increasing",
@@ -150,7 +150,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Total Energy provided",
                 "unique_id": f"{self.device_id}_total_energy_provided",
-                "value_template": "{{ value_json.total_provided }}",
+                "value_template": "{{ value_json.total_prov }}",
                 "unit_of_measurement": "Wh",
                 "device_class": "energy",
                 "state_class": "total_increasing",
@@ -158,7 +158,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Power consumed",
                 "unique_id": f"{self.device_id}_power_consumed",
-                "value_template": "{{ value_json.power_consumed }}",
+                "value_template": "{{ value_json.w_con }}",
                 "unit_of_measurement": "W",
                 "device_class": "power",
                 "state_class": "measurement",
@@ -166,7 +166,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Power provided",
                 "unique_id": f"{self.device_id}_power_provided",
-                "value_template": "{{ value_json.power_provided }}",
+                "value_template": "{{ value_json.w_prov }}",
                 "unit_of_measurement": "W",
                 "device_class": "power",
                 "state_class": "measurement",
@@ -174,7 +174,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Voltage L1",
                 "unique_id": f"{self.device_id}_voltage_l1",
-                "value_template": "{{ value_json.voltage_l1 }}",
+                "value_template": "{{ value_json.u1 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
                 "state_class": "measurement",
@@ -182,7 +182,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Voltage L1",
                 "unique_id": f"{self.device_id}_voltage_l1",
-                "value_template": "{{ value_json.voltage_l1 }}",
+                "value_template": "{{ value_json.u1 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
                 "state_class": "measurement",
@@ -190,7 +190,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Voltage L2",
                 "unique_id": f"{self.device_id}_voltage_l2",
-                "value_template": "{{ value_json.voltage_l2 }}",
+                "value_template": "{{ value_json.u2 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
                 "state_class": "measurement",
@@ -198,7 +198,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Voltage L3",
                 "unique_id": f"{self.device_id}_voltage_l3",
-                "value_template": "{{ value_json.voltage_l3 }}",
+                "value_template": "{{ value_json.u3 }}",
                 "unit_of_measurement": "V",
                 "device_class": "voltage",
                 "state_class": "measurement",
@@ -206,7 +206,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Current L1",
                 "unique_id": f"{self.device_id}_current_l1",
-                "value_template": "{{ value_json.current_l1 }}",
+                "value_template": "{{ value_json.i1 }}",
                 "unit_of_measurement": "A",
                 "device_class": "current",
                 "state_class": "measurement",
@@ -214,7 +214,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Current L2",
                 "unique_id": f"{self.device_id}_current_l2",
-                "value_template": "{{ value_json.current_l2 }}",
+                "value_template": "{{ value_json.i2 }}",
                 "unit_of_measurement": "A",
                 "device_class": "current",
                 "state_class": "measurement",
@@ -222,7 +222,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Current L3",
                 "unique_id": f"{self.device_id}_current_l3",
-                "value_template": "{{ value_json.current_l3 }}",
+                "value_template": "{{ value_json.i3 }}",
                 "unit_of_measurement": "A",
                 "device_class": "current",
                 "state_class": "measurement",
@@ -230,7 +230,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Angle between voltage L1 to current L1",
                 "unique_id": f"{self.device_id}_angle_l1",
-                "value_template": "{{ value_json.angle_l1 }}",
+                "value_template": "{{ value_json.angle1 }}",
                 "unit_of_measurement": "°",
                 "state_class": "measurement",
                 "enabled_by_default": False,
@@ -238,7 +238,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Angle between voltage L2 to current L3",
                 "unique_id": f"{self.device_id}_angle_l2",
-                "value_template": "{{ value_json.angle_l2 }}",
+                "value_template": "{{ value_json.angle2 }}",
                 "unit_of_measurement": "°",
                 "state_class": "measurement",
                 "enabled_by_default": False,
@@ -246,7 +246,7 @@ class SmartMeterDevice(MqttClient):
             {
                 "name": "Angle between voltage L3 to current L3",
                 "unique_id": f"{self.device_id}_angle_l3",
-                "value_template": "{{ value_json.angle_l3 }}",
+                "value_template": "{{ value_json.angle3 }}",
                 "unit_of_measurement": "°",
                 "state_class": "measurement",
                 "enabled_by_default": False,
