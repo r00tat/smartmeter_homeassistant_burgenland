@@ -49,6 +49,7 @@ class SmartMqttMeter:
             parity=dlms_config.get("parity", serial.PARITY_NONE),
             interface_type=self.config.get("interface_type", "OPTICAL"),
             hdlc_frame_size=dlms_config.get("hdlc_frame_size", 120),
+            timeout=dlms_config.get("timeout", 1.0),
             callback=self.got_meter_data,
         )
         log.info("connecting to serial port")

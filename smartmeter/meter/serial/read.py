@@ -4,7 +4,6 @@ import logging
 import struct
 from time import sleep
 from collections.abc import Callable
-import json
 
 from gurux_dlms import GXDLMSException
 
@@ -12,6 +11,7 @@ from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from ..bgld.data import MeterData
 
 MAX_CONSECUTIVE_FAILURES = 10
+DEFAULT_SERIAL_TIMEOUT = 1.0
 
 PARSE_ERRORS = (
     serial.SerialException,
@@ -27,9 +27,6 @@ log = logging.getLogger("meter.serial.read")
 PARITY_VALUES = serial.PARITY_NAMES.keys()
 PARITY_NAME_VALUES = {v.upper(): k for k, v in serial.PARITY_NAMES.items()}
 
-log.info("parity values: %s", ",".join(PARITY_VALUES))
-log.info("parity name values: %s", json.dumps(PARITY_NAME_VALUES))
-
 
 class MeterReader:
     """Read smart meter data and parse it."""
@@ -44,9 +41,12 @@ class MeterReader:
         stopbits=serial.STOPBITS_ONE,
         interface_type="OPTICAL",
         hdlc_frame_size=120,
+        timeout: float = DEFAULT_SERIAL_TIMEOUT,
         callback: Callable[[MeterData], None] = None,
     ):
         """Create a meter reader"""
+        log.debug("parity values: %s", ",".join(PARITY_VALUES))
+        log.debug("parity name values: %s", PARITY_NAME_VALUES)
         self.key = key
 
         self.ser: serial.Serial = None
@@ -57,6 +57,7 @@ class MeterReader:
         if self.parity not in PARITY_VALUES:
             self.parity = PARITY_NAME_VALUES.get(parity.upper(), serial.PARITY_NONE)
         self.stopbits = stopbits
+        self.timeout = timeout
         log.info(
             "serial port config: %s %s%s%s",
             self.port,
@@ -81,7 +82,12 @@ class MeterReader:
             self.stopbits,
         )
         self.ser = serial.Serial(
-            self.port, self.baudrate, self.bytesize, self.parity, self.stopbits
+            self.port,
+            self.baudrate,
+            self.bytesize,
+            self.parity,
+            self.stopbits,
+            timeout=self.timeout,
         )
 
     def disconnect(self):
