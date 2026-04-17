@@ -17,6 +17,7 @@ class MqttClient:
 
     def __init__(self, config: dict) -> None:
         self.config = config
+        self.message_callbacks: dict[str, Callable[[mqtt.MQTTMessage], None]] = {}
         self.connect_mqtt()
 
     def connect_mqtt(self) -> None:
@@ -50,7 +51,6 @@ class MqttClient:
         log.info("Connected to MQTT with result code " + str(reason_code))
         if reason_code != 0:
             raise RuntimeError(f"MQTT connection failed with error {reason_code}")
-        self.message_callbacks: dict[str, Callable[[], None]] = {}
 
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
