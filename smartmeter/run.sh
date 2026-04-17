@@ -30,7 +30,5 @@ fi
 # make sure we have the cwd in the base folder
 cd /app
 
-source .venv/bin/activate
-
 bashio::log.info "starting smartmeter app"
 python3 -m meter -c "$CONFIGFILE"
