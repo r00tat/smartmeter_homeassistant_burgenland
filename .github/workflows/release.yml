@@ -8,8 +8,8 @@ on:
 permissions: {}
 
 jobs:
-  release:
-    name: "Release"
+  prepare:
+    name: "Prepare release"
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
@@ -19,8 +19,10 @@ jobs:
 
       - name: "Adjust version number"
         shell: "bash"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          yq -i '.version="${{ github.event.release.tag_name }}"' \
+          yq -i '.version=strenv(RELEASE_TAG)' \
             "${{ github.workspace }}/smartmeter/config.yaml"
 
       - name: "✏️ Generate release changelog"
@@ -47,15 +49,40 @@ jobs:
           commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
           file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v4
+  build:
+    name: "Build ${{ matrix.arch }} image"
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            os: ubuntu-24.04
+          - arch: aarch64
+            os: ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v6.0.2"
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Publish
-        uses: home-assistant/builder@master
+          ref: main
+
+      - name: "Build and publish ${{ matrix.arch }} image"
+        uses: home-assistant/builder/actions/build-image@2026.03.2
         with:
-          args: |
-            --amd64 --aarch64 \
-            --target smartmeter \
-            --docker-hub paulwoelfel
+          arch: ${{ matrix.arch }}
+          context: smartmeter
+          image: docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_${{ matrix.arch }}
+          image-tags: |
+            ${{ github.event.release.tag_name }}
+            latest
+          version: ${{ github.event.release.tag_name }}
+          container-registry: docker.io
+          container-registry-username: ${{ secrets.DOCKERHUB_USERNAME }}
+          container-registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          build-args: |
+            BUILD_FROM=ghcr.io/hassio-addons/base-python:stable
+          push: "true"
+          cosign: "false"

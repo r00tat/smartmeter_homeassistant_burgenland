@@ -12,7 +12,7 @@ jobs:
     name: "Lint and Test"
     runs-on: "ubuntu-latest"
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: "Checkout the repository"
         uses: "actions/checkout@v6.0.2"
@@ -47,17 +47,35 @@ jobs:
           cd smartmeter &&
           python3 -m pytest tests/ -v
 
-      # - name: "Adjust version number"
-      #   shell: "bash"
-      #   run: |
-      #     yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
-      #       "${{ github.workspace }}/custom_components/blaulichtsms/manifest.json"
 
-      - name: Test build
-        uses: home-assistant/builder@master
+  test-build:
+    name: "Test build ${{ matrix.arch }} image"
+    needs: pull_request
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            os: ubuntu-24.04
+          - arch: aarch64
+            os: ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v6.0.2"
+
+      - name: "Test build ${{ matrix.arch }} image"
+        uses: home-assistant/builder/actions/build-image@2026.03.2
         with:
-          args: |
-            --test \
-            --amd64 --aarch64 \
-            --target smartmeter \
-            --docker-hub paulwoelfel
+          arch: ${{ matrix.arch }}
+          context: smartmeter
+          image: docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_${{ matrix.arch }}
+          image-tags: test
+          version: test
+          container-registry-password: "unused"
+          build-args: |
+            BUILD_FROM=ghcr.io/hassio-addons/base-python:stable
+          push: "false"
+          cosign: "false"
