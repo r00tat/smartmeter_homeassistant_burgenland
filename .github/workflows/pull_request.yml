@@ -25,10 +25,10 @@ jobs:
 
       - name: "Install requirements"
         run: |
-          python3 -m pip install uv && 
+          python3 -m pip install uv &&
           uv venv &&
           source .venv/bin/activate &&
-          uv pip install -r smartmeter/requirements.txt
+          uv pip install -r smartmeter/requirements-dev.txt
 
       - name: "Lint"
         run: |
