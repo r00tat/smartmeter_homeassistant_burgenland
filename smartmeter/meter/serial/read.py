@@ -1,12 +1,26 @@
 #!/usr/bin/env python3
 import serial
 import logging
+import struct
 from time import sleep
 from collections.abc import Callable
 import json
 
+from gurux_dlms import GXDLMSException
+
 from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from ..bgld.data import MeterData
+
+MAX_CONSECUTIVE_FAILURES = 10
+
+PARSE_ERRORS = (
+    serial.SerialException,
+    ValueError,
+    struct.error,
+    UnicodeDecodeError,
+    IndexError,
+    GXDLMSException,
+)
 
 log = logging.getLogger("meter.serial.read")
 
@@ -77,6 +91,7 @@ class MeterReader:
 
     def optical_loop(self):
         """Read data from serial port and parse it."""
+        failures = 0
         while self.should_run:
             received_data = self.ser.read()  # read serial port
             sleep(0.5)
@@ -91,13 +106,22 @@ class MeterReader:
                     log.debug("received meter data: %s", data)
                     if self.callback:
                         self.callback(data)
+                failures = 0
             except KeyboardInterrupt:
                 raise
-            except Exception as e:
+            except PARSE_ERRORS as e:
+                failures += 1
                 log.exception("failed to parse data from serial port: %s", e)
+                if failures >= MAX_CONSECUTIVE_FAILURES:
+                    log.error(
+                        "exceeded %d consecutive parse failures, aborting",
+                        MAX_CONSECUTIVE_FAILURES,
+                    )
+                    raise
 
     def phyiscal_loop(self):
         """Read data from the pyhsical serial port and parse it."""
+        failures = 0
         while self.should_run:
             received_data = self.ser.read()
             # a frame should be 120 bytes
@@ -116,10 +140,18 @@ class MeterReader:
                         log.debug("received meter data: %s", data)
                         if self.callback:
                             self.callback(data)
+                failures = 0
             except KeyboardInterrupt:
                 raise
-            except Exception as e:
+            except PARSE_ERRORS as e:
+                failures += 1
                 log.exception("failed to parse data from serial port: %s", e)
+                if failures >= MAX_CONSECUTIVE_FAILURES:
+                    log.error(
+                        "exceeded %d consecutive parse failures, aborting",
+                        MAX_CONSECUTIVE_FAILURES,
+                    )
+                    raise
 
     def start(self):
         """Start the read process"""
