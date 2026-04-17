@@ -65,7 +65,7 @@ class MeterReader:
             self.parity,
             self.stopbits,
         )
-        self.is_optical_inteface = interface_type == "OPTICAL"
+        self.is_optical_interface = interface_type == "OPTICAL"
 
         self.should_run = True
         self.is_running = False
@@ -95,23 +95,47 @@ class MeterReader:
         if self.ser and not self.ser.closed:
             self.ser.close()
 
-    def optical_loop(self):
-        """Read data from serial port and parse it."""
+    def _read_frame(self, min_size: int) -> bytes:
+        """Read at least ``min_size`` bytes (or a single byte for optical)."""
+        received_data = self.ser.read()
+        if min_size <= 1:
+            sleep(0.5)
+            data_left = self.ser.inWaiting()
+            received_data += self.ser.read(data_left)
+        else:
+            while len(received_data) < min_size:
+                sleep(0.5)
+                data_left = self.ser.inWaiting()
+                received_data += self.ser.read(data_left)
+        return received_data
+
+    def _handle_optical_frame(self, received_data: bytes) -> None:
+        decrypted_data = parse_dlms_data(received_data, self.key)
+        log.debug("values: %s", decrypted_data.value)
+        if decrypted_data.value:
+            data = MeterData(decrypted_data.value)
+            log.debug("received meter data: %s", data)
+            if self.callback:
+                self.callback(data)
+
+    def _handle_physical_frame(self, received_data: bytes) -> None:
+        parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
+        log.debug("XML Result:\n%s", parsed_xml)
+        if parsed_xml and len(parsed_xml) > 0:
+            values = parse_xml(parsed_xml)
+            if values and len(values) > 0:
+                data = MeterData(values)
+                log.debug("received meter data: %s", data)
+                if self.callback:
+                    self.callback(data)
+
+    def _read_loop(self, handler: Callable[[bytes], None], frame_size: int) -> None:
         failures = 0
         while self.should_run:
-            received_data = self.ser.read()  # read serial port
-            sleep(0.5)
-            data_left = self.ser.inWaiting()  # check for remaining byte
-            received_data += self.ser.read(data_left)
+            received_data = self._read_frame(frame_size)
             log.debug("received: %s", received_data)
             try:
-                decrypted_data = parse_dlms_data(received_data, self.key)
-                log.debug("values: %s", decrypted_data.value)
-                if decrypted_data.value:
-                    data = MeterData(decrypted_data.value)
-                    log.debug("received meter data: %s", data)
-                    if self.callback:
-                        self.callback(data)
+                handler(received_data)
                 failures = 0
             except KeyboardInterrupt:
                 raise
@@ -125,49 +149,23 @@ class MeterReader:
                     )
                     raise
 
-    def phyiscal_loop(self):
-        """Read data from the pyhsical serial port and parse it."""
-        failures = 0
-        while self.should_run:
-            received_data = self.ser.read()
-            # a frame should be 120 bytes
-            while len(received_data) < self.hdlc_frame_size:
-                sleep(0.5)
-                data_left = self.ser.inWaiting()  # check for remaining byte
-                received_data += self.ser.read(data_left)
-            log.debug("received: %s", received_data)
-            try:
-                parsed_xml = parse_pyhiscal_dlms_data(received_data, self.key)
-                log.debug("XML Result:\n%s", parsed_xml)
-                if parsed_xml and len(parsed_xml) > 0:
-                    values = parse_xml(parsed_xml)
-                    if values and len(values) > 0:
-                        data = MeterData(values)
-                        log.debug("received meter data: %s", data)
-                        if self.callback:
-                            self.callback(data)
-                failures = 0
-            except KeyboardInterrupt:
-                raise
-            except PARSE_ERRORS as e:
-                failures += 1
-                log.exception("failed to parse data from serial port: %s", e)
-                if failures >= MAX_CONSECUTIVE_FAILURES:
-                    log.error(
-                        "exceeded %d consecutive parse failures, aborting",
-                        MAX_CONSECUTIVE_FAILURES,
-                    )
-                    raise
+    def optical_loop(self):
+        """Read data from the optical interface and parse it."""
+        self._read_loop(self._handle_optical_frame, 1)
+
+    def physical_loop(self):
+        """Read data from the physical serial port and parse it."""
+        self._read_loop(self._handle_physical_frame, self.hdlc_frame_size)
 
     def start(self):
         """Start the read process"""
         self.is_running = True
         self.connect()
 
-        if self.is_optical_inteface:
+        if self.is_optical_interface:
             self.optical_loop()
         else:
-            self.phyiscal_loop()
+            self.physical_loop()
 
         self.is_running = False
         self.disconnect()

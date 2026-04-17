@@ -90,7 +90,7 @@ class SmartMqttMeter:
             self.reader_thread.start()
             self.mqtt_thread.start()
 
-            log.info("wating for serial port to complete")
+            log.info("waiting for serial port to complete")
             while not self._stop.is_set():
                 if not self.reader_thread.is_alive():
                     log.info("reader thread exited, shutting down")
