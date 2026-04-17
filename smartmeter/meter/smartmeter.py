@@ -30,6 +30,7 @@ class SmartMqttMeter:
         self.mqtt_thread: threading.Thread = None
         self.counter = 0
         self.publish_interval = 6
+        self._stop = threading.Event()
 
         self.setup()
 
@@ -87,5 +88,12 @@ class SmartMqttMeter:
             log.info("wating for serial port to complete")
             self.reader_thread.join()
         finally:
+            self.stop()
+
+    def stop(self):
+        """Signal all components to stop and wait for shutdown."""
+        self._stop.set()
+        if self.reader:
             self.reader.stop()
+        if self.mqtt:
             self.mqtt.stop()
