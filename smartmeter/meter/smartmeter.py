@@ -11,6 +11,13 @@ from .serial.read import MeterReader
 
 log = logging.getLogger("meter.smartmeter")
 
+_SECRET_KEYS = ("key", "password")
+
+
+def _redact(cfg: dict) -> dict:
+    """Return a shallow copy of cfg with sensitive values replaced by '***'."""
+    return {k: ("***" if k in _SECRET_KEYS and v else v) for k, v in cfg.items()}
+
 
 class SmartMqttMeter:
     """Connect the smart meter from serial to MQTT."""
@@ -29,7 +36,7 @@ class SmartMqttMeter:
     def setup(self):
         log.info("starting setup")
         dlms_config = self.config.get("dlms", {})
-        log.info("dlms config \n%s", yaml.safe_dump(dlms_config))
+        log.info("dlms config \n%s", yaml.safe_dump(_redact(dlms_config)))
         self.reader = MeterReader(
             dlms_config.get("key"),
             dlms_config.get("port", "/dev/ttyUSB0"),
@@ -45,7 +52,7 @@ class SmartMqttMeter:
         self.reader.connect()
 
         mqtt_config = self.config.get("mqtt", {})
-        log.info("mqtt config: \n%s", yaml.safe_dump(mqtt_config))
+        log.info("mqtt config: \n%s", yaml.safe_dump(_redact(mqtt_config)))
         self.mqtt = SmartMeterDevice(mqtt_config)
         # we get data every 5 seconds, so we publish every 6th time (30s)
         # unless configured otherwise
