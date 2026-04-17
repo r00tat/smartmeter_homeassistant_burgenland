@@ -76,6 +76,8 @@ class SmartMqttMeter:
             self.mqtt.publish_status(data)
         self.counter += 1
 
+    SHUTDOWN_TIMEOUT_SECONDS = 10
+
     def start(self):
         try:
             self.reader_thread = threading.Thread(target=self.reader.start)
@@ -86,14 +88,34 @@ class SmartMqttMeter:
             self.mqtt_thread.start()
 
             log.info("wating for serial port to complete")
-            self.reader_thread.join()
+            while not self._stop.is_set():
+                if not self.reader_thread.is_alive():
+                    log.info("reader thread exited, shutting down")
+                    break
+                if not self.mqtt_thread.is_alive():
+                    log.info("mqtt thread exited, shutting down")
+                    break
+                self._stop.wait(timeout=1.0)
         finally:
             self.stop()
 
     def stop(self):
         """Signal all components to stop and wait for shutdown."""
+        already_stopping = self._stop.is_set()
         self._stop.set()
         if self.reader:
             self.reader.stop()
         if self.mqtt:
             self.mqtt.stop()
+
+        if already_stopping:
+            return
+        for thread in (self.reader_thread, self.mqtt_thread):
+            if thread is not None and thread.is_alive():
+                thread.join(timeout=self.SHUTDOWN_TIMEOUT_SECONDS)
+                if thread.is_alive():
+                    log.warning(
+                        "thread %s did not exit within %ds",
+                        thread.name,
+                        self.SHUTDOWN_TIMEOUT_SECONDS,
+                    )
