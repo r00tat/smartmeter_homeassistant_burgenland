@@ -5,6 +5,7 @@
 from typing import Any
 from collections.abc import Callable
 import paho.mqtt.client as mqtt
+from paho.mqtt import MQTTException
 import json
 import logging
 
@@ -16,6 +17,7 @@ class MqttClient:
 
     def __init__(self, config: dict) -> None:
         self.config = config
+        self.message_callbacks: dict[str, Callable[[mqtt.MQTTMessage], None]] = {}
         self.connect_mqtt()
 
     def connect_mqtt(self) -> None:
@@ -31,11 +33,37 @@ class MqttClient:
         self.client.username_pw_set(
             username=self.config.get("user"), password=self.config.get("password")
         )
+        self._configure_tls()
+        host = self.config.get("host")
+        if not host:
+            raise ValueError("mqtt.host is required")
         self.client.connect(
-            self.config.get("host"),
+            host,
             self.config.get("port", 1883),
             self.config.get("keepalive", 60),
         )
+
+    def _configure_tls(self) -> None:
+        """Enable TLS if any tls_* option is present in the config."""
+        tls_ca = self.config.get("tls_ca")
+        tls_cert = self.config.get("tls_cert")
+        tls_key = self.config.get("tls_key")
+        tls_insecure = self.config.get("tls_insecure")
+
+        if not any(
+            value not in (None, "")
+            for value in (tls_ca, tls_cert, tls_key, tls_insecure)
+        ):
+            return
+
+        log.info("enabling MQTT TLS")
+        self.client.tls_set(
+            ca_certs=tls_ca or None,
+            certfile=tls_cert or None,
+            keyfile=tls_key or None,
+        )
+        if tls_insecure is not None:
+            self.client.tls_insecure_set(bool(tls_insecure))
 
     @property
     def base_topic(self) -> str:
@@ -49,7 +77,6 @@ class MqttClient:
         log.info("Connected to MQTT with result code " + str(reason_code))
         if reason_code != 0:
             raise RuntimeError(f"MQTT connection failed with error {reason_code}")
-        self.message_callbacks: dict[str, Callable[[], None]] = {}
 
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
@@ -103,16 +130,16 @@ class MqttClient:
         """Subscribe to a MQTT topic"""
         log.info("subscribing to %s", topic)
         self.client.subscribe(topic)
-        if callback:
-            self.message_callbacks[topic] = callback
+        self.message_callbacks[topic] = callback
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage):
         """New message received"""
         log.info("got a message %s %s", msg.topic, str(msg.payload))
 
-        if self.message_callbacks[msg.topic]:
-            self.message_callbacks[msg.topic](msg)
+        callback = self.message_callbacks.get(msg.topic)
+        if callback is not None:
+            callback(msg)
 
     def topic_with_prefix(self, topic: str) -> str:
         return f"{self.base_topic}/{topic}"
@@ -126,7 +153,7 @@ class MqttClient:
         try:
             log.info("starting mqtt loop")
             self.client.loop_forever()
-        except:  # noqa
+        except (OSError, MQTTException):
             log.exception("loop interrupted")
             self.stop()
 
@@ -136,5 +163,5 @@ class MqttClient:
             try:
                 self.publish(self.topic_with_prefix("availability"), "offline")
                 self.client.disconnect()
-            except:  # noqa
-                pass
+            except (OSError, MQTTException):
+                log.exception("mqtt disconnect failed")

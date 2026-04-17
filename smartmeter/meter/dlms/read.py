@@ -61,16 +61,19 @@ def convert_to_xml(notify: GXReplyData):
     return xml
 
 
-def parse_xml(xml: str):
+def parse_xml(xml: str) -> list:
     """Parsing xml response"""
     soup = BeautifulSoup(xml, "xml")
     struct = soup.find("Structure")
 
-    all_values = []
+    all_values: list = []
+    if struct is None:
+        log.debug("no <Structure> element found")
+        return all_values
 
     log.debug("struct: %s", struct)
     for child in struct.findChildren():
-        parsed_value = None
+        parsed_value: int | bytearray | None = None
         if child.name.startswith("UInt"):
             parsed_value = int(child["Value"], 16)
 

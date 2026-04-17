@@ -30,6 +30,10 @@ options:
     prefix: ""
     sensors_migrated: false
     publish_interval: 30
+    tls_ca: ""
+    tls_cert: ""
+    tls_key: ""
+    tls_insecure: false
   dlms:
     port: "/dev/ttyUSB0"
     baudrate: 9600
@@ -52,6 +56,10 @@ schema:
     prefix: "str?"
     sensors_migrated: bool?
     publish_interval: int?
+    tls_ca: "str?"
+    tls_cert: "str?"
+    tls_key: "str?"
+    tls_insecure: bool?
   dlms:
     port: "str"
     baudrate: "int?"

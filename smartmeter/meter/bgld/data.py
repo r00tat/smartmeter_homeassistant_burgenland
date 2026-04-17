@@ -1,6 +1,7 @@
 """Data structure definition for burgenland smartmeter"""
 
 import json
+from typing import Any
 
 
 class MeterData:
@@ -23,16 +24,16 @@ class MeterData:
     - Zähleridentifikationsnummern des Netzbetreibers
     """
 
-    def __init__(self, dlms_data: list[any]):
+    def __init__(self, dlms_data: list[Any]):
         self.dlms_data = dlms_data
 
         self.voltage_l1 = 0
         self.voltage_l2 = 0
         self.voltage_l3 = 0
 
-        self.current_l1 = 0
-        self.current_l2 = 0
-        self.current_l3 = 0
+        self.current_l1: float = 0
+        self.current_l2: float = 0
+        self.current_l3: float = 0
 
         self.power_consumed = 0
         self.power_provided = 0
@@ -40,7 +41,7 @@ class MeterData:
         self.total_consumed = 0
         self.total_provided = 0
 
-        self.meter_id = None
+        self.meter_id: str | None = None
 
         # Winkel Spannung L1 zu Strom L1
         self.angle_1 = 0
