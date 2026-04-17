@@ -102,10 +102,7 @@ class SmartMeterDevice(MqttClient):
         )
         for device in self.devices()[1:]:
             self.publish(
-                (
-                    f"homeassistant/sensor/f{self.device_id}"
-                    f"{device.get('unique_id')}/config"
-                ),
+                f"homeassistant/sensor/{self.device_id}_{device.get('unique_id')}/config",
                 json.dumps(
                     {
                         "migrate_discovery": True,
@@ -117,10 +114,7 @@ class SmartMeterDevice(MqttClient):
                 ),
             )
             self.publish(
-                (
-                    f"homeassistant/sensor/f{self.device_id}"
-                    f"{device.get('unique_id')}/config"
-                ),
+                f"homeassistant/sensor/{self.device_id}_{device.get('unique_id')}/config",
                 json.dumps(
                     {
                         "migrate_discovery": True,
