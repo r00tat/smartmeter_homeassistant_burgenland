@@ -5,6 +5,7 @@
 from typing import Any
 from collections.abc import Callable
 import paho.mqtt.client as mqtt
+from paho.mqtt import MQTTException
 import json
 import logging
 
@@ -126,7 +127,7 @@ class MqttClient:
         try:
             log.info("starting mqtt loop")
             self.client.loop_forever()
-        except:  # noqa
+        except (OSError, MQTTException):
             log.exception("loop interrupted")
             self.stop()
 
@@ -136,5 +137,5 @@ class MqttClient:
             try:
                 self.publish(self.topic_with_prefix("availability"), "offline")
                 self.client.disconnect()
-            except:  # noqa
-                pass
+            except (OSError, MQTTException):
+                log.exception("mqtt disconnect failed")
