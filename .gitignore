@@ -180,3 +180,5 @@ pip-selfcheck.json
 key.txt
 smartmeter-data.raw
 smartmeter-config.yaml
+
+.worktrees/
