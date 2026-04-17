@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.6.0) (2026-04-17)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.4...0.6.0)
+
+**Merged pull requests:**
+
+- Bump the dependencies group across 1 directory with 2 updates [\#85](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/85) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/login-action from 3 to 4 in the dependencies group [\#84](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/84) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.15.0 to ~=0.15.1 in the dependencies group [\#82](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/82) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.14.14 to ~=0.15.0 in the dependencies group [\#81](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/81) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update ruff requirement from ~=0.14.13 to ~=0.14.14 in the dependencies group [\#80](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/80) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group with 2 updates [\#79](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/79) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group across 1 directory with 2 updates [\#78](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/78) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.5.4](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.5.4) (2026-01-04)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.3...0.5.4)
