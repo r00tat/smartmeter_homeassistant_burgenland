@@ -180,14 +180,6 @@ class SmartMeterDevice(MqttClient):
                 "state_class": "measurement",
             },
             {
-                "name": "Voltage L1",
-                "unique_id": f"{self.device_id}_voltage_l1",
-                "value_template": "{{ value_json.u1 }}",
-                "unit_of_measurement": "V",
-                "device_class": "voltage",
-                "state_class": "measurement",
-            },
-            {
                 "name": "Voltage L2",
                 "unique_id": f"{self.device_id}_voltage_l2",
                 "value_template": "{{ value_json.u2 }}",
