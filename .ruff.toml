@@ -53,6 +53,12 @@ ignore = [
 ]
 
 
+[lint.per-file-ignores]
+"smartmeter/tests/*" = [
+    "D101", # Missing docstring in public class
+    "D103", # Missing docstring in public function
+]
+
 [lint.flake8-pytest-style]
 fixture-parentheses = false
 

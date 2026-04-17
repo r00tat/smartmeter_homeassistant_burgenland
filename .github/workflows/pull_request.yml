@@ -36,14 +36,11 @@ jobs:
           cd smartmeter &&
           python3 -m ruff check
 
-      # - name: 'Test'
-      #   run: |
-      #     source .venv/bin/activate &&
-      #     python3 -m unittest discover -v
-      #   env: # Or as an environment variable
-      #     BLAULICHTSMS_CUSTOMERID: '${{ secrets.BLAULICHTSMS_CUSTOMERID }}'
-      #     BLAULICHTSMS_USERNAME: '${{ secrets.BLAULICHTSMS_USERNAME }}'
-      #     BLAULICHTSMS_PASSWORD: '${{ secrets.BLAULICHTSMS_PASSWORD }}'
+      - name: "Test"
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m pytest tests/ -v
 
       # - name: "Adjust version number"
       #   shell: "bash"
