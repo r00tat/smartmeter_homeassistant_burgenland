@@ -33,11 +33,34 @@ class MqttClient:
         self.client.username_pw_set(
             username=self.config.get("user"), password=self.config.get("password")
         )
+        self._configure_tls()
         self.client.connect(
             self.config.get("host"),
             self.config.get("port", 1883),
             self.config.get("keepalive", 60),
         )
+
+    def _configure_tls(self) -> None:
+        """Enable TLS if any tls_* option is present in the config."""
+        tls_ca = self.config.get("tls_ca")
+        tls_cert = self.config.get("tls_cert")
+        tls_key = self.config.get("tls_key")
+        tls_insecure = self.config.get("tls_insecure")
+
+        if not any(
+            value not in (None, "")
+            for value in (tls_ca, tls_cert, tls_key, tls_insecure)
+        ):
+            return
+
+        log.info("enabling MQTT TLS")
+        self.client.tls_set(
+            ca_certs=tls_ca or None,
+            certfile=tls_cert or None,
+            keyfile=tls_key or None,
+        )
+        if tls_insecure is not None:
+            self.client.tls_insecure_set(bool(tls_insecure))
 
     @property
     def base_topic(self) -> str:
