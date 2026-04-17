@@ -6,6 +6,7 @@ import serial
 import yaml
 
 from .bgld.data import MeterData
+from .config_validation import validate_config
 from .mqtt.device import SmartMeterDevice
 from .serial.read import MeterReader
 
@@ -23,6 +24,7 @@ class SmartMqttMeter:
     """Connect the smart meter from serial to MQTT."""
 
     def __init__(self, config: dict) -> None:
+        validate_config(config)
         self.config = config
         self.reader: MeterReader = None
         self.mqtt: SmartMeterDevice = None
