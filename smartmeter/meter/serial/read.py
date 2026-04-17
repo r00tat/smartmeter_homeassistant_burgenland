@@ -42,7 +42,7 @@ class MeterReader:
         interface_type="OPTICAL",
         hdlc_frame_size=120,
         timeout: float = DEFAULT_SERIAL_TIMEOUT,
-        callback: Callable[[MeterData], None] = None,
+        callback: Callable[[MeterData], None] | None = None,
     ):
         """Create a meter reader"""
         log.debug("parity values: %s", ",".join(PARITY_VALUES))
@@ -115,7 +115,7 @@ class MeterReader:
         if decrypted_data.value:
             data = MeterData(decrypted_data.value)
             log.debug("received meter data: %s", data)
-            if self.callback:
+            if self.callback is not None:
                 self.callback(data)
 
     def _handle_physical_frame(self, received_data: bytes) -> None:
@@ -126,7 +126,7 @@ class MeterReader:
             if values and len(values) > 0:
                 data = MeterData(values)
                 log.debug("received meter data: %s", data)
-                if self.callback:
+                if self.callback is not None:
                     self.callback(data)
 
     def _read_loop(self, handler: Callable[[bytes], None], frame_size: int) -> None:

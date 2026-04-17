@@ -26,10 +26,10 @@ class SmartMqttMeter:
     def __init__(self, config: dict) -> None:
         validate_config(config)
         self.config = config
-        self.reader: MeterReader = None
-        self.mqtt: SmartMeterDevice = None
-        self.reader_thread: threading.Thread = None
-        self.mqtt_thread: threading.Thread = None
+        self.reader: MeterReader | None = None
+        self.mqtt: SmartMeterDevice | None = None
+        self.reader_thread: threading.Thread | None = None
+        self.mqtt_thread: threading.Thread | None = None
         self.counter = 0
         self.publish_interval = 6
         self._stop = threading.Event()
@@ -75,13 +75,15 @@ class SmartMqttMeter:
             f"{'publishing to mqtt' if self.counter % self.publish_interval == 0 else 'skipping'}"
             f": {data}"
         )
-        if self.counter % self.publish_interval == 0:
+        if self.counter % self.publish_interval == 0 and self.mqtt is not None:
             self.mqtt.publish_status(data)
         self.counter += 1
 
     SHUTDOWN_TIMEOUT_SECONDS = 10
 
     def start(self):
+        if self.reader is None or self.mqtt is None:
+            raise RuntimeError("setup() must be called before start()")
         try:
             self.reader_thread = threading.Thread(target=self.reader.start)
             self.mqtt_thread = threading.Thread(target=self.mqtt.start)

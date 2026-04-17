@@ -36,6 +36,11 @@ jobs:
           cd smartmeter &&
           python3 -m ruff check
 
+      - name: "Type check"
+        run: |
+          source .venv/bin/activate &&
+          python3 -m mypy --config-file mypy.ini
+
       - name: "Test"
         run: |
           source .venv/bin/activate &&

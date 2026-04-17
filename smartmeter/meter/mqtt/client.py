@@ -34,8 +34,11 @@ class MqttClient:
             username=self.config.get("user"), password=self.config.get("password")
         )
         self._configure_tls()
+        host = self.config.get("host")
+        if not host:
+            raise ValueError("mqtt.host is required")
         self.client.connect(
-            self.config.get("host"),
+            host,
             self.config.get("port", 1883),
             self.config.get("keepalive", 60),
         )
@@ -127,16 +130,16 @@ class MqttClient:
         """Subscribe to a MQTT topic"""
         log.info("subscribing to %s", topic)
         self.client.subscribe(topic)
-        if callback:
-            self.message_callbacks[topic] = callback
+        self.message_callbacks[topic] = callback
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage):
         """New message received"""
         log.info("got a message %s %s", msg.topic, str(msg.payload))
 
-        if self.message_callbacks[msg.topic]:
-            self.message_callbacks[msg.topic](msg)
+        callback = self.message_callbacks.get(msg.topic)
+        if callback is not None:
+            callback(msg)
 
     def topic_with_prefix(self, topic: str) -> str:
         return f"{self.base_topic}/{topic}"
