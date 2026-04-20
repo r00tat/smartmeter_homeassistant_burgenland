@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+**Implemented enhancements:**
+
+- Add support for Netz Niederösterreich / EVN Sagemcom T210-D meter
+  (M-Bus framing, 2400 8E1, AES-GCM). Select via `meter_type: noe_evn`.
+  Existing Netz Burgenland (`burgenland`) deployments keep their current
+  behaviour as the default profile.
+
 ## [0.6.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.6.0) (2026-04-17)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.5.4...0.6.0)

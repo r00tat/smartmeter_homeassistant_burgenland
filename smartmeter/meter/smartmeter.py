@@ -2,12 +2,15 @@
 
 import logging
 import threading
-import serial
+from typing import Any
+
 import yaml
 
-from .bgld.data import MeterData
-from .config_validation import validate_config
+from .config_validation import DEFAULT_METER_TYPE, validate_config
 from .mqtt.device import SmartMeterDevice
+from .noe.read import NoeMeterReader
+from .profile import get_profile
+from .reader_factory import build_reader
 from .serial.read import MeterReader
 
 log = logging.getLogger("meter.smartmeter")
@@ -26,7 +29,7 @@ class SmartMqttMeter:
     def __init__(self, config: dict) -> None:
         validate_config(config)
         self.config = config
-        self.reader: MeterReader | None = None
+        self.reader: MeterReader | NoeMeterReader | None = None
         self.mqtt: SmartMeterDevice | None = None
         self.reader_thread: threading.Thread | None = None
         self.mqtt_thread: threading.Thread | None = None
@@ -38,18 +41,19 @@ class SmartMqttMeter:
 
     def setup(self):
         log.info("starting setup")
+        meter_type = self.config.get("meter_type", DEFAULT_METER_TYPE)
+        profile = get_profile(meter_type)
+        log.info(
+            "meter profile: %s (%s %s)",
+            profile.name,
+            profile.manufacturer,
+            profile.model,
+        )
         dlms_config = self.config.get("dlms", {})
         log.info("dlms config \n%s", yaml.safe_dump(_redact(dlms_config)))
-        self.reader = MeterReader(
-            dlms_config.get("key"),
-            dlms_config.get("port", "/dev/ttyUSB0"),
-            baudrate=dlms_config.get("baudrate", 9600),
-            bytesize=dlms_config.get("bytesize", serial.EIGHTBITS),
-            stopbits=dlms_config.get("stopbits", serial.STOPBITS_ONE),
-            parity=dlms_config.get("parity", serial.PARITY_NONE),
-            interface_type=self.config.get("interface_type", "OPTICAL"),
-            hdlc_frame_size=dlms_config.get("hdlc_frame_size", 120),
-            timeout=dlms_config.get("timeout", 1.0),
+        self.reader = build_reader(
+            self.config,
+            profile,
             callback=self.got_meter_data,
         )
         log.info("connecting to serial port")
@@ -57,7 +61,7 @@ class SmartMqttMeter:
 
         mqtt_config = self.config.get("mqtt", {})
         log.info("mqtt config: \n%s", yaml.safe_dump(_redact(mqtt_config)))
-        self.mqtt = SmartMeterDevice(mqtt_config)
+        self.mqtt = SmartMeterDevice(mqtt_config, profile=profile)
         # we get data every 5 seconds, so we publish every 6th time (30s)
         # unless configured otherwise
         self.publish_interval = int(mqtt_config.get("publish_interval", 30) / 5)
@@ -69,7 +73,7 @@ class SmartMqttMeter:
 
         log.info("setup complete")
 
-    def got_meter_data(self, data: MeterData):
+    def got_meter_data(self, data: Any):
         log.info(
             "got meter data, "
             f"{'publishing to mqtt' if self.counter % self.publish_interval == 0 else 'skipping'}"
