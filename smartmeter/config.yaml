@@ -17,6 +17,7 @@ boot: "auto"
 # privileged:
 #  - "NET_ADMIN"
 options:
+  meter_type: burgenland
   interface_type: OPTICAL
   logging: INFO
   mqtt:
@@ -43,6 +44,7 @@ options:
     key: "" # hex key to decrypt message
     hdlc_frame_size: 120
 schema:
+  meter_type: list(burgenland|noe_evn)?
   interface_type: list(OPTICAL|PHYSICAL)?
   logging: list(INFO|WARNING|ERROR|CRITICAL|DEBUG)?
   mqtt:
