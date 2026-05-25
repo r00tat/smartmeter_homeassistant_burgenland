@@ -1,4 +1,4 @@
 -r requirements.txt
 mypy~=2.1
 pytest~=9.0
-ruff~=0.15.13
+ruff~=0.15.14
