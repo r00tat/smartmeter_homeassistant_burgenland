@@ -1,4 +1,8 @@
 logging: INFO
+# meter_type selects the provider profile. Supported:
+#   burgenland (default) — Landis+Gyr E450 via DLMS/HDLC (Netz Burgenland)
+#   noe_evn              — Sagemcom T210-D via M-Bus (Netz NÖ / EVN)
+# meter_type: burgenland
 interface_type: OPTICAL
 
 mqtt:

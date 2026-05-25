@@ -1,8 +1,18 @@
 # Smart Meter Reader Burgenland - AT
 
-This python program connects your Smart Meter from Netz Burgenland to Home
-Assistant via MQTT. It has been developed for the
-[Landis+Gyr E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf) Smartmeter. It has been tested with a Raspberry Pi Zero 2 W as a standalone device and with a Raspberry Pi 4 as Home Assistant Addon.
+This python program connects your Austrian Smart Meter to Home Assistant
+via MQTT.
+
+Supported meters (select via `meter_type`):
+
+- `burgenland` *(default)* — Netz Burgenland
+  [Landis+Gyr E450](https://www.netzburgenland.at/fileadmin/NB_pdf_NEU/Smart_Meter/Spezifikation_Kundenschnittstelle_E450_korr_2.pdf)
+  via DLMS/HDLC at 9600 baud.
+- `noe_evn` — Netz Niederösterreich / EVN Sagemcom T210-D via DLMS over
+  M-Bus framing at 2400 baud (8E1).
+
+It has been tested with a Raspberry Pi Zero 2 W as a standalone device
+and with a Raspberry Pi 4 as Home Assistant Addon.
 
 The addon uses Mosquitto MQTT server to manage the connection from the addon to HomeAssistant. You need to install the addon first.
 
@@ -83,6 +93,26 @@ Building a version and pushing to docker hub:
 - [Optische Schnittstelle](https://assets.netzburgenland.at/Netz_Burgenland_Beschreibung_Endkundenschnittstelle_02_c72d3973e9.pdf)
 
 ### Interface description
+
+#### Sagemcom T210-D (Netz NÖ / EVN)
+
+The Sagemcom T210-D exposes an **M-Bus** customer interface (not DLMS/HDLC).
+Frames are pushed roughly every 5 seconds at **2400 baud, 8E1**. Each frame is
+an M-Bus long frame (`68 LL LL 68 … CS 16`) that wraps a DLMS/COSEM
+data-notification APDU. The APDU is encrypted with **AES-128-GCM**
+(DLMS/COSEM Security Suite 0). The 12-byte nonce is the concatenation of
+the 8-byte system title and the 4-byte frame counter taken from the
+M-Bus header.
+
+Order the M-Bus customer interface via the Netz NÖ portal and request
+the AES key. Set `meter_type: noe_evn` in the addon config.
+
+Published OBIS registers: voltages L1–L3, currents L1–L3, active power
++P / −P, cumulative import/export energy, power factor (no phase
+angles — the T210-D does not publish them).
+
+Further reading: [Netz NÖ Kundenschnittstelle Lastenheft (PDF)](https://www.netz-noe.at/Download-(1)/Smart-Meter/218_9_SmartMeter_Kundenschnittstelle_Lastenheft2-0.aspx),
+[greenMikeEU/SmartMeterEVN](https://github.com/greenMikeEU/SmartMeterEVN).
 
 #### Landis+Gyr E450
 

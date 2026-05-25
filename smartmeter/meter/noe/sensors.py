@@ -1,0 +1,97 @@
+"""Home Assistant MQTT sensor catalog for the Netz NÖ / Sagemcom T210-D profile."""
+
+from __future__ import annotations
+
+from ..mqtt.sensor_spec import SensorSpec
+
+SENSOR_SPECS: tuple[SensorSpec, ...] = (
+    SensorSpec(name="Raw Data", suffix="", raw=True),
+    SensorSpec(
+        name="Total Energy consumed",
+        suffix="_total_energy_consumed",
+        value_template="{{ value_json.total_con }}",
+        unit_of_measurement="Wh",
+        device_class="energy",
+        state_class="total_increasing",
+    ),
+    SensorSpec(
+        name="Total Energy provided",
+        suffix="_total_energy_provided",
+        value_template="{{ value_json.total_prov }}",
+        unit_of_measurement="Wh",
+        device_class="energy",
+        state_class="total_increasing",
+    ),
+    SensorSpec(
+        name="Power consumed",
+        suffix="_power_consumed",
+        value_template="{{ value_json.w_con }}",
+        unit_of_measurement="W",
+        device_class="power",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Power provided",
+        suffix="_power_provided",
+        value_template="{{ value_json.w_prov }}",
+        unit_of_measurement="W",
+        device_class="power",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Voltage L1",
+        suffix="_voltage_l1",
+        value_template="{{ value_json.u1 }}",
+        unit_of_measurement="V",
+        device_class="voltage",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Voltage L2",
+        suffix="_voltage_l2",
+        value_template="{{ value_json.u2 }}",
+        unit_of_measurement="V",
+        device_class="voltage",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Voltage L3",
+        suffix="_voltage_l3",
+        value_template="{{ value_json.u3 }}",
+        unit_of_measurement="V",
+        device_class="voltage",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Current L1",
+        suffix="_current_l1",
+        value_template="{{ value_json.i1 }}",
+        unit_of_measurement="A",
+        device_class="current",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Current L2",
+        suffix="_current_l2",
+        value_template="{{ value_json.i2 }}",
+        unit_of_measurement="A",
+        device_class="current",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Current L3",
+        suffix="_current_l3",
+        value_template="{{ value_json.i3 }}",
+        unit_of_measurement="A",
+        device_class="current",
+        state_class="measurement",
+    ),
+    SensorSpec(
+        name="Power Factor",
+        suffix="_power_factor",
+        value_template="{{ value_json.power_factor }}",
+        unit_of_measurement="",
+        device_class="power_factor",
+        state_class="measurement",
+    ),
+)

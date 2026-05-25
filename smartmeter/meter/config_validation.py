@@ -9,6 +9,9 @@ HEX_KEY_RE = re.compile(r"^[0-9a-fA-F]{32}$")
 VALID_PARITY_LETTERS = set(serial.PARITY_NAMES.keys())
 VALID_PARITY_NAMES = {name.upper() for name in serial.PARITY_NAMES.values()}
 
+VALID_METER_TYPES = {"burgenland", "noe_evn"}
+DEFAULT_METER_TYPE = "burgenland"
+
 
 class ConfigError(ValueError):
     """Raised when the add-on configuration is invalid."""
@@ -21,6 +24,13 @@ def validate_config(config: dict) -> None:
     """
     if not isinstance(config, dict):
         raise ConfigError("config must be a mapping")
+
+    meter_type = config.get("meter_type", DEFAULT_METER_TYPE)
+    if meter_type not in VALID_METER_TYPES:
+        raise ConfigError(
+            f"meter_type {meter_type!r} is not valid; "
+            f"allowed: {sorted(VALID_METER_TYPES)}"
+        )
 
     mqtt = config.get("mqtt") or {}
     if not isinstance(mqtt, dict):

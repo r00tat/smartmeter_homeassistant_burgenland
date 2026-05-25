@@ -58,3 +58,20 @@ def test_parity_letter_accepted() -> None:
 
 def test_parity_empty_accepted() -> None:
     validate_config(_valid_config(dlms={"key": VALID_KEY, "parity": ""}))
+
+
+def test_default_meter_type_accepted() -> None:
+    validate_config(_valid_config())
+
+
+def test_meter_type_burgenland_accepted() -> None:
+    validate_config(_valid_config(meter_type="burgenland"))
+
+
+def test_meter_type_noe_evn_accepted() -> None:
+    validate_config(_valid_config(meter_type="noe_evn"))
+
+
+def test_unknown_meter_type_rejected() -> None:
+    with pytest.raises(ConfigError, match="meter_type"):
+        validate_config(_valid_config(meter_type="wien_netze"))
