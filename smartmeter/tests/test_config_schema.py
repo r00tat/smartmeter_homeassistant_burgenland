@@ -22,12 +22,11 @@ def test_schema_is_valid_draft_2020_12() -> None:
     Draft202012Validator.check_schema(_schema())
 
 
-def test_template_matches_schema() -> None:
+def test_example_config_matches_schema() -> None:
+    # The shipped example config must validate as-is: it carries placeholder
+    # values (host, 32-hex key) so users get no editor errors before editing.
     with open(_TEMPLATE, encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
-    # template ships an empty host/key (user fills them); validate shape only
-    data.setdefault("mqtt", {})["host"] = "mqtt.local"
-    data.setdefault("dlms", {})["key"] = "00" * 16
     Draft202012Validator(_schema()).validate(data)
 
 

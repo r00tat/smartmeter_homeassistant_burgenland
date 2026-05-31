@@ -4,6 +4,7 @@
   "title": "Smartmeter add-on runtime configuration",
   "type": "object",
   "additionalProperties": true,
+  "required": ["mqtt", "dlms"],
   "properties": {
     "logging": {
       "type": "string",
