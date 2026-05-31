@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/r00tat/smartmeter_homeassistant_burgenland/config.schema.json",
+  "title": "Smartmeter add-on runtime configuration",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["mqtt", "dlms"],
+  "properties": {
+    "logging": {
+      "type": "string",
+      "enum": ["INFO", "WARNING", "ERROR", "CRITICAL", "DEBUG"]
+    },
+    "meter_type": {
+      "type": "string",
+      "enum": ["burgenland", "noe_evn"],
+      "default": "burgenland"
+    },
+    "interface_type": {
+      "type": "string",
+      "enum": ["OPTICAL", "PHYSICAL"]
+    },
+    "mqtt": {
+      "type": "object",
+      "required": ["host"],
+      "additionalProperties": false,
+      "properties": {
+        "device_id": {"type": "string"},
+        "name": {"type": "string"},
+        "host": {"type": "string", "minLength": 1},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "user": {"type": "string"},
+        "password": {"type": "string"},
+        "keepalive": {"type": "integer", "minimum": 1},
+        "prefix": {"type": "string"},
+        "sensors_migrated": {"type": "boolean"},
+        "publish_interval": {"type": "integer", "minimum": 1},
+        "tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable MQTT over TLS. The tls_* options apply only when true."
+        },
+        "tls_ca": {"type": "string"},
+        "tls_cert": {"type": "string"},
+        "tls_key": {"type": "string"},
+        "tls_insecure": {"type": "boolean"}
+      }
+    },
+    "dlms": {
+      "type": "object",
+      "required": ["key", "port"],
+      "additionalProperties": false,
+      "properties": {
+        "port": {"type": "string", "minLength": 1},
+        "baudrate": {"type": "integer"},
+        "bytesize": {"type": "integer"},
+        "parity": {
+          "type": "string",
+          "enum": [
+            "", "NONE", "EVEN", "ODD", "MARK", "SPACE",
+            "N", "E", "O", "M", "S"
+          ]
+        },
+        "stopbits": {"type": "integer"},
+        "key": {"type": "string", "pattern": "^[0-9a-fA-F]{32}$"},
+        "hdlc_frame_size": {"type": "integer"}
+      }
+    }
+  }
+}

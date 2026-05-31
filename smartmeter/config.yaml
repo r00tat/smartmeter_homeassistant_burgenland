@@ -31,6 +31,7 @@ options:
     prefix: ""
     sensors_migrated: false
     publish_interval: 30
+    tls: false
     tls_ca: ""
     tls_cert: ""
     tls_key: ""
@@ -58,6 +59,7 @@ schema:
     prefix: "str?"
     sensors_migrated: bool?
     publish_interval: int?
+    tls: bool?
     tls_ca: "str?"
     tls_cert: "str?"
     tls_key: "str?"

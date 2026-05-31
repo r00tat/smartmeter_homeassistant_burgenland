@@ -44,17 +44,14 @@ class MqttClient:
         )
 
     def _configure_tls(self) -> None:
-        """Enable TLS if any tls_* option is present in the config."""
+        """Enable TLS only when explicitly switched on via ``tls: true``."""
+        if not self.config.get("tls"):
+            return
+
         tls_ca = self.config.get("tls_ca")
         tls_cert = self.config.get("tls_cert")
         tls_key = self.config.get("tls_key")
         tls_insecure = self.config.get("tls_insecure")
-
-        if not any(
-            value not in (None, "")
-            for value in (tls_ca, tls_cert, tls_key, tls_insecure)
-        ):
-            return
 
         log.info("enabling MQTT TLS")
         self.client.tls_set(

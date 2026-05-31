@@ -1,3 +1,9 @@
 {
-  "editor.rulers": [80]
+  "editor.rulers": [80],
+  "yaml.schemas": {
+    "./smartmeter/config.schema.json": [
+      "smartmeter/smartmeter-config.example.yaml",
+      "smartmeter/smartmeter-config.yaml"
+    ]
+  }
 }

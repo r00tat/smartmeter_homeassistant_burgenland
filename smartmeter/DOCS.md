@@ -34,4 +34,21 @@ T210-D does not publish them.
 
 ## Optional MQTT TLS
 
-To connect to an MQTT broker over TLS, set any of the `tls_ca`, `tls_cert`, `tls_key`, or `tls_insecure` options under `mqtt`. `tls_ca` points to a CA certificate (PEM) the broker is trusted against; `tls_cert` and `tls_key` enable mutual TLS with a client certificate and key. Set `tls_insecure: true` to skip hostname verification for testing only. Paths must be readable from within the addon container (e.g. mounted via `share:ro` or `config:ro`). If none of these options are set, MQTT connects without TLS.
+TLS is disabled by default. To connect to an MQTT broker over TLS, set
+`tls: true` under `mqtt`. The default port stays `1883`; TLS brokers
+usually listen on a separate port (commonly `8883`), so set `port`
+accordingly.
+
+When `tls: true`, the following options take effect (they are ignored
+while `tls` is `false`):
+
+- `tls_ca`: path to a CA certificate (PEM) the broker is trusted against.
+  If left empty, the system CA store is used (works with publicly trusted
+  brokers).
+- `tls_cert` and `tls_key`: enable mutual TLS with a client certificate
+  and key.
+- `tls_insecure: true`: skip hostname/certificate verification (testing
+  only).
+
+Certificate paths must be readable from within the add-on container (e.g.
+mounted via `share:ro` or `config:ro`).

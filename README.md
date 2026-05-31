@@ -53,7 +53,7 @@ This are the commands to get started:
 ```bash
 git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter
 cd smartmeter
-cp smartmeter-config-template.yaml smartmeter-config.yaml
+cp smartmeter-config.example.yaml smartmeter-config.yaml
 # now edit the config
 # if you are on debian make sure you got everything you need:
 curl -LsSf https://astral.sh/uv/install.sh | sh

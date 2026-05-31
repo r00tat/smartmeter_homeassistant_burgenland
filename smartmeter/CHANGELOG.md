@@ -2,12 +2,23 @@
 
 ## [Unreleased]
 
+**Fixed bugs:**
+
+- MQTT no longer attempts a TLS handshake on the plain `1883` port. TLS
+  was previously force-enabled by the `tls_insecure: false` default,
+  causing `[SSL: UNEXPECTED_EOF_WHILE_READING]` connection failures
+  ([\#94](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/94)).
+
 **Implemented enhancements:**
 
 - Add support for Netz Niederösterreich / EVN Sagemcom T210-D meter
   (M-Bus framing, 2400 8E1, AES-GCM). Select via `meter_type: noe_evn`.
   Existing Netz Burgenland (`burgenland`) deployments keep their current
   behaviour as the default profile.
+- Add explicit `mqtt.tls` option. TLS is now opt-in via `tls: true`; the
+  `tls_ca` / `tls_cert` / `tls_key` / `tls_insecure` options only apply
+  when TLS is enabled. A JSON Schema (`config.schema.json`) is provided
+  for validating configuration files.
 
 ## [0.6.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.6.0) (2026-04-17)
 

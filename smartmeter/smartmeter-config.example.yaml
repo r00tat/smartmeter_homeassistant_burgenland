@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=./config.schema.json
 logging: INFO
 # meter_type selects the provider profile. Supported:
 #   burgenland (default) — Landis+Gyr E450 via DLMS/HDLC (Netz Burgenland)
@@ -8,7 +9,7 @@ interface_type: OPTICAL
 mqtt:
   # device_id: "smartmeter"
   # name: "Smart Meter"
-  host: ""
+  host: "example.com"
   # port: 1883
   user: ""
   password: ""
@@ -21,4 +22,4 @@ dlms:
   # bytesize: 8
   # parity: "NONE"
   # stopbits: 1
-  key: "" # hex key to decrypt message
+  key: "012345678901234567890123456789ab" # hex key to decrypt message
