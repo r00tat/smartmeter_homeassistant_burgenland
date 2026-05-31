@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 
 _HERE = os.path.dirname(os.path.dirname(__file__))  # smartmeter/
 _SCHEMA = os.path.join(_HERE, "config.schema.json")
-_TEMPLATE = os.path.join(_HERE, "smartmeter-config-template.yaml")
+_TEMPLATE = os.path.join(_HERE, "smartmeter-config.example.yaml")
 
 
 def _schema() -> dict:
