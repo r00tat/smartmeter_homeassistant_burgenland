@@ -1,24 +1,30 @@
 # Changelog
 
-## [Unreleased]
+## [Unreleased](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/HEAD)
 
-**Fixed bugs:**
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.0...HEAD)
 
-- MQTT no longer attempts a TLS handshake on the plain `1883` port. TLS
-  was previously force-enabled by the `tls_insecure: false` default,
-  causing `[SSL: UNEXPECTED_EOF_WHILE_READING]` connection failures
-  ([\#94](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/94)).
+**Closed issues:**
+
+- MQTT need a Certificat [\#94](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/94)
+
+## [0.7.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.0) (2026-05-31)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.6.0...0.7.0)
 
 **Implemented enhancements:**
 
-- Add support for Netz Niederösterreich / EVN Sagemcom T210-D meter
-  (M-Bus framing, 2400 8E1, AES-GCM). Select via `meter_type: noe_evn`.
-  Existing Netz Burgenland (`burgenland`) deployments keep their current
-  behaviour as the default profile.
-- Add explicit `mqtt.tls` option. TLS is now opt-in via `tls: true`; the
-  `tls_ca` / `tls_cert` / `tls_key` / `tls_insecure` options only apply
-  when TLS is enabled. A JSON Schema (`config.schema.json`) is provided
-  for validating configuration files.
+- Sagemcom T210-D Netz Niederösterreich [\#69](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/69)
+- feat\(noe\): add Netz NÖ / EVN Sagemcom T210-D support [\#89](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/89) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- fix\(mqtt\): make TLS opt-in via explicit `tls` flag + config JSON schema \(\#94\) [\#95](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/95) ([r00tat](https://github.com/r00tat))
+- build\(deps-dev\): update ruff requirement from ~=0.15.13 to ~=0.15.14 in the dependencies group [\#93](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/93) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump the dependencies group across 1 directory with 2 updates [\#92](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/92) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update ruff requirement from ~=0.15.11 to ~=0.15.12 in the dependencies group [\#90](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/90) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump the dependencies group with 5 updates [\#88](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/88) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: migrate from deprecated home-assistant/builder to reusable actions [\#87](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/87) ([r00tat](https://github.com/r00tat))
 
 ## [0.6.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.6.0) (2026-04-17)
 
@@ -26,6 +32,7 @@
 
 **Merged pull requests:**
 
+- fix: address code-review-2026-04-17 \(P0–P3\) [\#86](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/86) ([r00tat](https://github.com/r00tat))
 - Bump the dependencies group across 1 directory with 2 updates [\#85](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/85) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Bump docker/login-action from 3 to 4 in the dependencies group [\#84](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/84) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Update ruff requirement from ~=0.15.0 to ~=0.15.1 in the dependencies group [\#82](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/82) ([dependabot[bot]](https://github.com/apps/dependabot))
