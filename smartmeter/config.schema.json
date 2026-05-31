@@ -54,7 +54,10 @@
         "bytesize": {"type": "integer"},
         "parity": {
           "type": "string",
-          "enum": ["NONE", "EVEN", "ODD", "MARK", "SPACE"]
+          "enum": [
+            "", "NONE", "EVEN", "ODD", "MARK", "SPACE",
+            "N", "E", "O", "M", "S"
+          ]
         },
         "stopbits": {"type": "integer"},
         "key": {"type": "string", "pattern": "^[0-9a-fA-F]{32}$"},

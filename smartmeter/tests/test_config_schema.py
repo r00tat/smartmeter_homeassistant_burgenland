@@ -45,3 +45,13 @@ def test_schema_rejects_unknown_meter_type() -> None:
     }
     errors = list(Draft202012Validator(_schema()).iter_errors(cfg))
     assert errors, "unknown meter_type should fail validation"
+
+
+def test_schema_accepts_single_letter_parity() -> None:
+    # config_validation.py accepts both pyserial letters and full names.
+    cfg = {
+        "mqtt": {"host": "h"},
+        "dlms": {"key": "00" * 16, "port": "/dev/ttyUSB0", "parity": "E"},
+    }
+    errors = list(Draft202012Validator(_schema()).iter_errors(cfg))
+    assert not errors, f"single-letter parity should be valid: {errors}"
