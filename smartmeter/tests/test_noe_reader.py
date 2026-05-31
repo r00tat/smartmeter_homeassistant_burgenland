@@ -10,6 +10,9 @@ from __future__ import annotations
 from collections import deque
 from threading import Thread
 
+import pytest
+import serial
+
 from meter.noe.data import MeterData
 from meter.noe.read import NoeMeterReader
 from tests.fixtures.noe_sample_frame import build_sample_frame
@@ -69,6 +72,27 @@ def test_reader_invokes_callback_with_decoded_meter_data() -> None:
     assert data.current_l1 == 5.0
     assert data.power_factor == 0.98
     assert data.total_consumed == 12345678
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        ("NONE", serial.PARITY_NONE),
+        ("none", serial.PARITY_NONE),
+        ("EVEN", serial.PARITY_EVEN),
+        ("Odd", serial.PARITY_ODD),
+        ("N", serial.PARITY_NONE),
+        ("E", serial.PARITY_EVEN),
+    ],
+)
+def test_reader_normalizes_parity_name_to_pyserial_letter(given, expected) -> None:
+    """Config supplies human-readable parity names; pyserial wants letters.
+
+    Regression test for issue #97: ``parity="NONE"`` crashed ``serial.Serial``
+    with ``ValueError: Not a valid parity: 'NONE'``.
+    """
+    reader = NoeMeterReader(key_hex="00" * 16, parity=given)
+    assert reader.parity == expected
 
 
 def test_reader_skips_garbage_until_mbus_start() -> None:

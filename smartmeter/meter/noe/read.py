@@ -33,6 +33,9 @@ _MIN_FRAME_LENGTH = 27  # must fit system title and frame counter
 _MAX_CONSECUTIVE_FAILURES = 10
 _DATA_NOTIFICATION_TAG = 0x0F
 
+_PARITY_LETTERS = serial.PARITY_NAMES.keys()
+_PARITY_NAME_TO_LETTER = {v.upper(): k for k, v in serial.PARITY_NAMES.items()}
+
 
 class _SerialLike(Protocol):
     def read(self, size: int = 1) -> bytes: ...
@@ -58,7 +61,13 @@ class NoeMeterReader:
         self.port = port
         self.baudrate = baudrate
         self.bytesize = bytesize
+        # Config supplies human-readable names ("NONE"); pyserial wants the
+        # single-letter codes ("N"). Normalise, falling back to no parity.
         self.parity = parity
+        if self.parity not in _PARITY_LETTERS:
+            self.parity = _PARITY_NAME_TO_LETTER.get(
+                str(parity).upper(), serial.PARITY_NONE
+            )
         self.stopbits = stopbits
         self.timeout = timeout
         self.callback = callback
