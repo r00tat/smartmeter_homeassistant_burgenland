@@ -2,11 +2,25 @@
 
 ## [Unreleased](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/HEAD)
 
-[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.0...HEAD)
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.1...HEAD)
 
 **Closed issues:**
 
+- EVN Parity [\#97](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/97)
+
+## [0.7.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.1) (2026-05-31)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.0...0.7.1)
+
+**Closed issues:**
+
+- Burgenland zähler Bug nach update von 0.5.3 auf 0.7.0 [\#98](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/98)
+- EVN Zähler [\#96](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/96)
 - MQTT need a Certificat [\#94](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/94)
+
+**Merged pull requests:**
+
+- fix\(noe\): normalize parity name to pyserial letter code \(\#97\) [\#99](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/99) ([r00tat](https://github.com/r00tat))
 
 ## [0.7.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.0) (2026-05-31)
 
