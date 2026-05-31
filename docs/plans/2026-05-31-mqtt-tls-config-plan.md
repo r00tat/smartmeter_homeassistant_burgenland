@@ -17,6 +17,8 @@
 - `smartmeter/tests/test_mqtt_tls.py` — **new** unit tests for the gate.
 - `smartmeter/DOCS.md` — "Optional MQTT TLS" section rewrite.
 - `smartmeter/CHANGELOG.md` — `[Unreleased]` entry.
+- `smartmeter/config.schema.json` — **new** JSON Schema (Draft 2020-12) for the runtime config, including `mqtt.tls`.
+- `smartmeter/smartmeter-config-template.yaml` — add `# yaml-language-server: $schema=./config.schema.json` header.
 
 ---
 
@@ -259,9 +261,192 @@ git commit -m "docs: document explicit MQTT tls option (#94)"
 
 ---
 
+## Task 4: Add JSON Schema for the runtime config + editor header
+
+**Files:**
+- Create: `smartmeter/config.schema.json`
+- Modify: `smartmeter/smartmeter-config-template.yaml:1` (add schema header)
+- Test: `smartmeter/tests/test_config_schema.py` (create)
+
+- [ ] **Step 0: Add the `jsonschema` dev dependency**
+
+`jsonschema` is not currently installed. Add this line to
+`smartmeter/requirements-dev.txt`:
+
+```text
+jsonschema~=4.0
+```
+
+Then install (from `smartmeter/`): `pip install -r requirements-dev.txt`
+Expected: `jsonschema` installs without error.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `smartmeter/tests/test_config_schema.py`. It validates the bundled
+template against the schema and checks the `tls` option is present and
+boolean.
+
+```python
+"""The runtime config schema accepts the template and the mqtt.tls option."""
+
+from __future__ import annotations
+
+import json
+import os
+
+import yaml
+from jsonschema import Draft202012Validator
+
+_HERE = os.path.dirname(os.path.dirname(__file__))  # smartmeter/
+_SCHEMA = os.path.join(_HERE, "config.schema.json")
+_TEMPLATE = os.path.join(_HERE, "smartmeter-config-template.yaml")
+
+
+def _schema() -> dict:
+    with open(_SCHEMA, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def test_schema_is_valid_draft_2020_12() -> None:
+    Draft202012Validator.check_schema(_schema())
+
+
+def test_template_matches_schema() -> None:
+    with open(_TEMPLATE, encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+    # template ships an empty host/key (user fills them); validate shape only
+    data.setdefault("mqtt", {})["host"] = "mqtt.local"
+    data.setdefault("dlms", {})["key"] = "00" * 16
+    Draft202012Validator(_schema()).validate(data)
+
+
+def test_schema_allows_tls_boolean() -> None:
+    schema = _schema()
+    mqtt_props = schema["properties"]["mqtt"]["properties"]
+    assert mqtt_props["tls"]["type"] == "boolean"
+
+
+def test_schema_rejects_unknown_meter_type() -> None:
+    cfg = {
+        "meter_type": "bogus",
+        "mqtt": {"host": "h"},
+        "dlms": {"key": "00" * 16, "port": "/dev/ttyUSB0"},
+    }
+    errors = list(Draft202012Validator(_schema()).iter_errors(cfg))
+    assert errors, "unknown meter_type should fail validation"
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run (from `smartmeter/`): `python -m pytest tests/test_config_schema.py -v`
+Expected: FAIL — `config.schema.json` does not exist yet (FileNotFoundError).
+
+- [ ] **Step 3: Create the schema file**
+
+Create `smartmeter/config.schema.json`:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/r00tat/smartmeter_homeassistant_burgenland/config.schema.json",
+  "title": "Smartmeter add-on runtime configuration",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "logging": {
+      "type": "string",
+      "enum": ["INFO", "WARNING", "ERROR", "CRITICAL", "DEBUG"]
+    },
+    "meter_type": {
+      "type": "string",
+      "enum": ["burgenland", "noe_evn"],
+      "default": "burgenland"
+    },
+    "interface_type": {
+      "type": "string",
+      "enum": ["OPTICAL", "PHYSICAL"]
+    },
+    "mqtt": {
+      "type": "object",
+      "required": ["host"],
+      "additionalProperties": false,
+      "properties": {
+        "device_id": {"type": "string"},
+        "name": {"type": "string"},
+        "host": {"type": "string", "minLength": 1},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "user": {"type": "string"},
+        "password": {"type": "string"},
+        "keepalive": {"type": "integer", "minimum": 1},
+        "prefix": {"type": "string"},
+        "sensors_migrated": {"type": "boolean"},
+        "publish_interval": {"type": "integer", "minimum": 1},
+        "tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable MQTT over TLS. The tls_* options apply only when true."
+        },
+        "tls_ca": {"type": "string"},
+        "tls_cert": {"type": "string"},
+        "tls_key": {"type": "string"},
+        "tls_insecure": {"type": "boolean"}
+      }
+    },
+    "dlms": {
+      "type": "object",
+      "required": ["key", "port"],
+      "additionalProperties": false,
+      "properties": {
+        "port": {"type": "string", "minLength": 1},
+        "baudrate": {"type": "integer"},
+        "bytesize": {"type": "integer"},
+        "parity": {
+          "type": "string",
+          "enum": ["NONE", "EVEN", "ODD", "MARK", "SPACE"]
+        },
+        "stopbits": {"type": "integer"},
+        "key": {"type": "string", "pattern": "^[0-9a-fA-F]{32}$"},
+        "hdlc_frame_size": {"type": "integer"}
+      }
+    }
+  }
+}
+```
+
+- [ ] **Step 4: Add the schema header to the template**
+
+Add as the **first line** of `smartmeter/smartmeter-config-template.yaml`:
+
+```yaml
+# yaml-language-server: $schema=./config.schema.json
+```
+
+(Keep the existing `logging: INFO` line as line 2.)
+
+- [ ] **Step 5: Run the tests to verify they pass**
+
+Run (from `smartmeter/`): `python -m pytest tests/test_config_schema.py -v`
+Expected: all 4 tests PASS.
+
+- [ ] **Step 6: Run the full suite + ruff + JSON sanity**
+
+Run (from `smartmeter/`):
+`python -m pytest tests/ -q && ruff check meter tests && python -c "import json; json.load(open('config.schema.json'))" && echo OK`
+Expected: tests pass, ruff clean, prints `OK`.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add smartmeter/config.schema.json smartmeter/smartmeter-config-template.yaml smartmeter/tests/test_config_schema.py smartmeter/requirements-dev.txt
+git commit -m "feat: add JSON schema for runtime config validation (#94)"
+```
+
+---
+
 ## Self-Review Notes
 
-- **Spec coverage:** Task 1 = client gate fix + regression tests; Task 2 = schema option; Task 3 = DOCS + CHANGELOG. All design "Affected Components" covered.
+- **Spec coverage:** Task 1 = client gate fix + regression tests; Task 2 = add-on schema option; Task 3 = DOCS + CHANGELOG; Task 4 = JSON Schema + template header. All design "Affected Components" covered.
 - **No fallback:** `test_tls_not_enabled_when_certs_present_but_tls_false` locks the strict no-fallback decision.
-- **Type consistency:** the config key is `tls` (boolean) everywhere — config.yaml options, schema, `self.config.get("tls")`, and all tests.
+- **Type consistency:** the config key is `tls` (boolean) everywhere — config.yaml options, add-on schema, JSON schema, `self.config.get("tls")`, and all tests.
+- **Schema scope:** `config.schema.json` validates the runtime config (template / `/data/options.json`), mirroring `config_validation.py`; the HA add-on manifest keeps its own `schema:` block in `config.yaml`.
 - **Port unchanged:** no task modifies the default `1883`; docs only mention `8883` as a manual choice.

@@ -79,7 +79,20 @@ this is called out in DOCS.md and the changelog.
 4. **`smartmeter/CHANGELOG.md`** — add an entry under `[Unreleased]`
    documenting the bugfix and the new `tls` option.
 
-5. **`smartmeter/tests/`** — new unit tests for `_configure_tls`
+5. **`smartmeter/config.schema.json`** (new) — a JSON Schema (Draft 2020-12)
+   describing the runtime config structure (`logging`, `meter_type`,
+   `interface_type`, `mqtt`, `dlms`), including the new `mqtt.tls`
+   boolean. It mirrors the rules already enforced in
+   `config_validation.py` (required `mqtt.host`, `dlms.key` 32-hex, parity
+   enum, meter_type enum) so editors and CI can validate config files.
+   `smartmeter-config-template.yaml` gets a
+   `# yaml-language-server: $schema=./config.schema.json` header so editors
+   pick up the schema automatically. The schema documents the **runtime**
+   config consumed by `python -m meter -c <file>` (and the add-on's
+   `/data/options.json`), not the Home Assistant add-on manifest, which
+   keeps its own `schema:` block in `config.yaml`.
+
+6. **`smartmeter/tests/`** — new unit tests for `_configure_tls`
    (mocking `mqtt.Client`):
    - `tls` missing → `tls_set` **not** called (regression test for #94).
    - `tls: false` with certs present → `tls_set` **not** called.
