@@ -79,3 +79,27 @@ jobs:
             BUILD_FROM=ghcr.io/hassio-addons/base-python:stable
           push: "false"
           cosign: "false"
+
+  test-build-standalone:
+    name: "Test build standalone multi-arch image"
+    needs: pull_request
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v6.0.2"
+
+      - name: "Set up QEMU"
+        uses: docker/setup-qemu-action@v3
+
+      - name: "Set up Docker Buildx"
+        uses: docker/setup-buildx-action@v3
+
+      - name: "Test build standalone image"
+        uses: docker/build-push-action@v6
+        with:
+          context: smartmeter
+          file: smartmeter/Dockerfile.standalone
+          platforms: linux/amd64,linux/arm64
+          push: false
