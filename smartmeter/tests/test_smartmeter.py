@@ -52,9 +52,11 @@ def test_setup_passes_got_meter_data_callback() -> None:
     assert callback == meter.got_meter_data
 
 
-def test_setup_connects_reader() -> None:
+def test_setup_does_not_open_serial_port() -> None:
+    # The reader opens the port in start(); setup() must not open it too,
+    # otherwise the device is held by two handles (and logged twice).
     _, build_reader, _ = _make_meter(dict(_BASE_CFG))
-    build_reader.return_value.connect.assert_called_once()
+    build_reader.return_value.connect.assert_not_called()
 
 
 def test_profile_lookup_matches_registry() -> None:
