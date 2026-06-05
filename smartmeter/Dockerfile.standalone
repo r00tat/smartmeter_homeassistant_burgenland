@@ -10,7 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY meter ./meter/
 COPY config.yaml ./
-COPY standalone-entrypoint.sh ./
-RUN chmod +x /app/standalone-entrypoint.sh
+COPY --chmod=755 standalone-entrypoint.sh ./
 
 ENTRYPOINT ["/app/standalone-entrypoint.sh"]
