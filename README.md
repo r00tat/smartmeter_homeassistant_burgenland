@@ -60,18 +60,18 @@ cp smartmeter-config.example.yaml smartmeter-config.yaml
 # Edit smartmeter-config.yaml: set mqtt.host, dlms.key, dlms.port, …
 ```
 
-1. Start with docker compose (using the provided `smartmeter/docker-compose.standalone.yml`):
+1. Start with docker compose (from inside `smartmeter/`, using the provided `docker-compose.standalone.yml`):
 
 ```bash
-docker compose -f smartmeter/docker-compose.standalone.yml up -d
+docker compose -f docker-compose.standalone.yml up -d
 ```
 
-Or run directly with `docker run`:
+Or run directly with `docker run` (also from inside `smartmeter/`):
 
 ```bash
 docker run -d --restart unless-stopped \
   --device /dev/ttyUSB0:/dev/ttyUSB0 \
-  -v "$(pwd)/smartmeter/smartmeter-config.yaml:/config/smartmeter-config.yaml:ro" \
+  -v "$(pwd)/smartmeter-config.yaml:/config/smartmeter-config.yaml:ro" \
   docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
 ```
 

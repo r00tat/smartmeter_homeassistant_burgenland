@@ -79,6 +79,9 @@ To use a different path inside the container, set the `SMARTMETER_CONFIG`
 environment variable:
 
 ```bash
+# Minimal example — illustrates the env var only. For real use, add the serial
+# device (--device), detach (-d), and a restart policy (--restart), or use the
+# docker-compose.standalone.yml example below.
 docker run -e SMARTMETER_CONFIG=/myconfig.yaml \
   -v /path/to/myconfig.yaml:/myconfig.yaml \
   docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
