@@ -1,0 +1,16 @@
+ARG BUILD_FROM=python:3.13-slim
+FROM $BUILD_FROM
+
+ENV LANG=C.UTF-8
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY meter ./meter/
+COPY config.yaml ./
+COPY standalone-entrypoint.sh ./
+RUN chmod +x /app/standalone-entrypoint.sh
+
+ENTRYPOINT ["/app/standalone-entrypoint.sh"]
