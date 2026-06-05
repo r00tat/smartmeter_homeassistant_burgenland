@@ -89,9 +89,12 @@ docker run -e SMARTMETER_CONFIG=/myconfig.yaml \
 
 ### docker compose (recommended)
 
-Use the provided `docker-compose.standalone.yml` example:
+Use the provided `docker-compose.standalone.yml` example. Run it from inside
+the `smartmeter/` directory (where the compose file and your
+`smartmeter-config.yaml` live):
 
 ```bash
+cd smartmeter
 docker compose -f docker-compose.standalone.yml up -d
 ```
 
