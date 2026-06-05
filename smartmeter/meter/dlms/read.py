@@ -44,6 +44,13 @@ def parse_pyhiscal_dlms_data(data: bytes, key: str):
     tr.comments = True
     msg = GXDLMSTranslatorMessage()
     msg.message = GXByteBuffer(data)
+    # Pin the framing to HDLC. Without this, ``interfaceType`` stays ``None`` and
+    # ``findNextFrame`` scans the buffer trying every framing; a misaligned byte
+    # can match ``isWirelessMBusData`` and enter the wireless M-Bus branch, which
+    # calls the broken ``_GXCommon.decryptManufacturer`` (removed in gurux-dlms
+    # >= 1.0.193) and raises AttributeError. Our serial meters are always HDLC.
+    # See https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/98
+    msg.interfaceType = InterfaceType.HDLC
     xml = ""
     pdu = GXByteBuffer()
     tr.completePdu = True
