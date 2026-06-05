@@ -1,12 +1,20 @@
 # Changelog
 
-## [Unreleased](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/HEAD)
+## [0.7.2](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.2) (2026-06-05)
 
-[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.1...HEAD)
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.1...0.7.2)
+
+**Fixed bugs:**
+
+- fix\(dlms\): force HDLC framing to avoid gurux wireless M-Bus crash \(\#98\) [\#102](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/102) ([r00tat](https://github.com/r00tat))
 
 **Closed issues:**
 
-- EVN Parity [\#97](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/97)
+- Burgenland zähler Bug nach update von 0.5.3 auf 0.7.0 [\#98](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/98)
+
+**Merged pull requests:**
+
+- fix\(noe\): survive serial timeouts, reconnect on faults, add diagnostics [\#103](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/103) ([r00tat](https://github.com/r00tat))
 
 ## [0.7.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.1) (2026-05-31)
 
@@ -14,7 +22,6 @@
 
 **Closed issues:**
 
-- Burgenland zähler Bug nach update von 0.5.3 auf 0.7.0 [\#98](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/98)
 - EVN Zähler [\#96](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/96)
 - MQTT need a Certificat [\#94](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/94)
 
