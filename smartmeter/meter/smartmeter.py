@@ -56,8 +56,8 @@ class SmartMqttMeter:
             profile,
             callback=self.got_meter_data,
         )
-        log.info("connecting to serial port")
-        self.reader.connect()
+        # The reader opens the port itself in ``start()``; opening it here too
+        # left two handles on the same device (and logged the connect twice).
 
         mqtt_config = self.config.get("mqtt", {})
         log.info("mqtt config: \n%s", yaml.safe_dump(_redact(mqtt_config)))

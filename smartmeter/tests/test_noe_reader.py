@@ -7,6 +7,7 @@ through the reader and asserts that the callback receives a populated
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from threading import Thread
 
@@ -95,6 +96,55 @@ def test_reader_normalizes_parity_name_to_pyserial_letter(given, expected) -> No
     assert reader.parity == expected
 
 
+class TimeoutThenFrameSerial(FakeSerial):
+    """Serial stub that times out (empty reads) before delivering a frame.
+
+    Real pyserial returns ``b""`` from ``read()`` whenever the configured
+    ``timeout`` elapses without a byte arriving -- which happens constantly
+    between frames and in the window after connecting, before the meter
+    pushes its first frame. An empty read is a *timeout*, not end-of-stream,
+    and must not terminate the reader.
+    """
+
+    def __init__(self, payload: bytes, timeouts_before: int = 3) -> None:
+        super().__init__(payload)
+        self._timeouts_before = timeouts_before
+
+    def read(self, size: int = 1) -> bytes:
+        if self._timeouts_before > 0:
+            self._timeouts_before -= 1
+            return b""
+        return super().read(size)
+
+
+def test_reader_survives_serial_timeouts_before_first_frame() -> None:
+    """Regression test for issue #97 (second report).
+
+    The reader exited on the first serial timeout, shutting the whole app
+    down without reading a single frame and without crashing.
+    """
+    sample = build_sample_frame()
+    payload = bytes.fromhex(sample.frame_hex)
+
+    received: list[MeterData] = []
+
+    def callback(data: MeterData) -> None:
+        received.append(data)
+        reader.stop()
+
+    reader = NoeMeterReader(
+        key_hex=sample.key.hex(),
+        serial_factory=lambda: TimeoutThenFrameSerial(payload + b"\x00" * 64),
+        callback=callback,
+    )
+
+    thread = Thread(target=reader.start)
+    thread.start()
+    thread.join(timeout=5.0)
+    assert not thread.is_alive(), "reader did not terminate"
+    assert len(received) == 1, "reader exited on a timeout instead of reading the frame"
+
+
 def test_reader_skips_garbage_until_mbus_start() -> None:
     sample = build_sample_frame()
     payload = bytes.fromhex(sample.frame_hex)
@@ -118,3 +168,90 @@ def test_reader_skips_garbage_until_mbus_start() -> None:
     thread.join(timeout=5.0)
     assert not thread.is_alive(), "reader did not terminate"
     assert len(received) == 1
+
+
+class RaisingSerial:
+    """Serial stub whose ``read`` raises, simulating a port fault."""
+
+    def __init__(self) -> None:
+        self.closed = False
+
+    def read(self, size: int = 1) -> bytes:
+        raise serial.SerialException("simulated serial fault")
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_reader_reconnects_after_serial_error() -> None:
+    """A serial fault must reconnect, not kill the thread (and the app)."""
+    sample = build_sample_frame()
+    payload = bytes.fromhex(sample.frame_hex)
+
+    attempts = [0]
+    received: list[MeterData] = []
+
+    def callback(data: MeterData) -> None:
+        received.append(data)
+        reader.stop()
+
+    def factory() -> object:
+        attempts[0] += 1
+        if attempts[0] == 1:
+            return RaisingSerial()
+        return FakeSerial(payload + b"\x00" * 64)
+
+    reader = NoeMeterReader(
+        key_hex=sample.key.hex(),
+        serial_factory=factory,
+        callback=callback,
+    )
+    reader.reconnect_backoff_seconds = 0  # no real sleep in tests
+
+    thread = Thread(target=reader.start)
+    thread.start()
+    thread.join(timeout=5.0)
+    assert not thread.is_alive(), "reader did not terminate"
+    assert attempts[0] == 2, "reader did not reopen the port after the fault"
+    assert len(received) == 1
+
+
+def test_reader_logs_heartbeat_with_diagnostic_when_no_data(caplog) -> None:
+    """When nothing is read, the heartbeat must point at the likely cause."""
+    box: list[NoeMeterReader] = []
+    clock = [0.0]
+
+    def fake_monotonic() -> float:
+        clock[0] += 100.0  # advance past the heartbeat interval each call
+        return clock[0]
+
+    class SilentSerial:
+        def __init__(self) -> None:
+            self.closed = False
+            self._reads = 0
+
+        def read(self, size: int = 1) -> bytes:
+            self._reads += 1
+            if self._reads >= 4:
+                box[0].stop()
+            return b""  # always a timeout, never any data
+
+        def close(self) -> None:
+            self.closed = True
+
+    reader = NoeMeterReader(
+        key_hex="00" * 16,
+        serial_factory=SilentSerial,
+        monotonic=fake_monotonic,
+    )
+    box.append(reader)
+
+    with caplog.at_level(logging.INFO, logger="meter.noe.read"):
+        thread = Thread(target=reader.start)
+        thread.start()
+        thread.join(timeout=5.0)
+
+    assert not thread.is_alive(), "reader did not terminate"
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "reader heartbeat" in messages
+    assert "no bytes received" in messages
