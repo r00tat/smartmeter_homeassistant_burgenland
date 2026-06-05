@@ -37,7 +37,47 @@ To use this program on the homeassistant raspberry pi as addon follow this steps
     As hostname use the homeassistant address. As username / password use a normal home assistant user or configure credentials in the Mosquitto broker.
 13. start the addon
 
-### Standalone
+### Standalone (Docker)
+
+The add-on image requires the Home Assistant Supervisor and cannot run on a
+plain Docker host. A separate standalone image is provided for exactly this use
+case ([#101](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/101)).
+It is published as a multi-arch image (amd64/arm64):
+
+```text
+docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone
+```
+
+**Steps:**
+
+1. Request the [activation of the customer interface](https://www.netzburgenland.at/kundenservice/smart-metering/smart-metering/kundenschnittstelle.html) and select IR as transport.
+1. Connect the IR reader to the smart meter and to your host machine.
+1. Copy and edit the example config:
+
+```bash
+cd smartmeter/
+cp smartmeter-config.example.yaml smartmeter-config.yaml
+# Edit smartmeter-config.yaml: set mqtt.host, dlms.key, dlms.port, …
+```
+
+1. Start with docker compose (using the provided `smartmeter/docker-compose.standalone.yml`):
+
+```bash
+docker compose -f smartmeter/docker-compose.standalone.yml up -d
+```
+
+Or run directly with `docker run`:
+
+```bash
+docker run -d --restart unless-stopped \
+  --device /dev/ttyUSB0:/dev/ttyUSB0 \
+  -v "$(pwd)/smartmeter/smartmeter-config.yaml:/config/smartmeter-config.yaml:ro" \
+  docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
+```
+
+Adjust `/dev/ttyUSB0` if your IR reader appears on a different device node.
+
+### Standalone (systemd / uv)
 
 To use this program on an external raspberry pi follow this steps:
 

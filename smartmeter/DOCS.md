@@ -52,3 +52,55 @@ while `tls` is `false`):
 
 Certificate paths must be readable from within the add-on container (e.g.
 mounted via `share:ro` or `config:ro`).
+
+## Standalone (Docker / docker-compose)
+
+The standalone image runs **without** the Home Assistant Supervisor, making it
+suitable for any host that can run Docker (a plain Raspberry Pi, a NAS, a VPS,
+etc.). It is published as a multi-arch image (amd64 and arm64) at:
+
+```text
+docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone
+```
+
+### Configuration
+
+The standalone image reads a plain YAML config file — the same format as
+`smartmeter-config.example.yaml`. Mount it into the container at
+`/config/smartmeter-config.yaml`:
+
+```bash
+# One-time setup
+cp smartmeter-config.example.yaml smartmeter-config.yaml
+# Edit smartmeter-config.yaml: set mqtt.host, dlms.key, dlms.port, …
+```
+
+To use a different path inside the container, set the `SMARTMETER_CONFIG`
+environment variable:
+
+```bash
+docker run -e SMARTMETER_CONFIG=/myconfig.yaml \
+  -v /path/to/myconfig.yaml:/myconfig.yaml \
+  docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
+```
+
+### docker compose (recommended)
+
+Use the provided `docker-compose.standalone.yml` example:
+
+```bash
+docker compose -f docker-compose.standalone.yml up -d
+```
+
+The compose file mounts `./smartmeter-config.yaml` and maps the serial device
+`/dev/ttyUSB0`. Adjust the device path in the file if your IR reader appears on
+a different node (e.g. `/dev/ttyUSB1` or `/dev/ttyAMA0`).
+
+### Minimal docker run
+
+```bash
+docker run -d --restart unless-stopped \
+  --device /dev/ttyUSB0:/dev/ttyUSB0 \
+  -v "$(pwd)/smartmeter-config.yaml:/config/smartmeter-config.yaml:ro" \
+  docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
+```
