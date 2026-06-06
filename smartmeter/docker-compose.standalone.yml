@@ -1,0 +1,29 @@
+# Standalone smartmeter reader — runs WITHOUT the Home Assistant Supervisor.
+#
+# Quick start:
+#   1. Copy the example config:  cp smartmeter-config.example.yaml smartmeter-config.yaml
+#   2. Edit smartmeter-config.yaml (MQTT host, AES key, serial port, …)
+#   3. Start:  docker compose -f docker-compose.standalone.yml up -d
+
+services:
+  smartmeter:
+    image: docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
+
+    # Uncomment the block below (and comment out the image: line above) to build
+    # locally from the repo instead of pulling the published image.
+    # Run docker compose from inside the smartmeter/ directory in that case.
+    #
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.standalone
+
+    restart: unless-stopped
+
+    volumes:
+      # Mount your edited config file (read-only).
+      - ./smartmeter-config.yaml:/config/smartmeter-config.yaml:ro
+
+    devices:
+      # Adjust the host path if your IR reader appears on a different device node
+      # (e.g. /dev/ttyUSB1, /dev/ttyAMA0, …).
+      - /dev/ttyUSB0:/dev/ttyUSB0
