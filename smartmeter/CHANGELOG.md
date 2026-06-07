@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.8.0) (2026-06-07)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.2...0.8.0)
+
+**Implemented enhancements:**
+
+- feat\(standalone\): supervisor-free Docker image for standalone operation \(\#101\) [\#104](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/104) ([r00tat](https://github.com/r00tat))
+
+**Merged pull requests:**
+
+- build\(deps\): bump the dependencies group with 3 updates [\#107](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/107) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump the dependencies group with 5 updates [\#106](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/106) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Ignore gurux-dlms in dependabot updates [\#105](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/105) ([r00tat](https://github.com/r00tat))
+
 ## [0.7.2](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.2) (2026-06-05)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.1...0.7.2)
