@@ -5,4 +5,4 @@ pycryptodomex~=3.23
 pyserial~=3.5
 PyYAML~=6.0
 lxml~=6.1
-beautifulsoup4~=4.14
+beautifulsoup4~=4.15
