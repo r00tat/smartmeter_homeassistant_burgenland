@@ -70,7 +70,7 @@ jobs:
           ref: main
 
       - name: "Build and publish ${{ matrix.arch }} image"
-        uses: home-assistant/builder/actions/build-image@2026.03.2
+        uses: home-assistant/builder/actions/build-image@2026.06.0
         with:
           arch: ${{ matrix.arch }}
           context: smartmeter
