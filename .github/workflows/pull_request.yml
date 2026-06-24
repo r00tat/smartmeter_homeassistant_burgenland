@@ -15,10 +15,10 @@ jobs:
       contents: read
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.3"
+        uses: "actions/checkout@v7.0.0"
 
       - name: "Set up Python"
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.13"
           cache: "pip"
@@ -64,7 +64,7 @@ jobs:
       contents: read
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.3"
+        uses: "actions/checkout@v7.0.0"
 
       - name: "Test build ${{ matrix.arch }} image"
         uses: home-assistant/builder/actions/build-image@2026.06.0
@@ -88,7 +88,7 @@ jobs:
       contents: read
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.3"
+        uses: "actions/checkout@v7.0.0"
 
       - name: "Set up QEMU"
         uses: docker/setup-qemu-action@v4
