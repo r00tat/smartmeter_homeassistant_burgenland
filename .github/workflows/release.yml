@@ -15,7 +15,7 @@ jobs:
       contents: write
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.3"
+        uses: "actions/checkout@v7.0.0"
 
       - name: "Adjust version number"
         shell: "bash"
@@ -65,7 +65,7 @@ jobs:
       contents: read
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.3"
+        uses: "actions/checkout@v7.0.0"
         with:
           ref: main
 
@@ -95,7 +95,7 @@ jobs:
       contents: read
     steps:
       - name: "Checkout the repository"
-        uses: "actions/checkout@v6.0.3"
+        uses: "actions/checkout@v7.0.0"
         with:
           ref: main
 
