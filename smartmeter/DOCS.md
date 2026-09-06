@@ -50,8 +50,10 @@ while `tls` is `false`):
 - `tls_insecure: true`: skip hostname/certificate verification (testing
   only).
 
-Certificate paths must be readable from within the add-on container (e.g.
-mounted via `share:ro` or `config:ro`).
+Certificate paths must be readable from within the add-on container. The
+add-on mounts the Home Assistant `share` folder read-only at `/share` and the
+Home Assistant configuration folder read-only at `/config`, so certificates
+placed in either directory can be referenced as `/share/...` or `/config/...`.
 
 ## Standalone (Docker / docker-compose)
 
