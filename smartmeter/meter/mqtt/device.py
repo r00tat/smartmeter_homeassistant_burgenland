@@ -106,46 +106,24 @@ class SmartMeterDevice(MqttClient):
         self.publish(f"{self.base_topic}/availability", "online")
 
     def migrate_old_sensors(self) -> None:
-        """Migrate sensors to a device."""
+        """Migrate the legacy single-component sensors to device discovery.
+
+        Home Assistant validates migration messages against a schema that
+        allows the ``migrate_discovery`` key and nothing else, so any extra
+        option in the payload makes it reject the whole message and log a
+        warning. Publish the bare flag to every legacy discovery topic.
+        """
         log.info("migrating old sensors")
+        migrate_payload = json.dumps({"migrate_discovery": True})
+
         self.publish(
             f"homeassistant/sensor/{self.device_id}/config",
-            json.dumps(
-                {
-                    "migrate_discovery": True,
-                    "device": self.mqtt_device,
-                    "state_topic": f"{self.base_topic}/state",
-                }
-            ),
-        )
-        self.publish(
-            f"homeassistant/sensor/{self.device_id}/config",
-            json.dumps(
-                {
-                    "migrate_discovery": True,
-                }
-            ),
+            migrate_payload,
         )
         for device in self.devices()[1:]:
             self.publish(
                 f"homeassistant/sensor/{self.device_id}_{device.get('unique_id')}/config",
-                json.dumps(
-                    {
-                        "migrate_discovery": True,
-                        "unique_id": device["unique_id"],
-                        "device": self.mqtt_device,
-                        "state_topic": f"{self.base_topic}/state",
-                        "value_template": device["value_template"],
-                    }
-                ),
-            )
-            self.publish(
-                f"homeassistant/sensor/{self.device_id}_{device.get('unique_id')}/config",
-                json.dumps(
-                    {
-                        "migrate_discovery": True,
-                    }
-                ),
+                migrate_payload,
             )
 
     def _spec_to_device(self, spec: SensorSpec) -> dict[str, Any]:

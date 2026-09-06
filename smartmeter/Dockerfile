@@ -1,3 +1,5 @@
+# Supervisor no longer reads build.yaml and stopped supplying BUILD_FROM by
+# default in 2026.04, so the base image is defined here and here only.
 ARG BUILD_FROM=ghcr.io/hassio-addons/base-python:stable
 FROM $BUILD_FROM
 

@@ -73,8 +73,14 @@ schema:
     key: "str" # hex key to decrypt message
     hdlc_frame_size: "int?"
 map:
-  - "share:ro"
-  - "config:ro"
+  # Supervisor deprecated the legacy string form and the "config" mapping type
+  # (2026.07). "homeassistant_config" defaults to /homeassistant, so pin the
+  # path to /config to keep existing certificate paths working.
+  - type: share
+    read_only: true
+  - type: homeassistant_config
+    read_only: true
+    path: /config
 devices:
   - /dev/ttyUSB0
   - /dev/ttyUSB1
