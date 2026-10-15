@@ -1,5 +1,5 @@
 -r requirements.txt
 jsonschema~=4.26
-mypy~=2.3
+mypy~=2.4
 pytest~=9.1
-ruff~=0.16.7
+ruff~=0.17.0
