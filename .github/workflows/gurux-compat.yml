@@ -1,0 +1,97 @@
+name: "gurux compatibility"
+
+# gurux-dlms changes behaviour even in patch releases (#98, #105) and the
+# add-on base image moves to new Python versions on its own (#128). Run the
+# whole test suite, including the gurux contract tests, on the Python versions
+# the images use, and check the newest gurux release as an early warning.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  pinned:
+    name: "Tests, pinned gurux, Python ${{ matrix.python-version }}"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.13: standalone image (python:3.13-slim)
+        # 3.15: Home Assistant add-on image (base-python:stable)
+        python-version: ["3.13", "3.15"]
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v7.0.1"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+          cache: "pip"
+
+      - name: "Install requirements"
+        run: |
+          python3 -m pip install uv &&
+          uv venv -p "$(command -v python3)" &&
+          source .venv/bin/activate &&
+          uv pip install -r smartmeter/requirements-dev.txt
+
+      - name: "Apply the same gurux fix-up as the Dockerfiles"
+        run: |
+          source .venv/bin/activate &&
+          python3 smartmeter/fix_source_encoding.py gurux_dlms gurux_common
+
+      - name: "Test"
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m pytest tests/ -v
+
+  latest-gurux:
+    name: "Contract tests, latest gurux (early warning)"
+    runs-on: "ubuntu-latest"
+    # Informational only: a failure means the next gurux upgrade needs work,
+    # not that this change is broken.
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v7.0.1"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.15"
+          allow-prereleases: true
+          cache: "pip"
+
+      - name: "Install requirements with the newest gurux release"
+        run: |
+          python3 -m pip install uv &&
+          uv venv -p "$(command -v python3)" &&
+          source .venv/bin/activate &&
+          uv pip install -r smartmeter/requirements-dev.txt &&
+          uv pip install --upgrade gurux-dlms gurux-common &&
+          uv pip show gurux-dlms gurux-common | grep -E "^(Name|Version)" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: "Apply the gurux fix-up"
+        run: |
+          source .venv/bin/activate &&
+          python3 smartmeter/fix_source_encoding.py gurux_dlms gurux_common
+
+      - name: "Contract tests"
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m pytest -v tests/test_gurux_contract.py tests/test_dlms_read.py tests/test_noe_pipeline.py tests/test_noe_reader.py tests/test_noe_obis.py
