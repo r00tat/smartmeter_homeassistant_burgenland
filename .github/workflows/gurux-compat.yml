@@ -60,9 +60,6 @@ jobs:
   latest-gurux:
     name: "Contract tests, latest gurux (early warning)"
     runs-on: "ubuntu-latest"
-    # Informational only: a failure means the next gurux upgrade needs work,
-    # not that this change is broken.
-    continue-on-error: true
     permissions:
       contents: read
     steps:
@@ -90,8 +87,31 @@ jobs:
           source .venv/bin/activate &&
           python3 smartmeter/fix_source_encoding.py gurux_dlms gurux_common
 
+      # Informational only: a failure means the next gurux upgrade needs work,
+      # not that this change is broken. The job stays green and reports a
+      # warning instead, so it does not show up as a failed check on PRs.
       - name: "Contract tests"
+        id: contract
+        continue-on-error: true
         run: |
           source .venv/bin/activate &&
           cd smartmeter &&
-          python3 -m pytest -v tests/test_gurux_contract.py tests/test_dlms_read.py tests/test_noe_pipeline.py tests/test_noe_reader.py tests/test_noe_obis.py
+          python3 -m pytest -v -rf tests/test_gurux_contract.py tests/test_dlms_read.py tests/test_noe_pipeline.py tests/test_noe_reader.py tests/test_noe_obis.py 2>&1 | tee ../pytest.log
+          exit "${PIPESTATUS[0]}"
+
+      - name: "Report result"
+        if: always()
+        env:
+          OUTCOME: ${{ steps.contract.outcome }}
+        run: |
+          if [ "$OUTCOME" = "success" ]; then
+            echo "Newest gurux release passes all contract tests." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=gurux upgrade::Newest gurux release fails contract tests, see job summary"
+            {
+              echo "### Newest gurux release fails contract tests"
+              echo '```'
+              grep -E "^(FAILED|ERROR)" pytest.log || tail -n 20 pytest.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
