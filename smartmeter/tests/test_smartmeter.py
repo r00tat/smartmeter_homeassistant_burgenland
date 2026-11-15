@@ -62,3 +62,9 @@ def test_setup_does_not_open_serial_port() -> None:
 def test_profile_lookup_matches_registry() -> None:
     # Sanity: noe_evn profile is known.
     assert get_profile("noe_evn").name == "noe_evn"
+
+
+
+def test_setup_keeps_publish_interval_for_burgenland() -> None:
+    meter, _, _ = _make_meter(dict(_BASE_CFG))
+    assert meter.publish_interval == 6

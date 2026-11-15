@@ -8,10 +8,8 @@ import yaml
 
 from .config_validation import DEFAULT_METER_TYPE, validate_config
 from .mqtt.device import SmartMeterDevice
-from .noe.read import NoeMeterReader
-from .profile import get_profile
+from .profile import MeterReaderLike, get_profile
 from .reader_factory import build_reader
-from .serial.read import MeterReader
 
 log = logging.getLogger("meter.smartmeter")
 
@@ -29,7 +27,7 @@ class SmartMqttMeter:
     def __init__(self, config: dict) -> None:
         validate_config(config)
         self.config = config
-        self.reader: MeterReader | NoeMeterReader | None = None
+        self.reader: MeterReaderLike | None = None
         self.mqtt: SmartMeterDevice | None = None
         self.reader_thread: threading.Thread | None = None
         self.mqtt_thread: threading.Thread | None = None
@@ -62,13 +60,15 @@ class SmartMqttMeter:
         mqtt_config = self.config.get("mqtt", {})
         log.info("mqtt config: \n%s", yaml.safe_dump(_redact(mqtt_config)))
         self.mqtt = SmartMeterDevice(mqtt_config, profile=profile)
-        # we get data every 5 seconds, so we publish every 6th time (30s)
-        # unless configured otherwise
-        self.publish_interval = int(mqtt_config.get("publish_interval", 30) / 5)
+        # The meter pushes a telegram every ``profile.push_interval_seconds``
+        # (e.g. every 5s for Burgenland/NÖ); publish only every n-th one so
+        # MQTT sees a value roughly every ``publish_interval`` seconds.
+        publish_seconds = mqtt_config.get("publish_interval", 30)
+        self.publish_interval = profile.readings_per_publish(publish_seconds)
         log.info(
             "publishing every %d readings and every %d seconds",
             self.publish_interval,
-            mqtt_config.get("publish_interval", 30),
+            publish_seconds,
         )
 
         log.info("setup complete")

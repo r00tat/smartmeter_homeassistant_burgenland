@@ -18,6 +18,8 @@ mqtt:
 
 dlms:
   port: "/dev/ttyUSB0"
+  # Serial settings default to the selected meter_type; only set them to
+  # override (burgenland: 9600 8N1, noe_evn: 2400 8E1).
   # baudrate: 9600
   # bytesize: 8
   # parity: "NONE"
