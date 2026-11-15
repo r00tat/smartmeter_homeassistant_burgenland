@@ -1,4 +1,4 @@
-ARG BUILD_FROM=python:3.13-slim
+ARG BUILD_FROM=python:3.15-slim
 FROM $BUILD_FROM
 
 ENV LANG=C.UTF-8
