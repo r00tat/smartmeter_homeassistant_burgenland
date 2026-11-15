@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.8.1) (2026-11-15)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.8.0...0.8.1)
+
+**Merged pull requests:**
+
+- fix: gurux-dlms on Python 3.15, gurux contract tests, CI on 3.15 \(\#128\) [\#130](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/130) ([r00tat](https://github.com/r00tat))
+
 ## [0.8.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.8.0) (2026-11-15)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.2...0.8.0)
