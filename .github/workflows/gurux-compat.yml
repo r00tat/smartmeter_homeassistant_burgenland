@@ -1,9 +1,10 @@
-name: "gurux compatibility"
+name: "Tests and gurux compatibility"
 
 # gurux-dlms changes behaviour even in patch releases (#98, #105) and the
 # add-on base image moves to new Python versions on its own (#128). Run the
 # whole test suite, including the gurux contract tests, on the Python versions
-# the images use, and check the newest gurux release as an early warning.
+# the images use, check the newest gurux release as an early warning, and
+# lint/type check, also on pushes to main (the PR workflow only runs on PRs).
 
 on:
   pull_request:
@@ -17,6 +18,39 @@ on:
 permissions: {}
 
 jobs:
+  lint:
+    name: "Lint and type check"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v7.0.1"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: "Install requirements"
+        run: |
+          python3 -m pip install uv &&
+          uv venv -p "$(command -v python3)" &&
+          source .venv/bin/activate &&
+          uv pip install -r smartmeter/requirements-dev.txt
+
+      - name: "Lint"
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m ruff check
+
+      - name: "Type check"
+        run: |
+          source .venv/bin/activate &&
+          python3 -m mypy --config-file mypy.ini
+
   pinned:
     name: "Tests, pinned gurux, Python ${{ matrix.python-version }}"
     runs-on: "ubuntu-latest"
