@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import serial
 import logging
-import struct
 from time import monotonic, sleep
 from collections.abc import Callable
 
-from gurux_dlms import GXDLMSException
 
 from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from ..bgld.data import MeterData
@@ -21,14 +19,11 @@ OPTICAL_IDLE_GAP_SECONDS = 0.2
 OPTICAL_MAX_FRAME_SECONDS = 3.0
 OPTICAL_POLL_SECONDS = 0.02
 
-PARSE_ERRORS = (
-    serial.SerialException,
-    ValueError,
-    struct.error,
-    UnicodeDecodeError,
-    IndexError,
-    GXDLMSException,
-)
+# gurux reports some decoding problems with a bare ``Exception`` (e.g. a
+# corrupted telegram on the optical head raises ``Exception("Wrong CRC.")``),
+# so a single garbled telegram must not be allowed to end the reader thread.
+# Repeated failures still abort after MAX_CONSECUTIVE_FAILURES.
+PARSE_ERRORS: tuple[type[Exception], ...] = (Exception,)
 
 log = logging.getLogger("meter.serial.read")
 

@@ -1,0 +1,152 @@
+name: "Tests and gurux compatibility"
+
+# gurux-dlms changes behaviour even in patch releases (#98, #105) and the
+# add-on base image moves to new Python versions on its own (#128). Run the
+# whole test suite, including the gurux contract tests, on the Python versions
+# the images use, check the newest gurux release as an early warning, and
+# lint/type check, also on pushes to main (the PR workflow only runs on PRs).
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  lint:
+    name: "Lint and type check"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v7.0.1"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.15"
+          cache: "pip"
+
+      - name: "Install requirements"
+        run: |
+          python3 -m pip install uv &&
+          uv venv -p "$(command -v python3)" &&
+          source .venv/bin/activate &&
+          uv pip install -r smartmeter/requirements-dev.txt
+
+      - name: "Lint"
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m ruff check
+
+      - name: "Type check"
+        run: |
+          source .venv/bin/activate &&
+          python3 -m mypy --config-file mypy.ini
+
+  pinned:
+    name: "Tests, pinned gurux, Python ${{ matrix.python-version }}"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both images run Python 3.15: the Home Assistant add-on
+        # (base-python:stable) and the standalone image (python:3.15-slim).
+        # Add a version here when an image moves to a new Python.
+        python-version: ["3.15"]
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v7.0.1"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+          cache: "pip"
+
+      - name: "Install requirements"
+        run: |
+          python3 -m pip install uv &&
+          uv venv -p "$(command -v python3)" &&
+          source .venv/bin/activate &&
+          uv pip install -r smartmeter/requirements-dev.txt
+
+      - name: "Apply the same gurux fix-up as the Dockerfiles"
+        run: |
+          source .venv/bin/activate &&
+          python3 smartmeter/fix_source_encoding.py gurux_dlms gurux_common
+
+      - name: "Test"
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m pytest tests/ -v
+
+  latest-gurux:
+    name: "Contract tests, latest gurux (early warning)"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v7.0.1"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.15"
+          allow-prereleases: true
+          cache: "pip"
+
+      - name: "Install requirements with the newest gurux release"
+        run: |
+          python3 -m pip install uv &&
+          uv venv -p "$(command -v python3)" &&
+          source .venv/bin/activate &&
+          uv pip install -r smartmeter/requirements-dev.txt &&
+          uv pip install --upgrade gurux-dlms gurux-common &&
+          uv pip show gurux-dlms gurux-common | grep -E "^(Name|Version)" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: "Apply the gurux fix-up"
+        run: |
+          source .venv/bin/activate &&
+          python3 smartmeter/fix_source_encoding.py gurux_dlms gurux_common
+
+      # Informational only: a failure means the next gurux upgrade needs work,
+      # not that this change is broken. The job stays green and reports a
+      # warning instead, so it does not show up as a failed check on PRs.
+      - name: "Contract tests"
+        id: contract
+        continue-on-error: true
+        run: |
+          source .venv/bin/activate &&
+          cd smartmeter &&
+          python3 -m pytest -v -rf tests/test_gurux_contract.py tests/test_dlms_read.py tests/test_noe_pipeline.py tests/test_noe_reader.py tests/test_noe_obis.py 2>&1 | tee ../pytest.log
+          exit "${PIPESTATUS[0]}"
+
+      - name: "Report result"
+        if: always()
+        env:
+          OUTCOME: ${{ steps.contract.outcome }}
+        run: |
+          if [ "$OUTCOME" = "success" ]; then
+            echo "Newest gurux release passes all contract tests." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=gurux upgrade::Newest gurux release fails contract tests, see job summary"
+            {
+              echo "### Newest gurux release fails contract tests"
+              echo '```'
+              grep -E "^(FAILED|ERROR)" pytest.log || tail -n 20 pytest.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

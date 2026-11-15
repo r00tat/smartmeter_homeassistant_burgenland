@@ -1,14 +1,18 @@
-ARG BUILD_FROM=python:3.13-slim
+ARG BUILD_FROM=python:3.15-slim
 FROM $BUILD_FROM
 
 ENV LANG=C.UTF-8
 
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt fix_source_encoding.py ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python3 fix_source_encoding.py gurux_dlms gurux_common
 
 COPY meter ./meter/
+# fail the build (and the PR test build) if the app cannot even be imported,
+# e.g. a dependency that is incompatible with the base image's Python (#128)
+RUN python3 -c "import meter.smartmeter"
 COPY config.yaml ./
 COPY --chmod=755 standalone-entrypoint.sh ./
 
