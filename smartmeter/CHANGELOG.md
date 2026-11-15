@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.8.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.8.0) (2026-11-15)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.2...0.8.0)
+
+**Fixed bugs:**
+
+- EVN Parity [\#97](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/97)
+
+**Closed issues:**
+
+- smartmeter\_homeassistant\_burgenland - 0.7.1 - standalone docker [\#101](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/101)
+
+**Merged pull requests:**
+
+- fix\(serial\): assemble optical telegrams by line idle gap \(\#128\) [\#129](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/129) ([r00tat](https://github.com/r00tat))
+- build\(deps\): bump the dependencies group with 2 updates [\#127](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/127) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump the dependencies group with 2 updates [\#126](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/126) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump actions/setup-python from 7.0.0 to 7.1.0 in the dependencies group [\#125](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/125) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update ruff requirement from ~=0.17.0 to ~=0.17.1 in the dependencies group [\#124](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/124) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump the dependencies group across 1 directory with 3 updates [\#123](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/123) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump home-assistant/builder from 2026.06.0 to 2026.09.0 in the dependencies group [\#120](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/120) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update ruff requirement from ~=0.16.6 to ~=0.16.7 in the dependencies group [\#119](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/119) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update ruff requirement from ~=0.15.21 to ~=0.16.6 in the dependencies group [\#118](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/118) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fix: align add-on with Home Assistant 2026.09 / current Supervisor [\#117](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/117) ([r00tat](https://github.com/r00tat))
+- build\(deps\): bump the dependencies group with 2 updates [\#116](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/116) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump the dependencies group with 2 updates [\#115](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/115) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update mypy requirement from ~=2.1 to ~=2.2 in the dependencies group [\#114](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/114) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update ruff requirement from ~=0.15.19 to ~=0.15.20 in the dependencies group [\#113](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/113) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): update ruff requirement from ~=0.15.17 to ~=0.15.19 in the dependencies group [\#112](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/112) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump the dependencies group with 2 updates [\#111](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/111) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps-dev\): bump the dependencies group with 2 updates [\#110](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/110) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump home-assistant/builder from 2026.03.2 to 2026.06.0 in the dependencies group [\#109](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/109) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): update beautifulsoup4 requirement from ~=4.14 to ~=4.15 in the dependencies group [\#108](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/108) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump the dependencies group with 3 updates [\#107](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/107) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump the dependencies group with 5 updates [\#106](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/106) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Dependabot: gurux-dlms Updates ignorieren [\#105](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/105) ([r00tat](https://github.com/r00tat))
+- feat\(standalone\): supervisor-free Docker image for standalone operation \(\#101\) [\#104](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/104) ([r00tat](https://github.com/r00tat))
+
 ## [0.7.2](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.7.2) (2026-06-05)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.7.1...0.7.2)
