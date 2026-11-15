@@ -10,6 +10,8 @@ Supported meters (select via `meter_type`):
   via DLMS/HDLC at 9600 baud.
 - `noe_evn` — Netz Niederösterreich / EVN Sagemcom T210-D via DLMS over
   M-Bus framing at 2400 baud (8E1).
+- `wien` — Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550,
+  Landis+Gyr E450) via DLMS/HDLC on the infrared interface at 9600 baud.
 
 It has been tested with a Raspberry Pi Zero 2 W as a standalone device
 and with a Raspberry Pi 4 as Home Assistant Addon.
@@ -153,6 +155,41 @@ angles — the T210-D does not publish them).
 
 Further reading: [Netz NÖ Kundenschnittstelle Lastenheft (PDF)](https://www.netz-noe.at/Download-(1)/Smart-Meter/218_9_SmartMeter_Kundenschnittstelle_Lastenheft2-0.aspx),
 [greenMikeEU/SmartMeterEVN](https://github.com/greenMikeEU/SmartMeterEVN).
+
+#### Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550, Landis+Gyr E450)
+
+Wiener Netze meters push a DLMS/COSEM data-notification **every second** on
+the infrared customer interface at **9600 baud, 8N1**, in a single HDLC
+frame (`7E A0 …`) with `general-glo-ciphering` (encryption only,
+AES-128-GCM without authentication tag) — the same transport as the
+Burgenland E450, so the same reader is used.
+
+The decrypted notification carries no OBIS codes, units or scalers, only a
+structure in a fixed order: an optional 16-character serial number (not
+sent by every meter), the timestamp, then `+A`, `−A`, `+R`, `−R` (Wh/varh)
+and `+P`, `−P`, `+Q`, `−Q` (W/var). There are no voltages or currents.
+
+Activate the customer interface and copy the AES key in the
+[Wiener Netze Smart Meter portal](https://smartmeter-web.wienernetze.at/),
+then set `meter_type: wien`.
+
+Further reading: [Wiener Netze Kundenschnittstelle](https://www.wienernetze.at/smart-meter-kundenschnittstelle),
+[bernikr/esphome-wienernetze-smartmeter](https://github.com/bernikr/esphome-wienernetze-smartmeter),
+[tofuSCHNITZEL/wiener-netze-smartmeter-serial](https://github.com/tofuSCHNITZEL/wiener-netze-smartmeter-serial).
+
+#### Adding another meter
+
+Everything that is specific to a meter's customer interface lives in its
+profile in `smartmeter/meter/profile.py`: serial defaults, push interval,
+which reader handles the line, how a decoded telegram becomes a
+`MeterData` object, and the Home Assistant metadata and sensors.
+`MeterProfile` is the abstract base class; `HdlcDlmsProfile` (DLMS in HDLC
+frames, e.g. Burgenland and Wien) and `MBusDlmsProfile` (DLMS in M-Bus
+frames, Netz NÖ) implement `create_reader`. A meter that reuses one of
+these interfaces only needs a new profile instance, a `MeterData`
+subclass of `BaseMeterData` and a sensor catalog. Register the name in
+`config.yaml` and `config.schema.json` too; a test checks that the lists
+match.
 
 #### Landis+Gyr E450
 

@@ -61,7 +61,7 @@ class SmartMqttMeter:
         log.info("mqtt config: \n%s", yaml.safe_dump(_redact(mqtt_config)))
         self.mqtt = SmartMeterDevice(mqtt_config, profile=profile)
         # The meter pushes a telegram every ``profile.push_interval_seconds``
-        # (e.g. every 5s for Burgenland/NÖ); publish only every n-th one so
+        # (5s for Burgenland/NÖ, 1s for Wien); publish only every n-th one so
         # MQTT sees a value roughly every ``publish_interval`` seconds.
         publish_seconds = mqtt_config.get("publish_interval", 30)
         self.publish_interval = profile.readings_per_publish(publish_seconds)

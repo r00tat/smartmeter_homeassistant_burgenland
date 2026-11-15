@@ -38,13 +38,13 @@ options:
     tls_insecure: false
   # baudrate, bytesize, parity and stopbits are intentionally not set here:
   # left empty, the selected meter_type supplies the right serial settings
-  # (e.g. 9600 8N1 for burgenland, 2400 8E1 for noe_evn).
+  # (e.g. 9600 8N1 for burgenland/wien, 2400 8E1 for noe_evn).
   dlms:
     port: "/dev/ttyUSB0"
     key: "" # hex key to decrypt message
     hdlc_frame_size: 120
 schema:
-  meter_type: list(burgenland|noe_evn)?
+  meter_type: list(burgenland|noe_evn|wien)?
   interface_type: list(OPTICAL|PHYSICAL)?
   logging: list(INFO|WARNING|ERROR|CRITICAL|DEBUG)?
   mqtt:

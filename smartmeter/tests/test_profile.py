@@ -12,6 +12,7 @@ from meter.config_validation import VALID_METER_TYPES
 from meter.noe.read import NoeMeterReader
 from meter.profile import HdlcDlmsProfile, MeterProfile, get_profile, known_meter_types
 from meter.serial.read import MeterReader as HdlcMeterReader
+from meter.wien.data import MeterData as WienMeterData
 
 
 def test_burgenland_profile_uses_landis_gyr_metadata() -> None:
@@ -62,6 +63,17 @@ def test_base_profile_cannot_be_instantiated() -> None:
         )
 
 
+def test_wien_profile_metadata() -> None:
+    profile = get_profile("wien")
+    assert isinstance(profile, HdlcDlmsProfile)
+    assert profile.data_factory is WienMeterData
+    assert profile.default_baudrate == 9600
+    assert profile.push_interval_seconds == 1.0
+    suffixes = {s.suffix for s in profile.sensor_specs}
+    assert "_reactive_power_consumed" in suffixes
+    assert "_voltage_l1" not in suffixes
+
+
 def test_burgenland_profile_decodes_into_bgld_meter_data() -> None:
     profile = get_profile("burgenland")
     assert isinstance(profile, HdlcDlmsProfile)
@@ -72,6 +84,7 @@ def test_burgenland_profile_decodes_into_bgld_meter_data() -> None:
     ("meter_type", "expected"),
     [
         ("burgenland", (9600, 8, serial.PARITY_NONE, 1)),
+        ("wien", (9600, 8, serial.PARITY_NONE, 1)),
         ("noe_evn", (2400, 8, serial.PARITY_EVEN, 1)),
     ],
 )
@@ -108,6 +121,7 @@ def test_parity_names_are_normalised(parity: str) -> None:
     [
         ("burgenland", 30, 6),
         ("noe_evn", 30, 6),
+        ("wien", 30, 30),
         ("burgenland", 1, 1),
         ("burgenland", 7, 2),
     ],
@@ -120,6 +134,7 @@ def test_readings_per_publish(meter_type: str, publish_seconds: int, expected: i
     ("meter_type", "reader_type"),
     [
         ("burgenland", HdlcMeterReader),
+        ("wien", HdlcMeterReader),
         ("noe_evn", NoeMeterReader),
     ],
 )

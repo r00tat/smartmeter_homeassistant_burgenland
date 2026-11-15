@@ -32,6 +32,8 @@ from .mqtt.sensor_spec import SensorSpec
 from .noe.read import NoeMeterReader
 from .noe.sensors import SENSOR_SPECS as NOE_SENSORS
 from .serial.read import MeterReader as HdlcMeterReader
+from .wien.data import MeterData as WienMeterData
+from .wien.sensors import SENSOR_SPECS as WIEN_SENSORS
 
 DEFAULT_METER_TYPE = "burgenland"
 
@@ -189,6 +191,17 @@ _PROFILES: dict[str, MeterProfile] = {
             default_baudrate=2400,
             default_parity=serial.PARITY_EVEN,
             push_interval_seconds=5.0,
+        ),
+        HdlcDlmsProfile(
+            name="wien",
+            # Wiener Netze installs meters from several vendors (Siemens,
+            # Iskraemeco, Landis+Gyr); they all share one notification layout.
+            manufacturer="Wiener Netze",
+            model="IM350 / AM550 / E450",
+            sensor_specs=WIEN_SENSORS,
+            default_baudrate=9600,
+            push_interval_seconds=1.0,
+            data_factory=WienMeterData,
         ),
     )
 }
