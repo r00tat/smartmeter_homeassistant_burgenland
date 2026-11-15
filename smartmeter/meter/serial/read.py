@@ -2,7 +2,7 @@
 import serial
 import logging
 import struct
-from time import sleep
+from time import monotonic, sleep
 from collections.abc import Callable
 
 from gurux_dlms import GXDLMSException
@@ -12,6 +12,14 @@ from ..bgld.data import MeterData
 
 MAX_CONSECUTIVE_FAILURES = 10
 DEFAULT_SERIAL_TIMEOUT = 1.0
+# The optical interface pushes one telegram every few seconds and is silent
+# in between. A telegram is complete once no further byte arrived for this
+# long (at 9600 baud a byte takes ~1 ms, USB-serial adapters add <=16 ms).
+OPTICAL_IDLE_GAP_SECONDS = 0.2
+# Upper bound for collecting one telegram, so a constantly chattering line
+# cannot keep the reader from ever handing data to the parser.
+OPTICAL_MAX_FRAME_SECONDS = 3.0
+OPTICAL_POLL_SECONDS = 0.02
 
 PARSE_ERRORS = (
     serial.SerialException,
@@ -96,17 +104,46 @@ class MeterReader:
             self.ser.close()
 
     def _read_frame(self, min_size: int) -> bytes:
-        """Read at least ``min_size`` bytes (or a single byte for optical)."""
-        received_data = self.ser.read()
+        """Read at least ``min_size`` bytes (or one complete telegram for optical)."""
         if min_size <= 1:
+            return self._read_optical_frame()
+        received_data = self.ser.read()
+        while len(received_data) < min_size:
             sleep(0.5)
             data_left = self.ser.inWaiting()
             received_data += self.ser.read(data_left)
-        else:
-            while len(received_data) < min_size:
-                sleep(0.5)
-                data_left = self.ser.inWaiting()
+        return received_data
+
+    def _read_optical_frame(self) -> bytes:
+        """Collect one telegram from the optical interface.
+
+        Wait (up to the serial timeout) for the first byte, then keep reading
+        until the line has been idle for ``OPTICAL_IDLE_GAP_SECONDS``.
+        A fixed sleep after the first byte is not enough: since the serial
+        port uses a read timeout, the loop runs on its own rhythm and a
+        telegram that starts during the sleep was cut in two and silently
+        dropped, losing most readings (#128).
+        """
+        received_data = self.ser.read()
+        if not received_data:
+            return b""
+        started = last_byte = monotonic()
+        while self.should_run:
+            sleep(OPTICAL_POLL_SECONDS)
+            now = monotonic()
+            data_left = self.ser.inWaiting()
+            if data_left:
                 received_data += self.ser.read(data_left)
+                last_byte = now
+            elif now - last_byte >= OPTICAL_IDLE_GAP_SECONDS:
+                break
+            if now - started >= OPTICAL_MAX_FRAME_SECONDS:
+                log.warning(
+                    "optical telegram exceeded %.1fs, parsing %d bytes received so far",
+                    OPTICAL_MAX_FRAME_SECONDS,
+                    len(received_data),
+                )
+                break
         return received_data
 
     def _handle_optical_frame(self, received_data: bytes) -> None:
@@ -133,6 +170,9 @@ class MeterReader:
         failures = 0
         while self.should_run:
             received_data = self._read_frame(frame_size)
+            if not received_data:
+                # serial read timeout without data, nothing to parse
+                continue
             log.debug("received: %s", received_data)
             try:
                 handler(received_data)
