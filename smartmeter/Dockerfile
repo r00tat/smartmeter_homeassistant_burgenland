@@ -7,11 +7,15 @@ ENV LANG=C.UTF-8
 
 WORKDIR /app
 
-COPY requirements.txt ./
+COPY requirements.txt fix_source_encoding.py ./
 RUN apk add --no-cache libxml2 libxslt && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    python3 fix_source_encoding.py gurux_dlms gurux_common
 
 COPY run.sh config.yaml ./
 COPY meter ./meter/
+# fail the build (and the PR test build) if the app cannot even be imported,
+# e.g. a dependency that is incompatible with the base image's Python (#128)
+RUN python3 -c "import meter.smartmeter"
 
 CMD [ "/app/run.sh" ]
