@@ -95,7 +95,7 @@ SENSOR_SPECS: tuple[SensorSpec, ...] = (
         enabled_by_default=False,
     ),
     SensorSpec(
-        name="Angle between voltage L2 to current L3",
+        name="Angle between voltage L2 to current L2",
         suffix="_angle_l2",
         value_template="{{ value_json.angle2 }}",
         unit_of_measurement="°",
