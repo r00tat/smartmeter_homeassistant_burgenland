@@ -203,15 +203,17 @@ class MeterReader:
     def start(self):
         """Start the read process"""
         self.is_running = True
-        self.connect()
-
-        if self.is_optical_interface:
-            self.optical_loop()
-        else:
-            self.physical_loop()
-
-        self.is_running = False
-        self.disconnect()
+        try:
+            self.connect()
+            if self.is_optical_interface:
+                self.optical_loop()
+            else:
+                self.physical_loop()
+        finally:
+            # Also on errors: a reader that is restarted in the same process
+            # (Home Assistant integration) must not find its own port busy.
+            self.is_running = False
+            self.disconnect()
 
     def stop(self):
         """Stop the read process"""

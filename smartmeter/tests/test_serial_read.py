@@ -157,3 +157,31 @@ def test_endless_stream_is_cut_after_max_frame_time(clock: FakeClock) -> None:
 
     assert 0 < len(data) < 1000
     assert clock.now - 0.1 <= serial_read.OPTICAL_MAX_FRAME_SECONDS + 0.1
+
+
+class ClosableSerial:
+    def __init__(self) -> None:
+        self.closed = False
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_start_closes_port_when_loop_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    reader = MeterReader(key="00" * 16, interface_type="OPTICAL")
+    port = ClosableSerial()
+
+    def connect() -> None:
+        reader.ser = port  # type: ignore[assignment]
+
+    def failing_loop() -> None:
+        raise RuntimeError("too many parse failures")
+
+    monkeypatch.setattr(reader, "connect", connect)
+    monkeypatch.setattr(reader, "optical_loop", failing_loop)
+
+    with pytest.raises(RuntimeError, match="parse failures"):
+        reader.start()
+
+    assert port.closed
+    assert reader.is_running is False
