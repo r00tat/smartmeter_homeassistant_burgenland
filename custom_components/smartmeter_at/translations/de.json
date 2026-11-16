@@ -1,0 +1,61 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Meter",
+        "description": "Verbinde den IR-Lesekopf mit dem Zähler und mit diesem Home-Assistant-Host. Stoppe vorher das Smartmeter-Add-on, falls es denselben Port verwendet.",
+        "data": {
+          "meter_type": "Netzbetreiber / Zähler",
+          "port": "Serieller Port",
+          "key": "Schlüssel der Kundenschnittstelle",
+          "interface_type": "Schnittstelle"
+        },
+        "data_description": {
+          "key": "32 Hex-Zeichen, die du von deinem Netzbetreiber bekommst.",
+          "interface_type": "Nur für Burgenland und Wien relevant. NÖ nutzt immer die M-Bus-Schnittstelle."
+        }
+      }
+    },
+    "error": {
+      "invalid_key": "Der Schlüssel muss genau 32 Hex-Zeichen lang sein.",
+      "cannot_connect": "Der serielle Port kann nicht geöffnet werden.",
+      "no_data": "Kein gültiges Telegramm empfangen. Prüfe Schlüssel, Zählertyp, Position des Lesekopfs und ob die Kundenschnittstelle aktiviert ist.",
+      "unknown": "Unerwarteter Fehler, siehe Log."
+    },
+    "abort": {
+      "already_configured": "Dieser Zähler ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "update_interval": "Aktualisierungsintervall"
+        },
+        "data_description": {
+          "update_interval": "Sekunden zwischen zwei Aktualisierungen. Der Zähler sendet alle 1–5 Sekunden; kleinere Werte schreiben mehr in die Datenbank."
+        }
+      }
+    }
+  },
+  "selector": {
+    "meter_type": {
+      "options": {
+        "burgenland": "Netz Burgenland (Landis+Gyr E450)",
+        "noe_evn": "Netz NÖ / EVN (Sagemcom T210-D)",
+        "wien": "Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550, Landis+Gyr E450)",
+        "steiermark": "Energienetze Steiermark (Landis+Gyr E450, M-Bus)",
+        "steiermark_sagemcom": "Energienetze Steiermark (Sagemcom, DSMR P1)",
+        "salzburg": "Salzburg Netz (Kaifa/Honeywell MA309M)",
+        "tirol": "TINETZ Tirol (Kaifa/Honeywell MA110M/MA309M)",
+        "h1": "Smart Meter 2.0 H1-Schnittstelle (DSMR P1)"
+      }
+    },
+    "interface_type": {
+      "options": {
+        "optical": "Optisch (IR-Lesekopf)",
+        "physical": "Kabelgebunden"
+      }
+    }
+  }
+}
