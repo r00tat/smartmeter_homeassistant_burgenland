@@ -2,6 +2,8 @@
 
 This python program connects your Austrian Smart Meter to Home Assistant
 via MQTT.
+Alternatively, the [Home Assistant integration (HACS)](#home-assistant-integration-hacs)
+reads the meter directly, without MQTT broker and add-on.
 
 Supported meters (select via `meter_type`):
 
@@ -120,6 +122,31 @@ docker run -d --restart unless-stopped \
 ```
 
 Adjust `/dev/ttyUSB0` if your IR reader appears on a different device node.
+
+### Home Assistant integration (HACS)
+
+Reads the meter directly in Home Assistant: no MQTT broker and no add-on
+needed, and it also works with Home Assistant Container and Core (no
+Supervisor). The meter's customer interface (IR reading head, M-Bus or P1
+adapter) must be connected to the Home Assistant host.
+
+1. Request the activation of the customer interface (see above).
+2. In HACS: ⋮ → Custom repositories → add
+   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`, category
+   *Integration*.
+3. Install *Smartmeter Austria* and restart Home Assistant.
+4. Settings → Devices & services → Add integration → *Smartmeter Austria*.
+5. Select grid operator, serial port and enter the key. The integration reads
+   one telegram before it saves the entry, so a wrong key or port shows up
+   right away.
+
+Use either the add-on or the integration for a meter, never both: only one of
+them can open the serial port. When you switch from the add-on, the
+integration creates new entities; the energy dashboard has to be pointed to
+the new *Total Energy consumed/provided* sensors.
+
+The update interval (default 10 s) is set under the integration's
+*Configure* button.
 
 ### Standalone (systemd / uv)
 
