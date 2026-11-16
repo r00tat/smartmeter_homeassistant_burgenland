@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.0b1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.9.0b1) (2026-11-16)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.9.0...0.9.0b1)
+
+## [0.9.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.9.0) (2026-11-16)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.8.1...0.9.0)
+
+**Fixed bugs:**
+
+- Abfrageintervall unregelmäßig [\#128](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/128)
+
+**Merged pull requests:**
+
+- feat: Home Assistant custom integration \(smartmeter\_at, HACS\) [\#133](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/133) ([r00tat](https://github.com/r00tat))
+- feat: Steiermark, Salzburg, Tirol and Smart Meter 2.0 H1 profiles [\#132](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/132) ([r00tat](https://github.com/r00tat))
+- Meter profile base class + Wiener Netze support [\#131](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/131) ([r00tat](https://github.com/r00tat))
+
 ## [0.8.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.8.1) (2026-11-15)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.8.0...0.8.1)
