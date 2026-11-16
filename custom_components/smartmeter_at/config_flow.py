@@ -210,17 +210,7 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
         if len(self._addon_devices) > 1:
             fields[
                 vol.Required(CONF_ADDON_DEVICE, default=self._addon_devices[0].device_id)
-            ] = SelectSelector(
-                SelectSelectorConfig(
-                    options=[
-                        SelectOptionDict(
-                            value=device.device_id,
-                            label=f"{device.name} ({len(device.entities)})",
-                        )
-                        for device in self._addon_devices
-                    ]
-                )
-            )
+            ] = _addon_device_selector(self._addon_devices)
         first = self._addon_devices[0]
         return self.async_show_form(
             step_id="migrate",
@@ -245,21 +235,65 @@ class SmartMeterOptionsFlow(OptionsFlow):
     """Options flow for the update interval."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        addon_devices = await self._async_addon_devices()
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(
-                data={CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL])}
-            )
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): NumberSelector(
-                    NumberSelectorConfig(
-                        min=1, max=3600, step=1, unit_of_measurement="s",
-                        mode=NumberSelectorMode.BOX,
-                    )
-                )
+            options: dict[str, Any] = {
+                CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL])
             }
-        )
+            if addon_devices and user_input.get(CONF_MIGRATE):
+                devices = {device.device_id: device for device in addon_devices}
+                device = devices[user_input.get(CONF_ADDON_DEVICE, addon_devices[0].device_id)]
+                if async_addon_active(self.hass, device):
+                    errors["base"] = "addon_running"
+                else:
+                    # Picked up by async_setup_entry on the reload that saving
+                    # the options triggers, then dropped again.
+                    options[CONF_ADDON_DEVICE] = device.device_id
+            if not errors:
+                return self.async_create_entry(data=options)
+
+        fields: dict[Any, Any] = {
+            vol.Required(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): NumberSelector(
+                NumberSelectorConfig(
+                    min=1, max=3600, step=1, unit_of_measurement="s",
+                    mode=NumberSelectorMode.BOX,
+                )
+            )
+        }
+        if addon_devices:
+            fields[vol.Required(CONF_MIGRATE, default=False)] = BooleanSelector()
+            fields[
+                vol.Required(CONF_ADDON_DEVICE, default=addon_devices[0].device_id)
+            ] = _addon_device_selector(addon_devices)
+        schema = vol.Schema(fields)
         return self.async_show_form(
             step_id="init",
-            data_schema=self.add_suggested_values_to_schema(schema, self.config_entry.options),
+            data_schema=self.add_suggested_values_to_schema(
+                schema, user_input or self.config_entry.options
+            ),
+            errors=errors,
         )
+
+    async def _async_addon_devices(self) -> list[AddonDevice]:
+        """Add-on MQTT devices whose sensors match this entry's meter."""
+        try:
+            core = await async_load_core(self.hass)
+        except HomeAssistantError:
+            return []
+        profile = core.profile.get_profile(self.config_entry.data[CONF_METER_TYPE])
+        return async_find_addon_devices(self.hass, sensor_suffixes(profile))
+
+
+def _addon_device_selector(devices: list[AddonDevice]) -> SelectSelector:
+    """Select an add-on device, labelled with its name and matching sensor count."""
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=[
+                SelectOptionDict(
+                    value=device.device_id, label=f"{device.name} ({len(device.entities)})"
+                )
+                for device in devices
+            ]
+        )
+    )

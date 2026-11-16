@@ -19,13 +19,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartMeterConfigEntry) -
     coordinator = SmartMeterCoordinator(hass, entry, core)
     entry.runtime_data = coordinator
 
-    if addon_device := entry.data.get(CONF_ADDON_DEVICE):
-        # One-off, before the sensors exist: they must be registered under the
-        # add-on's entity ids. Updating the data does not reload the entry,
-        # the update listener is only added below.
+    # Take over the add-on's sensors: requested by the config flow (data) or
+    # later in the options flow (options). One-off, before the sensors are
+    # added: they must be registered under the add-on's entity ids. Updating
+    # the entry does not reload it, the update listener is only added below.
+    addon_device = entry.data.get(CONF_ADDON_DEVICE) or entry.options.get(CONF_ADDON_DEVICE)
+    if addon_device:
         await async_migrate_from_addon(hass, entry, coordinator.profile, addon_device)
         hass.config_entries.async_update_entry(
-            entry, data={k: v for k, v in entry.data.items() if k != CONF_ADDON_DEVICE}
+            entry,
+            data={k: v for k, v in entry.data.items() if k != CONF_ADDON_DEVICE},
+            options={k: v for k, v in entry.options.items() if k != CONF_ADDON_DEVICE},
         )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

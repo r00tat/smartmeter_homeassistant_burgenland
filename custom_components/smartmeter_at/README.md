@@ -39,7 +39,9 @@ device and offers *Take over the add-on sensors*. With that, the integration
 registers its sensors under the add-on's entity ids and keeps their settings
 and unit (Wh), so dashboards, automations, the energy dashboard, history and
 statistics keep working. The add-on device is removed. Do not start the add-on
-again afterwards. Details: *Switching from the add-on* in the repository
+again afterwards. If you added the integration without taking over, stop the
+add-on and use *Configure* → *Take over the add-on sensors* later; the
+integration's own sensors are then replaced by the add-on's entity ids. Details: *Switching from the add-on* in the repository
 README.
 
 ## Installation

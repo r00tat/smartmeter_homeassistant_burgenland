@@ -44,12 +44,18 @@
     "step": {
       "init": {
         "data": {
-          "update_interval": "Aktualisierungsintervall"
+          "update_interval": "Aktualisierungsintervall",
+          "migrate": "Sensoren des Add-ons übernehmen",
+          "addon_device": "Add-on-Gerät"
         },
         "data_description": {
-          "update_interval": "Sekunden zwischen zwei Aktualisierungen. Der Zähler sendet alle 1–10 Sekunden; kleinere Werte schreiben mehr in die Datenbank."
+          "update_interval": "Sekunden zwischen zwei Aktualisierungen. Der Zähler sendet alle 1–10 Sekunden; kleinere Werte schreiben mehr in die Datenbank.",
+          "migrate": "Gibt den Sensoren dieses Eintrags die Entity-IDs und Einstellungen der Sensoren des Smartmeter-Add-ons, damit Dashboards, Automationen und Statistiken weiter funktionieren. Die bisher angelegten Sensoren dieses Eintrags werden ersetzt. Stoppe vorher das Add-on und schalte seinen Autostart ab."
         }
       }
+    },
+    "error": {
+      "addon_running": "Das Add-on liefert noch Werte. Stoppe das Add-on, warte eine Minute und versuche es erneut."
     }
   },
   "selector": {

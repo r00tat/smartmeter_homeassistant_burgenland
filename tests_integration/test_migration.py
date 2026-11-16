@@ -239,3 +239,75 @@ async def test_fresh_setup_uses_short_entity_ids(hass: HomeAssistant, fake_reade
     await hass.async_block_till_done()
 
     assert hass.states.get("sensor.smart_meter_total_energy_consumed") is not None
+
+
+async def test_options_take_over_replaces_existing_sensors(
+    hass: HomeAssistant, addon: Any, fake_readers: list
+) -> None:
+    """Integration set up without take-over first, take-over later via options."""
+    ent_reg = er.async_get(hass)
+    entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, title="Smart Meter Landis+Gyr E450")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await wait_for_data(entry.runtime_data)
+    await hass.async_block_till_done()
+    first_id = ent_reg.async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}_total_energy_consumed"
+    )
+    assert first_id is not None and first_id != OLD_ENERGY
+    # Both the add-on sensor and the integration sensor exist now.
+    assert ent_reg.async_get(OLD_ENERGY).platform == "mqtt"
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert CONF_MIGRATE in result["data_schema"].schema
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"update_interval": 20, CONF_MIGRATE: True, CONF_ADDON_DEVICE: addon_device(hass).id},
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    await wait_for_data(entry.runtime_data)
+    await hass.async_block_till_done()
+
+    energy = ent_reg.async_get(OLD_ENERGY)
+    assert energy.platform == DOMAIN
+    assert energy.unique_id == f"{entry.entry_id}_total_energy_consumed"
+    assert ent_reg.async_get(first_id) is None
+    assert hass.states.get(OLD_ENERGY).state == "49244276"
+    assert not [e for e in ent_reg.entities.values() if e.platform == "mqtt"]
+    # The update interval is kept, the one-off flag is dropped.
+    assert entry.options == {"update_interval": 20}
+
+
+async def test_options_refuse_while_addon_reports(
+    hass: HomeAssistant, addon: Any, fake_readers: list
+) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, title="Smart Meter Landis+Gyr E450")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, f"{ADDON_DEVICE_ID}/state", sample_reading().to_json())
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"update_interval": 10, CONF_MIGRATE: True, CONF_ADDON_DEVICE: addon_device(hass).id},
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "addon_running"}
+
+
+async def test_options_without_addon_only_show_interval(
+    hass: HomeAssistant, fake_readers: list
+) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, title="Smart Meter Landis+Gyr E450")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    assert list(result["data_schema"].schema) == ["update_interval"]

@@ -63,7 +63,12 @@ def async_find_addon_devices(hass: HomeAssistant, suffixes: Iterable[str]) -> li
     dev_reg = dr.async_get(hass)
     ent_reg = er.async_get(hass)
     found: list[AddonDevice] = []
-    for device in dev_reg.devices.values():
+    devices = {
+        device.id: device
+        for mqtt_entry in hass.config_entries.async_entries(MQTT_DOMAIN)
+        for device in dr.async_entries_for_config_entry(dev_reg, mqtt_entry.entry_id)
+    }
+    for device in devices.values():
         prefixes = [ident for domain, ident in device.identifiers if domain == MQTT_DOMAIN]
         if not prefixes:
             continue
@@ -156,13 +161,19 @@ async def async_migrate_from_addon(
             ent_reg, addon_device_id, include_disabled_entities=True
         )
     ]
+    # When the take-over runs for an existing entry (options flow), the
+    # integration already registered these sensors under new entity ids.
+    # Drop them so the add-on's ids can be used; their short history stays
+    # in the database under the dropped ids.
+    for suffix in old_entries:
+        existing = ent_reg.async_get_entity_id(SENSOR_DOMAIN, DOMAIN, f"{entry.entry_id}{suffix}")
+        if existing is not None:
+            removed.append(existing)
     for entity_id in removed:
         ent_reg.async_remove(entity_id)
     # The MQTT integration may already have dropped the now empty device.
-    for config_entry_id in list(old_device.config_entries):
-        if dev_reg.async_get(addon_device_id) is None:
-            break
-        dev_reg.async_update_device(addon_device_id, remove_config_entry_id=config_entry_id)
+    if dev_reg.async_get(addon_device_id) is not None:
+        dev_reg.async_remove_device(addon_device_id)
     await _async_wait_for_states_removed(hass, removed)
 
     new_device = dev_reg.async_get_or_create(
@@ -172,11 +183,14 @@ async def async_migrate_from_addon(
         manufacturer=profile.manufacturer,
         model=profile.model,
     )
+    # Settings of the add-on device win, but do not wipe settings the user
+    # already made on an existing integration device.
     dev_reg.async_update_device(
         new_device.id,
-        area_id=old_device.area_id,
-        name_by_user=old_device.name_by_user,
-        labels=set(old_device.labels),
+        name=DEVICE_NAME,
+        area_id=old_device.area_id or new_device.area_id,
+        name_by_user=old_device.name_by_user or new_device.name_by_user,
+        labels=set(old_device.labels) | set(new_device.labels),
     )
 
     for suffix, old in old_entries.items():
@@ -191,6 +205,15 @@ async def async_migrate_from_addon(
             disabled_by=old.disabled_by,
             hidden_by=old.hidden_by,
         )
+        # The registry restores the entity id of a deleted entry with the
+        # same unique id (options flow: the sensor removed above) and then
+        # ignores the suggestion, so rename explicitly.
+        if (
+            new.entity_id != old.entity_id
+            and not ent_reg.async_is_registered(old.entity_id)
+            and hass.states.get(old.entity_id) is None
+        ):
+            new = ent_reg.async_update_entity(new.entity_id, new_entity_id=old.entity_id)
         if new.entity_id != old.entity_id:
             _LOGGER.warning(
                 "Entity id %s is taken, the sensor is registered as %s instead",

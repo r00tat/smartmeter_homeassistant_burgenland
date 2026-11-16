@@ -163,6 +163,12 @@ cards show the same numbers as before. You can switch a sensor to kWh in its
 settings; the statistics are converted. The add-on's *Raw Data* sensor has no
 counterpart and is removed.
 
+Already added the integration without taking over? Stop the add-on, wait a
+minute, open the integration's *Configure*, switch on *Take over the add-on
+sensors* and pick the add-on device. The integration then drops the sensors
+it had created (their short history stays under the dropped entity ids) and
+takes over the add-on's entity ids as described above.
+
 If the add-on still reports values, the step refuses with *The add-on still
 reports values*. Do not start the add-on again afterwards: it would recreate
 its sensors under new entity ids. To go back, delete the integration entry and
