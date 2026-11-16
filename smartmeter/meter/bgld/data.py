@@ -1,10 +1,11 @@
 """Data structure definition for burgenland smartmeter"""
 
-import json
 from typing import Any
 
+from ..meter_data import BaseMeterData
 
-class MeterData:
+
+class MeterData(BaseMeterData):
     """Smart meter reply data parsed
 
     Values provided
@@ -111,7 +112,3 @@ class MeterData:
             "angle2": self.angle_2,
             "angle3": self.angle_3,
         }
-
-    def to_json(self) -> str:
-        """Return item as json"""
-        return json.dumps(self.to_dict())

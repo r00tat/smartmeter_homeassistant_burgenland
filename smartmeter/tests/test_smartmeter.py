@@ -62,3 +62,16 @@ def test_setup_does_not_open_serial_port() -> None:
 def test_profile_lookup_matches_registry() -> None:
     # Sanity: noe_evn profile is known.
     assert get_profile("noe_evn").name == "noe_evn"
+
+
+def test_setup_uses_wien_profile_and_scales_publish_interval() -> None:
+    # Wien pushes every second, so 30s means every 30th reading (not 6th).
+    cfg = dict(_BASE_CFG, meter_type="wien")
+    meter, build_reader, _ = _make_meter(cfg)
+    assert build_reader.call_args.args[1].name == "wien"
+    assert meter.publish_interval == 30
+
+
+def test_setup_keeps_publish_interval_for_burgenland() -> None:
+    meter, _, _ = _make_meter(dict(_BASE_CFG))
+    assert meter.publish_interval == 6

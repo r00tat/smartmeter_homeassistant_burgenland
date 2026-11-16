@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
+
+from ..meter_data import BaseMeterData
 
 # Scaling is expressed as a divisor (not a float multiplier) to keep
 # the serialised result exact (2301/10 == 230.1, but 2301*0.1 is not).
@@ -12,7 +13,7 @@ _CURRENT_DIVISOR = 100
 _POWER_FACTOR_DIVISOR = 1000
 
 
-class MeterData:
+class MeterData(BaseMeterData):
     """Netz-NÖ meter data keyed by OBIS field name.
 
     Values are provided by the meter as plain integers and must be
@@ -67,6 +68,3 @@ class MeterData:
             "total_prov": self.total_provided,
             "power_factor": self.power_factor,
         }
-
-    def to_json(self) -> str:
-        return json.dumps(self.to_dict())

@@ -12,7 +12,7 @@
     },
     "meter_type": {
       "type": "string",
-      "enum": ["burgenland", "noe_evn"],
+      "enum": ["burgenland", "noe_evn", "wien"],
       "default": "burgenland"
     },
     "interface_type": {

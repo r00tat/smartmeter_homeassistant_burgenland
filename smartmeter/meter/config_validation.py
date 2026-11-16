@@ -4,13 +4,18 @@ import re
 
 import serial
 
+from .profile import DEFAULT_METER_TYPE, known_meter_types
+
 HEX_KEY_RE = re.compile(r"^[0-9a-fA-F]{32}$")
 
 VALID_PARITY_LETTERS = set(serial.PARITY_NAMES.keys())
 VALID_PARITY_NAMES = {name.upper() for name in serial.PARITY_NAMES.values()}
 
-VALID_METER_TYPES = {"burgenland", "noe_evn"}
-DEFAULT_METER_TYPE = "burgenland"
+# Derived from the profile registry so a new profile is accepted everywhere
+# as soon as it is registered.
+VALID_METER_TYPES = frozenset(known_meter_types())
+
+__all__ = ["ConfigError", "DEFAULT_METER_TYPE", "VALID_METER_TYPES", "validate_config"]
 
 
 class ConfigError(ValueError):

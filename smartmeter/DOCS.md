@@ -15,6 +15,11 @@ Supported meters (select via `meter_type`):
   over DLMS via M-Bus framing at 2400 baud (8E1). The M-Bus customer
   interface must be activated and the AES key requested via the Netz NÖ
   customer portal.
+- `wien` — Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550,
+  Landis+Gyr E450) over DLMS/HDLC on the
+  [infrared customer interface](https://www.wienernetze.at/smart-meter-kundenschnittstelle)
+  at 9600 baud (8N1). Activate the customer interface and copy the AES key
+  from the [Wiener Netze Smart Meter portal](https://smartmeter-web.wienernetze.at/).
 
 You can read more about the underlying python program at the [github page](https://github.com/r00tat/smartmeter_homeassistant_burgenland).
 
@@ -22,15 +27,27 @@ You can read more about the underlying python program at the [github page](https
 
 Set the top-level `meter_type` option to switch between providers. When
 omitted, the addon behaves exactly as before and uses the `burgenland`
-profile. Changing the profile also switches the default serial baudrate
-(9600 for `burgenland`, 2400 for `noe_evn`) and the Home Assistant
-device manufacturer/model metadata.
+profile. The profile decides everything about the meter's interface: the
+serial settings (9600 8N1 for `burgenland` and `wien`, 2400 8E1 for
+`noe_evn`), how often the meter sends data, how the data is decoded, the
+Home Assistant device manufacturer/model metadata and the sensor list.
+
+Leave `baudrate`, `bytesize`, `parity` and `stopbits` empty to use the
+profile's settings; set them only to override. Installations that already
+saved explicit values keep them.
 
 The `noe_evn` profile publishes the subset of OBIS registers emitted by
 the Sagemcom T210-D: instantaneous voltages (L1–L3), currents (L1–L3),
 active power in/out, power factor, and cumulative import/export energy.
 Phase-angle sensors (which the E450 exposes) are omitted because the
 T210-D does not publish them.
+
+The `wien` profile publishes what Wiener Netze meters send every second:
+active energy in/out, active power in/out and, disabled by default,
+reactive energy and reactive power in/out. The meters send no voltages or
+currents. The meter clock is included in the raw state as `meter_time`.
+`publish_interval` is respected: with the default of 30 seconds every 30th
+reading is published.
 
 ## Optional MQTT TLS
 

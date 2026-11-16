@@ -3,6 +3,7 @@ logging: INFO
 # meter_type selects the provider profile. Supported:
 #   burgenland (default) — Landis+Gyr E450 via DLMS/HDLC (Netz Burgenland)
 #   noe_evn              — Sagemcom T210-D via M-Bus (Netz NÖ / EVN)
+#   wien                 — Wiener Netze (IM350, AM550, E450, …) via DLMS/HDLC
 # meter_type: burgenland
 interface_type: OPTICAL
 
@@ -18,6 +19,8 @@ mqtt:
 
 dlms:
   port: "/dev/ttyUSB0"
+  # Serial settings default to the selected meter_type; only set them to
+  # override (burgenland/wien: 9600 8N1, noe_evn: 2400 8E1).
   # baudrate: 9600
   # bytesize: 8
   # parity: "NONE"

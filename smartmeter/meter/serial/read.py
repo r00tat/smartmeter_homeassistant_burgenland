@@ -3,10 +3,12 @@ import serial
 import logging
 from time import monotonic, sleep
 from collections.abc import Callable
+from typing import Any
 
 
 from ..dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from ..bgld.data import MeterData
+from ..meter_data import BaseMeterData
 
 MAX_CONSECUTIVE_FAILURES = 10
 DEFAULT_SERIAL_TIMEOUT = 1.0
@@ -32,7 +34,11 @@ PARITY_NAME_VALUES = {v.upper(): k for k, v in serial.PARITY_NAMES.items()}
 
 
 class MeterReader:
-    """Read smart meter data and parse it."""
+    """Read DLMS/HDLC telegrams and hand the decoded values to ``data_factory``.
+
+    ``data_factory`` maps the list of values in a data notification onto the
+    meter profile's ``MeterData`` class (Burgenland by default).
+    """
 
     def __init__(
         self,
@@ -45,7 +51,8 @@ class MeterReader:
         interface_type="OPTICAL",
         hdlc_frame_size=120,
         timeout: float = DEFAULT_SERIAL_TIMEOUT,
-        callback: Callable[[MeterData], None] | None = None,
+        callback: Callable[[BaseMeterData], None] | None = None,
+        data_factory: Callable[[list[Any]], BaseMeterData] = MeterData,
     ):
         """Create a meter reader"""
         log.debug("parity values: %s", ",".join(PARITY_VALUES))
@@ -74,6 +81,7 @@ class MeterReader:
         self.is_running = False
         self.hdlc_frame_size = hdlc_frame_size
         self.callback = callback
+        self.data_factory = data_factory
 
     def connect(self):
         """Connect serial port"""
@@ -145,7 +153,7 @@ class MeterReader:
         decrypted_data = parse_dlms_data(received_data, self.key)
         log.debug("values: %s", decrypted_data.value)
         if decrypted_data.value:
-            data = MeterData(decrypted_data.value)
+            data = self.data_factory(decrypted_data.value)
             log.debug("received meter data: %s", data)
             if self.callback is not None:
                 self.callback(data)
@@ -156,7 +164,7 @@ class MeterReader:
         if parsed_xml and len(parsed_xml) > 0:
             values = parse_xml(parsed_xml)
             if values and len(values) > 0:
-                data = MeterData(values)
+                data = self.data_factory(values)
                 log.debug("received meter data: %s", data)
                 if self.callback is not None:
                     self.callback(data)
