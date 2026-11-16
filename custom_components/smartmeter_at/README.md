@@ -49,17 +49,23 @@ dangling, so use one of these:
 - Download `smartmeter_at.zip` from a
   [release](https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases)
   and unpack it into `/config/custom_components/smartmeter_at/`.
-- Clone the repository and copy the directory with links resolved:
+- Clone the repository into `/config` and symlink the integration, so you can
+  update it with `git pull`:
 
   ```bash
   cd /config
   git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
   mkdir -p /config/custom_components
   rm -rf /config/custom_components/smartmeter_at
-  cp -rL smartmeter-src/custom_components/smartmeter_at /config/custom_components/
+  ln -s ../smartmeter-src/custom_components/smartmeter_at /config/custom_components/smartmeter_at
   ```
 
-Restart Home Assistant afterwards.
+  Update later with `cd /config/smartmeter-src && git pull`. Keep the clone
+  inside `/config` and the link relative, otherwise it is dangling inside the
+  Home Assistant container.
+
+Restart Home Assistant after installing or updating. See *Integration
+Development* in the repository README for details.
 
 ## Configuration
 

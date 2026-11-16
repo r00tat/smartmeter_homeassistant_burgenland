@@ -73,6 +73,11 @@ fi
 
 log "Syncing custom_components/$COMPONENT to config/"
 mkdir -p "config/custom_components"
+# A symlink here would make rsync --delete write through it into its target.
+if [[ -L "config/custom_components/$COMPONENT" ]]; then
+  warn "config/custom_components/$COMPONENT is a symlink - remove it first."
+  exit 1
+fi
 # -L resolves the symlinks to smartmeter/meter: relative links would point
 # outside the mounted config directory and break inside the container.
 # --delete so files removed in the repo do not linger and get loaded.
