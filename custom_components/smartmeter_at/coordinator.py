@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable, Mapping
+from datetime import datetime, timedelta
 from functools import partial
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -28,6 +31,9 @@ _LOGGER = logging.getLogger(__name__)
 
 # Seconds to wait before the supervisor restarts a failed reader.
 RETRY_SECONDS = 10.0
+
+# How often to check whether the meter went silent.
+STALE_CHECK_INTERVAL = timedelta(seconds=30)
 
 
 def build_reader_factory(profile: Any, entry_data: Mapping[str, Any]) -> Callable[[Any], Any]:
@@ -50,6 +56,10 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.profile = core.profile.get_profile(entry.data[CONF_METER_TYPE])
         self.meter_id: str | None = None
+        # Entities go unavailable when no telegram arrives for this long.
+        self.stale_after = max(60.0, 6 * self.profile.push_interval_seconds)
+        self._last_data = time.monotonic()
+        self._unsub_stale_check: Callable[[], None] | None = None
         interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
         self._supervisor = core.supervisor.ReaderSupervisor(
             build_reader_factory(self.profile, entry.data),
@@ -60,9 +70,27 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def start(self) -> None:
+        self._last_data = time.monotonic()
+        self._unsub_stale_check = async_track_time_interval(
+            self.hass, self.async_check_stale, STALE_CHECK_INTERVAL
+        )
         self._supervisor.start()
 
+    @callback
+    def async_check_stale(self, now: datetime | None = None) -> None:
+        """Mark the data as failed once when no telegram arrived for too long."""
+        if not self.last_update_success:
+            return
+        silent = time.monotonic() - self._last_data
+        if silent > self.stale_after:
+            self.async_set_update_error(
+                TimeoutError(f"no telegram for {self.stale_after:.0f} s")
+            )
+
     async def async_stop(self) -> None:
+        if self._unsub_stale_check is not None:
+            self._unsub_stale_check()
+            self._unsub_stale_check = None
         await self.hass.async_add_executor_job(self._supervisor.stop)
 
     def _on_data_from_thread(self, data: Any) -> None:
@@ -73,6 +101,7 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @callback
     def _async_handle_data(self, data: Any) -> None:
+        self._last_data = time.monotonic()
         if data.meter_id and self.meter_id is None:
             self.meter_id = data.meter_id
             self._async_set_device_serial(data.meter_id)

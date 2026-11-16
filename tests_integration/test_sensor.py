@@ -14,11 +14,14 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.smartmeter_at.const import DOMAIN
-from custom_components.smartmeter_at.coordinator import SmartMeterCoordinator
+from custom_components.smartmeter_at.coordinator import (
+    STALE_CHECK_INTERVAL,
+    SmartMeterCoordinator,
+)
 from custom_components.smartmeter_at.core import async_load_core
 from custom_components.smartmeter_at.sensor import description_from_spec
 
-from .conftest import ENTRY_DATA, METER_ID, FakeReader, wait_for_data
+from .conftest import ENTRY_DATA, METER_ID, FakeReader, sample_reading, wait_for_data
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -156,3 +159,58 @@ async def test_error_then_recovery_through_thread_path(hass: HomeAssistant) -> N
             assert _state(hass, entry, "_voltage_l1").state == "236"
         finally:
             assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_silent_meter_makes_entities_unavailable(
+    hass: HomeAssistant, fake_readers
+) -> None:
+    entry = await _setup(hass)
+    coordinator = entry.runtime_data
+    try:
+        coordinator.async_check_stale()
+        assert coordinator.last_update_success  # fresh data is not stale
+
+        coordinator._last_data -= coordinator.stale_after + 1
+        coordinator.async_check_stale()
+        await hass.async_block_till_done()
+        assert not coordinator.last_update_success
+        assert _state(hass, entry, "_voltage_l1").state == "unavailable"
+
+        coordinator._async_handle_data(sample_reading())
+        await hass.async_block_till_done()
+        assert coordinator.last_update_success
+        assert _state(hass, entry, "_voltage_l1").state == "236"
+    finally:
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_staleness_is_reported_once_per_period(
+    hass: HomeAssistant, fake_readers
+) -> None:
+    entry = await _setup(hass)
+    coordinator = entry.runtime_data
+    try:
+        coordinator._last_data -= coordinator.stale_after + 1
+        with patch.object(
+            coordinator, "async_set_update_error", wraps=coordinator.async_set_update_error
+        ) as set_error:
+            coordinator.async_check_stale()
+            coordinator.async_check_stale()
+        assert set_error.call_count == 1
+    finally:
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_stale_check_is_scheduled_and_cancelled(
+    hass: HomeAssistant, fake_readers
+) -> None:
+    with patch(
+        "custom_components.smartmeter_at.coordinator.async_track_time_interval"
+    ) as track:
+        entry = await _setup(hass)
+        try:
+            track.assert_called_once()
+            assert track.call_args.args[2] == STALE_CHECK_INTERVAL
+        finally:
+            assert await hass.config_entries.async_unload(entry.entry_id)
+    track.return_value.assert_called_once()
