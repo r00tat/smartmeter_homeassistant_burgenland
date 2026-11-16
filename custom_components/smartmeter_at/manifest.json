@@ -7,7 +7,7 @@
   "integration_type": "device",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues",
-  "loggers": ["meter", "gurux_dlms"],
+  "loggers": ["meter", "gurux_dlms", "gurux_common"],
   "requirements": [
     "gurux-common==1.0.13",
     "gurux-dlms==1.0.197",

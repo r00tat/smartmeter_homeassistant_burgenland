@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from types import ModuleType
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 
 from . import fix_source_encoding
 from .const import DATA_CORE
@@ -47,7 +48,13 @@ def ensure_gurux_importable() -> None:
             "gurux-dlms is not importable on this Python (%s), re-encoding its sources",
             err,
         )
-    fix_source_encoding.main(list(_GURUX_PACKAGES))
+    try:
+        fix_source_encoding.main(list(_GURUX_PACKAGES))
+    except (OSError, SystemExit) as err:
+        raise HomeAssistantError(
+            "gurux-dlms cannot be imported on this Python and its sources "
+            f"could not be re-encoded: {err}"
+        ) from err
     for name in [m for m in sys.modules if m.split(".")[0] in _GURUX_PACKAGES]:
         del sys.modules[name]
     importlib.invalidate_caches()

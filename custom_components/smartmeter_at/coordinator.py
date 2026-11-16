@@ -26,6 +26,9 @@ from .core import Core
 
 _LOGGER = logging.getLogger(__name__)
 
+# Seconds to wait before the supervisor restarts a failed reader.
+RETRY_SECONDS = 10.0
+
 
 def build_reader_factory(profile: Any, entry_data: Mapping[str, Any]) -> Callable[[Any], Any]:
     """Return ``callback -> reader`` for the profile and the entry's settings."""
@@ -53,6 +56,7 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             on_data=self._on_data_from_thread,
             on_error=self._on_error_from_thread,
             every=self.profile.readings_per_publish(float(interval)),
+            retry_seconds=RETRY_SECONDS,
         )
 
     def start(self) -> None:
@@ -77,15 +81,11 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @callback
     def _async_set_device_serial(self, serial_number: str) -> None:
         dev_reg = dr.async_get(self.hass)
-        identifier = (DOMAIN, self.config_entry.entry_id)
-        if hasattr(dev_reg, "async_get_device_by_identifier"):
-            device = dev_reg.async_get_device_by_identifier(
-                identifier, self.config_entry.entry_id
-            )
-        else:  # Home Assistant before the per-entry lookup existed
-            device = dev_reg.async_get_device(identifiers={identifier})
-        if device is not None:
-            dev_reg.async_update_device(device.id, serial_number=serial_number)
+        dev_reg.async_get_or_create(
+            config_entry_id=self.config_entry.entry_id,
+            identifiers={(DOMAIN, self.config_entry.entry_id)},
+            serial_number=serial_number,
+        )
 
 
 type SmartMeterConfigEntry = ConfigEntry[SmartMeterCoordinator]

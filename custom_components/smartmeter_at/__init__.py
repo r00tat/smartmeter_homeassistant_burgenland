@@ -25,7 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartMeterConfigEntry) -
     async def _async_stop(_event: Event) -> None:
         await coordinator.async_stop()
 
-    entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_stop))
+    entry.async_on_unload(hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, _async_stop))
     entry.async_on_unload(entry.add_update_listener(_async_reload))
     return True
 

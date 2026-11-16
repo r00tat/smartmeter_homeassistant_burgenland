@@ -32,6 +32,7 @@ def description_from_spec(spec: Any) -> SensorEntityDescription:
         suggested_unit_of_measurement=(
             UnitOfEnergy.KILO_WATT_HOUR if unit == UnitOfEnergy.WATT_HOUR else None
         ),
+        suggested_display_precision=3 if unit == UnitOfEnergy.WATT_HOUR else None,
         entity_registry_enabled_default=spec.enabled_by_default is not False,
     )
 

@@ -1,17 +1,24 @@
 """Tests for entry setup and the sensor entities."""
 
+import logging
+from typing import Any
+from unittest.mock import patch
+
 import pytest
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.components.sensor import DEVICE_CLASS_UNITS
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.smartmeter_at.const import DOMAIN
+from custom_components.smartmeter_at.coordinator import SmartMeterCoordinator
 from custom_components.smartmeter_at.core import async_load_core
 from custom_components.smartmeter_at.sensor import description_from_spec
 
-from .conftest import ENTRY_DATA, METER_ID, wait_for_data
+from .conftest import ENTRY_DATA, METER_ID, FakeReader, wait_for_data
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -86,4 +93,66 @@ async def test_every_catalog_maps_to_valid_descriptions(
     core = await async_load_core(hass)
     for spec in core.profile.get_profile(meter_type).sensor_specs:
         if not spec.raw:
-            description_from_spec(spec)  # raises on unknown device/state class
+            description = description_from_spec(spec)  # raises on unknown classes
+            if description.device_class is not None:
+                assert (
+                    description.native_unit_of_measurement
+                    in DEVICE_CLASS_UNITS[description.device_class]
+                ), spec.name
+
+
+async def test_stop_event_then_unload_is_clean(
+    hass: HomeAssistant, fake_readers, caplog: pytest.LogCaptureFixture
+) -> None:
+    entry = await _setup(hass)
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
+    await hass.async_block_till_done()
+    assert all(reader.stopped.is_set() for reader in fake_readers)
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+    assert all(reader.stopped.is_set() for reader in fake_readers)
+
+
+class _FailingReader:
+    """Raises on start, like a serial port that cannot be opened."""
+
+    def start(self) -> None:
+        raise OSError("port gone")
+
+    def stop(self) -> None:
+        pass
+
+
+async def test_error_then_recovery_through_thread_path(hass: HomeAssistant) -> None:
+    readers: list[Any] = []
+
+    def factory(callback: Any) -> Any:
+        reader = _FailingReader() if not readers else FakeReader(callback)
+        readers.append(reader)
+        return reader
+
+    entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, title="Smart Meter")
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.smartmeter_at.coordinator.build_reader_factory",
+            return_value=factory,
+        ),
+        patch("custom_components.smartmeter_at.coordinator.RETRY_SECONDS", 0.01),
+        patch.object(
+            SmartMeterCoordinator,
+            "async_set_update_error",
+            autospec=True,
+            side_effect=SmartMeterCoordinator.async_set_update_error,
+        ) as set_error,
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        try:
+            await wait_for_data(entry.runtime_data)
+            await hass.async_block_till_done()
+            assert len(readers) >= 2
+            set_error.assert_called()  # the failure went through the thread path
+            assert entry.runtime_data.last_update_success
+            assert _state(hass, entry, "_voltage_l1").state == "236"
+        finally:
+            assert await hass.config_entries.async_unload(entry.entry_id)
