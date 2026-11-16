@@ -140,13 +140,20 @@ adapter) must be connected to the Home Assistant host.
    one telegram before it saves the entry, so a wrong key or port shows up
    right away.
 
-Use either the add-on or the integration for a meter, never both: only one of
-them can open the serial port. When you switch from the add-on, the
-integration creates new entities; the energy dashboard has to be pointed to
-the new *Total Energy consumed/provided* sensors.
+Use either the add-on or the integration for a meter, never both: both would
+read the same serial port and corrupt each other's telegrams. Stop the add-on
+and disable its autostart before you add the integration. When you switch from
+the add-on, the integration creates new entities; the energy dashboard has to
+be pointed to the new *Total Energy consumed/provided* sensors.
 
 The update interval (default 10 s) is set under the integration's
-*Configure* button.
+*Configure* button. The integration uses the serial defaults of the selected
+meter type; unlike the add-on, it has no baudrate or frame-size overrides.
+Entities become unavailable when no telegram arrives for about a minute.
+
+HACS installs the integration from a release that contains the
+`smartmeter_at.zip` asset. This is attached to the first release published
+after the integration was added; until then HACS has nothing to download.
 
 ### Standalone (systemd / uv)
 
