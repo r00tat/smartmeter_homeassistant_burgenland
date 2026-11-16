@@ -77,9 +77,13 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @callback
     def _async_set_device_serial(self, serial_number: str) -> None:
         dev_reg = dr.async_get(self.hass)
-        device = dev_reg.async_get_device(
-            identifiers={(DOMAIN, self.config_entry.entry_id)}
-        )
+        identifier = (DOMAIN, self.config_entry.entry_id)
+        if hasattr(dev_reg, "async_get_device_by_identifier"):
+            device = dev_reg.async_get_device_by_identifier(
+                identifier, self.config_entry.entry_id
+            )
+        else:  # Home Assistant before the per-entry lookup existed
+            device = dev_reg.async_get_device(identifiers={identifier})
         if device is not None:
             dev_reg.async_update_device(device.id, serial_number=serial_number)
 
