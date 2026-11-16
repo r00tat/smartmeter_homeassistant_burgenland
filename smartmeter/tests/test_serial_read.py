@@ -157,3 +157,56 @@ def test_endless_stream_is_cut_after_max_frame_time(clock: FakeClock) -> None:
 
     assert 0 < len(data) < 1000
     assert clock.now - 0.1 <= serial_read.OPTICAL_MAX_FRAME_SECONDS + 0.1
+
+
+class ClosableSerial:
+    def __init__(self) -> None:
+        self.closed = False
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_start_closes_port_when_loop_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    reader = MeterReader(key="00" * 16, interface_type="OPTICAL")
+    port = ClosableSerial()
+
+    def connect() -> None:
+        reader.ser = port  # type: ignore[assignment]
+
+    def failing_loop() -> None:
+        raise RuntimeError("too many parse failures")
+
+    monkeypatch.setattr(reader, "connect", connect)
+    monkeypatch.setattr(reader, "optical_loop", failing_loop)
+
+    with pytest.raises(RuntimeError, match="parse failures"):
+        reader.start()
+
+    assert port.closed
+    assert reader.is_running is False
+
+
+class SilentSerial:
+    def read(self, size: int = 1) -> bytes:
+        return b""
+
+    def inWaiting(self) -> int:
+        return 0
+
+
+def test_read_frame_on_silent_line_ends_when_stopped(monkeypatch: pytest.MonkeyPatch) -> None:
+    reader = MeterReader(key="00" * 16, interface_type="PHYSICAL")
+    reader.ser = SilentSerial()  # type: ignore[assignment]
+    sleeps: list[float] = []
+
+    def fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+        if len(sleeps) == 3:
+            reader.stop()
+        assert len(sleeps) < 100, "_read_frame ignores stop()"
+
+    monkeypatch.setattr(serial_read, "sleep", fake_sleep)
+
+    assert reader._read_frame(120) == b""
+    assert len(sleeps) == 3

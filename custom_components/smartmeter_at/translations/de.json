@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Meter",
+        "description": "Verbinde die Kundenschnittstelle des Zählers (IR-Lesekopf, M-Bus- oder P1-Adapter) mit diesem Home-Assistant-Host. Stoppe vorher das Smartmeter-Add-on, falls es denselben Port verwendet. Die Verbindungsprüfung kann bis zu 30 Sekunden dauern.",
+        "data": {
+          "meter_type": "Netzbetreiber / Zähler",
+          "port": "Serieller Port",
+          "key": "Schlüssel der Kundenschnittstelle",
+          "interface_type": "Schnittstelle"
+        },
+        "data_description": {
+          "key": "32 Hex-Zeichen, die du von deinem Netzbetreiber bekommst.",
+          "interface_type": "Nur für Burgenland und Wien relevant."
+        }
+      },
+      "migrate": {
+        "title": "Sensoren des Add-ons übernehmen",
+        "description": "Das Gerät **{device}** des Smartmeter-Add-ons hat {count} Sensoren, die zu diesem Zähler passen. Übernimmst du sie, bleiben Entity-IDs, Namen, Bereiche und Verlauf erhalten: Dashboards, Automationen und das Energie-Dashboard funktionieren weiter. Das Add-on-Gerät und seine Entitäten werden entfernt.\n\nStoppe vorher das Add-on und schalte seinen Autostart ab, sonst legt es seine Sensoren wieder an.",
+        "data": {
+          "migrate": "Sensoren des Add-ons übernehmen",
+          "addon_device": "Add-on-Gerät"
+        },
+        "data_description": {
+          "migrate": "Ohne Übernahme legt die Integration neue Sensoren an, und die Sensoren des Add-ons bleiben unverändert."
+        }
+      }
+    },
+    "error": {
+      "invalid_key": "Der Schlüssel muss genau 32 Hex-Zeichen lang sein.",
+      "port_in_use": "Dieser Port wird bereits von einem anderen Smart-Meter-Eintrag verwendet.",
+      "cannot_connect": "Der serielle Port kann nicht geöffnet werden.",
+      "no_data": "Kein gültiges Telegramm empfangen. Prüfe Schlüssel, Zählertyp, Position des Lesekopfs und ob die Kundenschnittstelle aktiviert ist.",
+      "unknown": "Unerwarteter Fehler, siehe Protokoll.",
+      "addon_running": "Das Add-on liefert noch Werte. Stoppe das Add-on, warte eine Minute und versuche es erneut."
+    },
+    "abort": {
+      "already_configured": "Dieser Zähler ist bereits eingerichtet.",
+      "core_unavailable": "Der Smartmeter-Kern konnte nicht geladen werden, siehe Protokoll."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "update_interval": "Aktualisierungsintervall",
+          "migrate": "Sensoren des Add-ons übernehmen",
+          "addon_device": "Add-on-Gerät"
+        },
+        "data_description": {
+          "update_interval": "Sekunden zwischen zwei Aktualisierungen. Der Zähler sendet alle 1–10 Sekunden; kleinere Werte schreiben mehr in die Datenbank.",
+          "migrate": "Gibt den Sensoren dieses Eintrags die Entity-IDs und Einstellungen der Sensoren des Smartmeter-Add-ons, damit Dashboards, Automationen und Statistiken weiter funktionieren. Die bisher angelegten Sensoren dieses Eintrags werden ersetzt. Stoppe vorher das Add-on und schalte seinen Autostart ab."
+        }
+      }
+    },
+    "error": {
+      "addon_running": "Das Add-on liefert noch Werte. Stoppe das Add-on, warte eine Minute und versuche es erneut."
+    }
+  },
+  "selector": {
+    "meter_type": {
+      "options": {
+        "burgenland": "Netz Burgenland (Landis+Gyr E450)",
+        "noe_evn": "Netz NÖ / EVN (Sagemcom T210-D)",
+        "wien": "Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550, Landis+Gyr E450)",
+        "steiermark": "Energienetze Steiermark (Landis+Gyr E450, M-Bus)",
+        "steiermark_sagemcom": "Energienetze Steiermark (Sagemcom, DSMR P1)",
+        "salzburg": "Salzburg Netz (Kaifa/Honeywell MA309M)",
+        "tirol": "TINETZ Tirol (Kaifa/Honeywell MA110M/MA309M)",
+        "h1": "Smart Meter 2.0 H1-Schnittstelle (DSMR P1)"
+      }
+    },
+    "interface_type": {
+      "options": {
+        "optical": "Optisch (IR-Lesekopf)",
+        "physical": "Kabelgebunden"
+      }
+    }
+  }
+}

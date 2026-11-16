@@ -13,6 +13,8 @@ jobs:
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
+    outputs:
+      sha: ${{ steps.release-sha.outputs.sha }}
     steps:
       - name: "Checkout the repository"
         uses: "actions/checkout@v7.0.1"
@@ -24,6 +26,9 @@ jobs:
         run: |
           yq -i '.version=strenv(RELEASE_TAG)' \
             "${{ github.workspace }}/smartmeter/config.yaml"
+          manifest="${{ github.workspace }}/custom_components/smartmeter_at/manifest.json"
+          jq --arg v "$RELEASE_TAG" '.version=$v' "$manifest" > "$manifest.tmp"
+          mv "$manifest.tmp" "$manifest"
 
       - name: "✏️ Generate release changelog"
         id: changelog
@@ -43,11 +48,20 @@ jobs:
           echo "CHANGELOG updated."
 
       - name: Commit config.yaml
+        id: auto-commit
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: main
           commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
-          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md
+          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md custom_components/smartmeter_at/manifest.json
+
+      - name: "Determine release commit"
+        id: release-sha
+        env:
+          COMMIT_HASH: ${{ steps.auto-commit.outputs.commit_hash }}
+        run: |
+          # Without changes no commit is made; fall back to the checked-out commit.
+          echo "sha=${COMMIT_HASH:-$(git rev-parse HEAD)}" >> "$GITHUB_OUTPUT"
 
   build:
     name: "Build ${{ matrix.arch }} image"
@@ -120,3 +134,29 @@ jobs:
           tags: |
             docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:${{ github.event.release.tag_name }}
             docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_standalone:latest
+
+  integration-zip:
+    name: "Attach HACS zip"
+    needs: prepare
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+    steps:
+      - name: "Checkout the release commit"
+        uses: "actions/checkout@v7.0.1"
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: "Build smartmeter_at.zip (symlinks resolved)"
+        run: |
+          cd custom_components/smartmeter_at
+          zip -r ../../smartmeter_at.zip . \
+            -x '__pycache__/*' '*/__pycache__/*' 'meter/__main__.py' 'meter/dlms/test*.py' 'meter/serial/test.py'
+          cd ../..
+          unzip -l smartmeter_at.zip | grep -E 'manifest.json|meter/profile.py|fix_source_encoding.py'
+
+      - name: "Upload to the release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" smartmeter_at.zip --clobber

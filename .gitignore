@@ -182,3 +182,12 @@ smartmeter-data.raw
 smartmeter-config.yaml
 
 .worktrees/
+
+.venv-ha/
+!/.github/scripts/
+
+# Home Assistant test instance created by dev.sh
+/config
+
+# Agent plans and specs (local only)
+docs/superpowers/

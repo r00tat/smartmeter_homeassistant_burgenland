@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart meter",
+        "description": "Connect the meter's customer interface (IR reading head, M-Bus or P1 adapter) to this Home Assistant host. Stop the Smartmeter add-on first if it uses the same port. Checking the connection can take up to 30 seconds.",
+        "data": {
+          "meter_type": "Grid operator / meter",
+          "port": "Serial port",
+          "key": "Customer interface key",
+          "interface_type": "Interface"
+        },
+        "data_description": {
+          "key": "32 hex characters, sent to you by your grid operator.",
+          "interface_type": "Only used for Burgenland and Wien."
+        }
+      },
+      "migrate": {
+        "title": "Take over add-on sensors",
+        "description": "Found the Smartmeter add-on device **{device}** with {count} sensors that match this meter. Taking them over keeps their entity ids, names, areas and history, so dashboards, automations and the energy dashboard keep working. The add-on device and its entities are removed.\n\nStop the add-on and disable its autostart first, otherwise it recreates its sensors.",
+        "data": {
+          "migrate": "Take over the add-on sensors",
+          "addon_device": "Add-on device"
+        },
+        "data_description": {
+          "migrate": "Without taking them over, the integration creates new sensors and the add-on sensors stay as they are."
+        }
+      }
+    },
+    "error": {
+      "invalid_key": "The key must be exactly 32 hex characters.",
+      "port_in_use": "This port is already used by another smart meter entry.",
+      "cannot_connect": "The serial port cannot be opened.",
+      "no_data": "No valid telegram received. Check the key, the meter type, the reading head position and that the customer interface is activated.",
+      "unknown": "Unexpected error, see the log.",
+      "addon_running": "The add-on still reports values. Stop the add-on, wait a minute and try again."
+    },
+    "abort": {
+      "already_configured": "This meter is already configured.",
+      "core_unavailable": "The Smartmeter core could not be loaded, see the log."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "update_interval": "Update interval",
+          "migrate": "Take over the add-on sensors",
+          "addon_device": "Add-on device"
+        },
+        "data_description": {
+          "update_interval": "Seconds between entity updates. The meter sends every 1-10 seconds; lower values write more to the database.",
+          "migrate": "Gives this entry's sensors the entity ids and settings of the Smartmeter add-on sensors, so dashboards, automations and statistics keep working. The sensors this entry created so far are replaced. Stop the add-on and disable its autostart first."
+        }
+      }
+    },
+    "error": {
+      "addon_running": "The add-on still reports values. Stop the add-on, wait a minute and try again."
+    }
+  },
+  "selector": {
+    "meter_type": {
+      "options": {
+        "burgenland": "Netz Burgenland (Landis+Gyr E450)",
+        "noe_evn": "Netz NÖ / EVN (Sagemcom T210-D)",
+        "wien": "Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550, Landis+Gyr E450)",
+        "steiermark": "Energienetze Steiermark (Landis+Gyr E450, M-Bus)",
+        "steiermark_sagemcom": "Energienetze Steiermark (Sagemcom, DSMR P1)",
+        "salzburg": "Salzburg Netz (Kaifa/Honeywell MA309M)",
+        "tirol": "TINETZ Tirol (Kaifa/Honeywell MA110M/MA309M)",
+        "h1": "Smart Meter 2.0 H1 interface (DSMR P1)"
+      }
+    },
+    "interface_type": {
+      "options": {
+        "optical": "Optical (IR reading head)",
+        "physical": "Wired"
+      }
+    }
+  }
+}

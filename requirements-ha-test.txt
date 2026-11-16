@@ -1,0 +1,12 @@
+# Same requirements as custom_components/smartmeter_at/manifest.json; the
+# add-on's requirements.txt cannot be reused because Home Assistant pins an
+# older paho-mqtt than the add-on (the integration does not use MQTT).
+gurux-common==1.0.13
+gurux-dlms==1.0.197
+pycryptodomex>=3.24
+# Ships with Home Assistant at runtime (hassfest forbids it in the manifest),
+# but the test environment does not pull it in.
+pyserial>=3.5
+beautifulsoup4>=4.12
+lxml>=5.0
+pytest-homeassistant-custom-component==0.13.375

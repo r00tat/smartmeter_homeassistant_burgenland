@@ -2,6 +2,8 @@
 
 This python program connects your Austrian Smart Meter to Home Assistant
 via MQTT.
+Alternatively, the [Home Assistant integration (HACS)](#home-assistant-integration-hacs)
+reads the meter directly, without MQTT broker and add-on.
 
 Supported meters (select via `meter_type`):
 
@@ -121,6 +123,67 @@ docker run -d --restart unless-stopped \
 
 Adjust `/dev/ttyUSB0` if your IR reader appears on a different device node.
 
+### Home Assistant integration (HACS)
+
+Reads the meter directly in Home Assistant: no MQTT broker and no add-on
+needed, and it also works with Home Assistant Container and Core (no
+Supervisor). The meter's customer interface (IR reading head, M-Bus or P1
+adapter) must be connected to the Home Assistant host.
+
+1. Request the activation of the customer interface (see above).
+2. In HACS: ⋮ → Custom repositories → add
+   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`, category
+   *Integration*.
+3. Install *Smartmeter Austria* and restart Home Assistant.
+4. Settings → Devices & services → Add integration → *Smartmeter Austria*.
+5. Select grid operator, serial port and enter the key. The integration reads
+   one telegram before it saves the entry, so a wrong key or port shows up
+   right away.
+
+Use either the add-on or the integration for a meter, never both: both would
+read the same serial port and corrupt each other's telegrams.
+
+#### Switching from the add-on
+
+The integration can take over the add-on's sensors, so dashboards,
+automations, scripts, the energy dashboard, history and long-term statistics
+keep working:
+
+1. Stop the add-on and disable its autostart. Leave the MQTT integration and
+   the broker running.
+2. Wait about a minute, then add the integration as above.
+3. After the connection check the integration finds the add-on's MQTT device
+   and offers *Take over the add-on sensors*. Keep it switched on.
+
+The integration then removes the add-on device and its entities (the MQTT
+integration also clears the retained discovery message) and registers its own
+sensors under the add-on's entity ids. It keeps names, icons, areas, aliases,
+labels, enabled/hidden state and the unit: energy stays in Wh, so templates and
+cards show the same numbers as before. You can switch a sensor to kWh in its
+settings; the statistics are converted. The add-on's *Raw Data* sensor has no
+counterpart and is removed.
+
+Already added the integration without taking over? Stop the add-on, wait a
+minute, open the integration's *Configure*, switch on *Take over the add-on
+sensors* and pick the add-on device. The integration then drops the sensors
+it had created (their short history stays under the dropped entity ids) and
+takes over the add-on's entity ids as described above.
+
+If the add-on still reports values, the step refuses with *The add-on still
+reports values*. Do not start the add-on again afterwards: it would recreate
+its sensors under new entity ids. To go back, delete the integration entry and
+start the add-on; it creates its sensors again with default entity ids, so
+entity ids you had changed have to be set again.
+
+The update interval (default 10 s) is set under the integration's
+*Configure* button. The integration uses the serial defaults of the selected
+meter type; unlike the add-on, it has no baudrate or frame-size overrides.
+Entities become unavailable when no telegram arrives for about a minute.
+
+HACS installs the integration from a release that contains the
+`smartmeter_at.zip` asset. This is attached to the first release published
+after the integration was added; until then HACS has nothing to download.
+
 ### Standalone (systemd / uv)
 
 To use this program on an external raspberry pi follow this steps:
@@ -161,6 +224,67 @@ pip3 install -r requirements.txt
 
 If you install additional pacakges, save the current installed dependencies to `requirements.txt` with:
 `pip freeze -l | grep -v flake8 > requirements.txt`
+
+### Integration Development
+
+The integration in `custom_components/smartmeter_at/` does not carry its own
+copy of the meter code: `meter/` and `fix_source_encoding.py` are symlinks into
+`smartmeter/`. Copying only `custom_components/smartmeter_at/` therefore leaves
+dangling links. Always work with the whole repository: either symlink the
+integration directory out of a clone, or resolve the links when copying (the
+release zip does the same).
+
+**Local test instance (Docker):** `./dev.sh` mirrors the integration (links
+resolved) into `config/` and starts Home Assistant in the container
+`smartmeter-ha-dev` on <http://localhost:8124>. Run it again after a change to
+sync and restart. `HTTP_PORT` changes the port, `--recreate` recreates the
+container, `--no-logs` keeps it running in the background. On a Linux host,
+`SERIAL_DEVICE=/dev/ttyUSB0 ./dev.sh` passes the reading head into the
+container; Docker Desktop on macOS/Windows cannot pass USB serial devices.
+
+**On a real Home Assistant (`/config/custom_components`):** clone the
+repository into `/config` on the Home Assistant host, e.g. via the
+*Terminal & SSH* add-on, and symlink the integration into `custom_components`.
+Updating is then a plain `git pull`:
+
+```bash
+cd /config
+git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
+# to test a branch that is not released yet:
+# git clone -b <branch> https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
+mkdir -p /config/custom_components
+rm -rf /config/custom_components/smartmeter_at
+ln -s ../smartmeter-src/custom_components/smartmeter_at /config/custom_components/smartmeter_at
+```
+
+Restart Home Assistant, then add the integration under Settings → Devices &
+services. To update:
+
+```bash
+cd /config/smartmeter-src && git pull
+```
+
+and restart Home Assistant; reloading the integration is not enough, because
+Python keeps the old code loaded. Switching branches works the same way with
+`git checkout <branch>`.
+
+Notes on the symlink:
+
+- Keep the clone inside `/config` and the link relative. Home Assistant OS and
+  Container only see `/config`, so a link to a path outside of it, or an
+  absolute host path, is dangling inside the container.
+- The nested links (`meter/`, `fix_source_encoding.py`) resolve through the
+  clone, so they keep working.
+- Do not install the integration via HACS at the same time, both would use
+  `custom_components/smartmeter_at`. Remove the link before switching to HACS.
+- The clone ends up in Home Assistant backups. Exclude it, or remove it once you
+  no longer need it.
+
+If you cannot run `git` on the Home Assistant host, copy the directory with
+links resolved instead, e.g. `cp -rL`, or from another machine
+`rsync -aL --delete --exclude __pycache__ custom_components/smartmeter_at/
+root@homeassistant.local:/config/custom_components/smartmeter_at/` (the SSH
+add-on needs `rsync`; `scp -r` follows links as well).
 
 ### Addon Development
 
