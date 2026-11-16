@@ -13,6 +13,8 @@ jobs:
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
+    outputs:
+      sha: ${{ steps.release-sha.outputs.sha }}
     steps:
       - name: "Checkout the repository"
         uses: "actions/checkout@v7.0.1"
@@ -46,11 +48,20 @@ jobs:
           echo "CHANGELOG updated."
 
       - name: Commit config.yaml
+        id: auto-commit
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: main
           commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
           file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md custom_components/smartmeter_at/manifest.json
+
+      - name: "Determine release commit"
+        id: release-sha
+        env:
+          COMMIT_HASH: ${{ steps.auto-commit.outputs.commit_hash }}
+        run: |
+          # Without changes no commit is made; fall back to the checked-out commit.
+          echo "sha=${COMMIT_HASH:-$(git rev-parse HEAD)}" >> "$GITHUB_OUTPUT"
 
   build:
     name: "Build ${{ matrix.arch }} image"
@@ -131,10 +142,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: "Checkout the repository"
+      - name: "Checkout the release commit"
         uses: "actions/checkout@v7.0.1"
         with:
-          ref: main
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - name: "Build smartmeter_at.zip (symlinks resolved)"
         run: |
