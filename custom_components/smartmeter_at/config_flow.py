@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
+import serial
 import serial.tools.list_ports
 import voluptuous as vol
 from homeassistant.config_entries import (
@@ -14,7 +16,9 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
+from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -61,7 +65,26 @@ def _list_ports() -> list[str]:
 
 async def async_list_ports(hass: HomeAssistant) -> list[str]:
     """List serial ports without blocking the event loop."""
-    return await hass.async_add_executor_job(_list_ports)
+    try:
+        return await hass.async_add_executor_job(_list_ports)
+    except OSError:
+        _LOGGER.warning("Could not list serial ports", exc_info=True)
+        return []
+
+
+def _check_port(port: str) -> None:
+    """Open and close the port once; raises ``OSError`` if that fails."""
+    serial.Serial(port).close()
+
+
+async def async_check_port(hass: HomeAssistant, port: str) -> None:
+    """Check that the port can be opened (readers reconnect silently otherwise)."""
+    await hass.async_add_executor_job(_check_port, port)
+
+
+async def async_realpath(hass: HomeAssistant, port: str) -> str:
+    """Resolve symlinks (e.g. /dev/serial/by-id) without blocking the loop."""
+    return await hass.async_add_executor_job(os.path.realpath, port)
 
 
 async def async_probe(hass: HomeAssistant, core: Core, data: dict[str, Any]) -> Any | None:
@@ -109,14 +132,20 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
         return SmartMeterOptionsFlow()
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        core = await async_load_core(self.hass)
+        try:
+            core = await async_load_core(self.hass)
+        except HomeAssistantError:
+            _LOGGER.exception("Smartmeter core could not be loaded")
+            return self.async_abort(reason="core_unavailable")
         errors: dict[str, str] = {}
         if user_input is not None:
-            data = {**user_input, CONF_KEY: user_input[CONF_KEY].strip()}
+            data = {**user_input, CONF_KEY: "".join(user_input[CONF_KEY].split())}
             if not core.config_validation.HEX_KEY_RE.match(data[CONF_KEY]):
                 errors[CONF_KEY] = "invalid_key"
             else:
+                await self._abort_if_port_in_use(data[CONF_PORT])
                 try:
+                    await async_check_port(self.hass, data[CONF_PORT])
                     reading = await async_probe(self.hass, core, data)
                 except OSError:  # includes serial.SerialException
                     errors["base"] = "cannot_connect"
@@ -128,7 +157,7 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
                         errors["base"] = "no_data"
                     else:
                         await self.async_set_unique_id(reading.meter_id or data[CONF_PORT])
-                        self._abort_if_unique_id_configured()
+                        self._abort_if_unique_id_configured(updates={CONF_PORT: data[CONF_PORT]})
                         profile = core.profile.get_profile(data[CONF_METER_TYPE])
                         return self.async_create_entry(
                             title=f"Smart Meter {profile.manufacturer} {profile.model}",
@@ -142,12 +171,22 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
 
+    async def _abort_if_port_in_use(self, port: str) -> None:
+        """Abort if an entry already reads this device (never open it twice)."""
+        wanted = await async_realpath(self.hass, port)
+        for entry in self._async_current_entries(include_ignore=False):
+            if await async_realpath(self.hass, entry.data[CONF_PORT]) == wanted:
+                raise AbortFlow("already_configured")
+
+
 class SmartMeterOptionsFlow(OptionsFlow):
     """Options flow for the update interval."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            return self.async_create_entry(
+                data={CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL])}
+            )
         schema = vol.Schema(
             {
                 vol.Required(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): NumberSelector(

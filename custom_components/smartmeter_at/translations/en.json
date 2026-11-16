@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Smart meter",
-        "description": "Connect the IR reading head to the meter and to this Home Assistant host. Stop the Smartmeter add-on first if it uses the same port.",
+        "description": "Connect the meter's customer interface (IR reading head, M-Bus or P1 adapter) to this Home Assistant host. Stop the Smartmeter add-on first if it uses the same port. Checking the connection can take up to 30 seconds.",
         "data": {
           "meter_type": "Grid operator / meter",
           "port": "Serial port",
@@ -12,7 +12,7 @@
         },
         "data_description": {
           "key": "32 hex characters, sent to you by your grid operator.",
-          "interface_type": "Only used for Burgenland and Wien. NÖ always uses the wired M-Bus port."
+          "interface_type": "Only used for Burgenland and Wien."
         }
       }
     },
@@ -23,7 +23,8 @@
       "unknown": "Unexpected error, see the log."
     },
     "abort": {
-      "already_configured": "This meter is already configured."
+      "already_configured": "This meter is already configured.",
+      "core_unavailable": "The Smartmeter core could not be loaded, see the log."
     }
   },
   "options": {
@@ -33,7 +34,7 @@
           "update_interval": "Update interval"
         },
         "data_description": {
-          "update_interval": "Seconds between entity updates. The meter sends every 1-5 seconds; lower values write more to the database."
+          "update_interval": "Seconds between entity updates. The meter sends every 1-10 seconds; lower values write more to the database."
         }
       }
     }

@@ -23,3 +23,5 @@ async def test_diagnostics_redact_key(hass: HomeAssistant, fake_readers) -> None
     assert result["entry_data"]["key"] == "**REDACTED**"
     assert result["meter_id_known"] is True
     assert result["data"]["u1"] == 236
+    assert result["profile"] == "burgenland"
+    assert "options" in result

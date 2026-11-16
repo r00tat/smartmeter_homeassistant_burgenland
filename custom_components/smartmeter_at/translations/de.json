@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Smart Meter",
-        "description": "Verbinde den IR-Lesekopf mit dem Zähler und mit diesem Home-Assistant-Host. Stoppe vorher das Smartmeter-Add-on, falls es denselben Port verwendet.",
+        "description": "Verbinde die Kundenschnittstelle des Zählers (IR-Lesekopf, M-Bus- oder P1-Adapter) mit diesem Home-Assistant-Host. Stoppe vorher das Smartmeter-Add-on, falls es denselben Port verwendet. Die Verbindungsprüfung kann bis zu 30 Sekunden dauern.",
         "data": {
           "meter_type": "Netzbetreiber / Zähler",
           "port": "Serieller Port",
@@ -12,7 +12,7 @@
         },
         "data_description": {
           "key": "32 Hex-Zeichen, die du von deinem Netzbetreiber bekommst.",
-          "interface_type": "Nur für Burgenland und Wien relevant. NÖ nutzt immer die M-Bus-Schnittstelle."
+          "interface_type": "Nur für Burgenland und Wien relevant."
         }
       }
     },
@@ -20,10 +20,11 @@
       "invalid_key": "Der Schlüssel muss genau 32 Hex-Zeichen lang sein.",
       "cannot_connect": "Der serielle Port kann nicht geöffnet werden.",
       "no_data": "Kein gültiges Telegramm empfangen. Prüfe Schlüssel, Zählertyp, Position des Lesekopfs und ob die Kundenschnittstelle aktiviert ist.",
-      "unknown": "Unerwarteter Fehler, siehe Log."
+      "unknown": "Unerwarteter Fehler, siehe Protokoll."
     },
     "abort": {
-      "already_configured": "Dieser Zähler ist bereits eingerichtet."
+      "already_configured": "Dieser Zähler ist bereits eingerichtet.",
+      "core_unavailable": "Der Smartmeter-Kern konnte nicht geladen werden, siehe Protokoll."
     }
   },
   "options": {
@@ -33,7 +34,7 @@
           "update_interval": "Aktualisierungsintervall"
         },
         "data_description": {
-          "update_interval": "Sekunden zwischen zwei Aktualisierungen. Der Zähler sendet alle 1–5 Sekunden; kleinere Werte schreiben mehr in die Datenbank."
+          "update_interval": "Sekunden zwischen zwei Aktualisierungen. Der Zähler sendet alle 1–10 Sekunden; kleinere Werte schreiben mehr in die Datenbank."
         }
       }
     }
