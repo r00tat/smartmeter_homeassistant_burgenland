@@ -31,6 +31,14 @@ from .meter_data import BaseMeterData
 from .mqtt.sensor_spec import SensorSpec
 from .noe.read import NoeMeterReader
 from .noe.sensors import SENSOR_SPECS as NOE_SENSORS
+from .push.framing import PushFramer
+from .push.reader import PushMeterReader
+from .push.sensors import (
+    E450_STEIERMARK_FIELDS,
+    H1_FIELDS,
+    KAIFA_FIELDS,
+    build_sensor_specs,
+)
 from .serial.read import MeterReader as HdlcMeterReader
 from .wien.data import MeterData as WienMeterData
 from .wien.sensors import SENSOR_SPECS as WIEN_SENSORS
@@ -171,6 +179,40 @@ class MBusDlmsProfile(MeterProfile):
         )
 
 
+@dataclass(frozen=True)
+class PushDlmsProfile(MeterProfile):
+    """Encrypted push telegrams decoded by the generic ``meter.push`` pipeline.
+
+    The flags pick the transports the framer looks for; the payload is
+    always a (ciphered) DLMS data-notification or a DSMR telegram whose
+    values are named by OBIS code.
+    """
+
+    mbus: bool = False
+    hdlc: bool = False
+    p1: bool = False
+
+    def framer(self) -> PushFramer:
+        return PushFramer(mbus=self.mbus, hdlc=self.hdlc, p1=self.p1)
+
+    def create_reader(
+        self, config: dict, callback: MeterDataCallback
+    ) -> PushMeterReader:
+        dlms = config.get("dlms") or {}
+        settings = self.serial_settings(config)
+        return PushMeterReader(
+            key_hex=dlms.get("key") or "",
+            framer_factory=self.framer,
+            port=settings.port,
+            baudrate=settings.baudrate,
+            bytesize=settings.bytesize,
+            parity=settings.parity,
+            stopbits=settings.stopbits,
+            timeout=settings.timeout,
+            callback=callback,
+        )
+
+
 _PROFILES: dict[str, MeterProfile] = {
     profile.name: profile
     for profile in (
@@ -202,6 +244,60 @@ _PROFILES: dict[str, MeterProfile] = {
             default_baudrate=9600,
             push_interval_seconds=1.0,
             data_factory=WienMeterData,
+        ),
+        # The profiles below follow the operators' published specifications
+        # but have not been verified with a real telegram yet (see README).
+        PushDlmsProfile(
+            name="steiermark",
+            manufacturer="Landis+Gyr",
+            model="E450 (Energienetze Steiermark)",
+            sensor_specs=build_sensor_specs(E450_STEIERMARK_FIELDS),
+            default_baudrate=2400,
+            default_parity=serial.PARITY_EVEN,
+            push_interval_seconds=10.0,
+            # Wired M-Bus; community reports show HDLC frames on the wire.
+            hdlc=True,
+            mbus=True,
+        ),
+        PushDlmsProfile(
+            name="steiermark_sagemcom",
+            manufacturer="Sagemcom",
+            model="DSMR P1 (Energienetze Steiermark)",
+            sensor_specs=build_sensor_specs(E450_STEIERMARK_FIELDS),
+            default_baudrate=115200,
+            push_interval_seconds=10.0,
+            p1=True,
+            hdlc=True,
+        ),
+        PushDlmsProfile(
+            name="salzburg",
+            manufacturer="Kaifa / Honeywell",
+            model="MA309M (Salzburg Netz)",
+            sensor_specs=build_sensor_specs(KAIFA_FIELDS),
+            default_baudrate=2400,
+            default_parity=serial.PARITY_EVEN,
+            push_interval_seconds=5.0,
+            mbus=True,
+        ),
+        PushDlmsProfile(
+            name="tirol",
+            manufacturer="Kaifa / Honeywell",
+            model="MA110M / MA309M (TINETZ)",
+            sensor_specs=build_sensor_specs(KAIFA_FIELDS),
+            default_baudrate=2400,
+            default_parity=serial.PARITY_EVEN,
+            push_interval_seconds=5.0,
+            mbus=True,
+        ),
+        PushDlmsProfile(
+            name="h1",
+            manufacturer="Smart Meter 2.0",
+            model="H1 customer interface (DSMR P1)",
+            sensor_specs=build_sensor_specs(H1_FIELDS),
+            default_baudrate=115200,
+            push_interval_seconds=1.0,
+            p1=True,
+            hdlc=True,
         ),
     )
 }

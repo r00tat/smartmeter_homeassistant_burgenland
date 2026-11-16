@@ -4,6 +4,12 @@ logging: INFO
 #   burgenland (default) — Landis+Gyr E450 via DLMS/HDLC (Netz Burgenland)
 #   noe_evn              — Sagemcom T210-D via M-Bus (Netz NÖ / EVN)
 #   wien                 — Wiener Netze (IM350, AM550, E450, …) via DLMS/HDLC
+# Untested, implemented from the specification (real telegrams wanted):
+#   steiermark           — Energienetze Steiermark, Landis+Gyr E450 via M-Bus
+#   steiermark_sagemcom  — Energienetze Steiermark, Sagemcom via DSMR P1
+#   salzburg             — Salzburg Netz, Kaifa / Honeywell via M-Bus
+#   tirol                — TINETZ, Kaifa / Honeywell via M-Bus
+#   h1                   — Smart Meter 2.0 H1 customer interface (DSMR P1)
 # meter_type: burgenland
 interface_type: OPTICAL
 
@@ -20,7 +26,8 @@ mqtt:
 dlms:
   port: "/dev/ttyUSB0"
   # Serial settings default to the selected meter_type; only set them to
-  # override (burgenland/wien: 9600 8N1, noe_evn: 2400 8E1).
+  # override (burgenland/wien: 9600 8N1; noe_evn, steiermark, salzburg,
+  # tirol: 2400 8E1; h1, steiermark_sagemcom: 115200 8N1).
   # baudrate: 9600
   # bytesize: 8
   # parity: "NONE"
