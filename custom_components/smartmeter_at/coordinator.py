@@ -32,6 +32,10 @@ _LOGGER = logging.getLogger(__name__)
 # Seconds to wait before the supervisor restarts a failed reader.
 RETRY_SECONDS = 10.0
 
+# Reopen the port when no telegram arrived for this long: a hung USB
+# adapter can keep the port open without delivering data.
+RESTART_AFTER_SECONDS = 300.0
+
 # How often to check whether the meter went silent.
 STALE_CHECK_INTERVAL = timedelta(seconds=30)
 
@@ -59,6 +63,7 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Entities go unavailable when no telegram arrives for this long.
         self.stale_after = max(60.0, 6 * self.profile.push_interval_seconds)
         self._last_data = time.monotonic()
+        self._last_restart = self._last_data
         self._unsub_stale_check: Callable[[], None] | None = None
         interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
         self._supervisor = core.supervisor.ReaderSupervisor(
@@ -70,7 +75,7 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def start(self) -> None:
-        self._last_data = time.monotonic()
+        self._last_data = self._last_restart = time.monotonic()
         self._unsub_stale_check = async_track_time_interval(
             self.hass, self.async_check_stale, STALE_CHECK_INTERVAL
         )
@@ -78,10 +83,14 @@ class SmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @callback
     def async_check_stale(self, now: datetime | None = None) -> None:
-        """Mark the data as failed once when no telegram arrived for too long."""
+        """Mark the data as failed when the meter went silent, reopen the port later."""
+        now = time.monotonic()
+        silent = now - self._last_data
+        if silent > RESTART_AFTER_SECONDS and now - self._last_restart > RESTART_AFTER_SECONDS:
+            self._last_restart = now
+            self._supervisor.restart(f"no telegram for {silent:.0f} s")
         if not self.last_update_success:
             return
-        silent = time.monotonic() - self._last_data
         if silent > self.stale_after:
             self.async_set_update_error(
                 TimeoutError(f"no telegram for {self.stale_after:.0f} s")

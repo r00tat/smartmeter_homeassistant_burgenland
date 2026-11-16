@@ -47,6 +47,7 @@ class ReaderSupervisor:
         self._reader: MeterReaderLike | None = None
         self._thread: threading.Thread | None = None
         self._count = 0
+        self._restart_reason: str | None = None
 
     def start(self) -> None:
         if self._thread is not None:
@@ -76,6 +77,20 @@ class ReaderSupervisor:
             if self._thread.is_alive():
                 log.warning("reader thread did not exit within %.0fs", timeout)
 
+    def restart(self, reason: str) -> None:
+        """Stop the current reader so the loop opens the port again.
+
+        For a reader that runs but delivers nothing (e.g. a hung USB
+        adapter); the next reader starts after ``retry_seconds``.
+        """
+        with self._lock:
+            reader = self._reader
+            if reader is None or self._stop.is_set():
+                return
+            self._restart_reason = reason
+        log.warning("restarting meter reader: %s", reason)
+        reader.stop()
+
     def _run(self) -> None:
         while not self._stop.is_set():
             error: Exception | None = None
@@ -87,7 +102,7 @@ class ReaderSupervisor:
                     reader = self._factory(self._handle)
                     self._reader = reader
                 reader.start()
-                if not self._stop.is_set():
+                if not self._stop.is_set() and self._restart_reason is None:
                     error = RuntimeError("meter reader stopped unexpectedly")
             except Exception as err:  # any reader fault must lead to a restart
                 log.warning("meter reader failed: %s", err, exc_info=True)
@@ -95,6 +110,7 @@ class ReaderSupervisor:
             finally:
                 with self._lock:
                     self._reader = None
+                    self._restart_reason = None
             if error is not None and not self._stop.is_set():
                 try:
                     self._on_error(error)

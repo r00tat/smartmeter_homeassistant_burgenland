@@ -110,6 +110,11 @@ needed sensors are disabled by default; enable them on the device page.
 All entities become unavailable when no telegram arrives for about a minute,
 for example when the reading head slipped off.
 
+The integration recovers on its own, so no restart automation is needed: if
+the port fails (e.g. the USB adapter was unplugged) it reopens it every 10
+seconds, and if the port stays open but no telegram arrives for 5 minutes (e.g.
+a hung adapter) it closes and reopens it.
+
 ## Troubleshooting
 
 - **Cannot connect:** the port does not exist or another process (often the

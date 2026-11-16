@@ -237,3 +237,34 @@ def test_no_data_forwarded_after_stop() -> None:
     supervisor.stop()
     callbacks[0]("late")
     assert data == []
+
+
+def test_restart_reopens_reader_without_reporting_an_error() -> None:
+    readers: list[FakeReader] = []
+    errors: list[Exception] = []
+
+    def factory(cb: Callable[[Any], None]) -> FakeReader:
+        reader = FakeReader(cb)
+        readers.append(reader)
+        return reader
+
+    supervisor = ReaderSupervisor(
+        factory, on_data=lambda d: None, on_error=errors.append, retry_seconds=0.01
+    )
+    supervisor.start()
+    try:
+        assert wait_for(lambda: len(readers) == 1 and readers[0].started.is_set())
+        supervisor.restart("no telegram")
+        assert wait_for(lambda: len(readers) == 2 and readers[1].started.is_set())
+        assert readers[0].stopped.is_set()
+        assert errors == []
+    finally:
+        supervisor.stop()
+
+
+def test_restart_without_running_reader_is_a_no_op() -> None:
+    supervisor = ReaderSupervisor(
+        lambda cb: FakeReader(cb), on_data=lambda d: None, on_error=lambda e: None
+    )
+    supervisor.restart("not started")
+    assert not supervisor.is_running()
