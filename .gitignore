@@ -182,3 +182,5 @@ smartmeter-data.raw
 smartmeter-config.yaml
 
 .worktrees/
+
+.venv-ha/

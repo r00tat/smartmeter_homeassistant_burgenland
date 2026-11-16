@@ -84,9 +84,19 @@ Expected: one Python version and two pinned lines, e.g. `homeassistant==2026.11.
 Write `requirements-ha-test.txt` (use the exact `pytest-homeassistant-custom-component` version from Step 2):
 
 ```text
--r smartmeter/requirements.txt
+# Same requirements as custom_components/smartmeter_at/manifest.json; the
+# add-on's requirements.txt cannot be reused because Home Assistant pins an
+# older paho-mqtt than the add-on (the integration does not use MQTT).
+gurux-common==1.0.13
+gurux-dlms==1.0.197
+pycryptodomex>=3.24
+pyserial>=3.5
+beautifulsoup4>=4.15
+lxml>=6.1
 pytest-homeassistant-custom-component==<version printed in Step 2>
 ```
+
+(Done: Python 3.14, `homeassistant==2026.10.4`, `pytest-homeassistant-custom-component==0.13.375`.)
 
 Write the major.minor Python version from Step 2 into `tests_integration/.python-version`, e.g.:
 
