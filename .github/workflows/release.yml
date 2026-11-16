@@ -10,6 +10,9 @@ permissions: {}
 jobs:
   prepare:
     name: "Prepare release"
+    # Pre-releases (e.g. 0.9.0b1 from a branch) only get the HACS zip:
+    # no version commit to main, no add-on or standalone images.
+    if: ${{ !github.event.release.prerelease }}
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
@@ -66,6 +69,7 @@ jobs:
   build:
     name: "Build ${{ matrix.arch }} image"
     needs: prepare
+    if: ${{ !github.event.release.prerelease }}
     strategy:
       fail-fast: false
       matrix:
@@ -102,6 +106,7 @@ jobs:
   build-standalone:
     name: "Build and publish standalone multi-arch image"
     needs: prepare
+    if: ${{ !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -138,6 +143,7 @@ jobs:
   integration-zip:
     name: "Attach HACS zip"
     needs: prepare
+    if: ${{ !cancelled() && (needs.prepare.result == 'success' || needs.prepare.result == 'skipped') }}
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
@@ -145,7 +151,16 @@ jobs:
       - name: "Checkout the release commit"
         uses: "actions/checkout@v7.0.1"
         with:
-          ref: ${{ needs.prepare.outputs.sha }}
+          # Pre-release: prepare was skipped, use the tagged commit.
+          ref: ${{ needs.prepare.outputs.sha || github.sha }}
+
+      - name: "Set the manifest version"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          manifest="custom_components/smartmeter_at/manifest.json"
+          jq --arg v "$RELEASE_TAG" '.version=$v' "$manifest" > "$manifest.tmp"
+          mv "$manifest.tmp" "$manifest"
 
       - name: "Build smartmeter_at.zip (symlinks resolved)"
         run: |
