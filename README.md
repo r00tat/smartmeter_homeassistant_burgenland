@@ -2,7 +2,7 @@
 
 This python program connects your Austrian Smart Meter to Home Assistant
 via MQTT.
-Alternatively, the [Home Assistant integration (HACS)](#home-assistant-integration-hacs)
+Alternatively, the [Home Assistant integration (Marketplace)](#home-assistant-integration-marketplace)
 reads the meter directly, without MQTT broker and add-on.
 
 Supported meters (select via `meter_type`):
@@ -123,7 +123,9 @@ docker run -d --restart unless-stopped \
 
 Adjust `/dev/ttyUSB0` if your IR reader appears on a different device node.
 
-### Home Assistant integration (HACS)
+### Home Assistant integration (Marketplace)
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=r00tat&repository=smartmeter_homeassistant_burgenland&category=integration)
 
 Reads the meter directly in Home Assistant: no MQTT broker and no add-on
 needed, and it also works with Home Assistant Container and Core (no
@@ -131,9 +133,12 @@ Supervisor). The meter's customer interface (IR reading head, M-Bus or P1
 adapter) must be connected to the Home Assistant host.
 
 1. Request the activation of the customer interface (see above).
-2. In HACS: ⋮ → Custom repositories → add
-   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`, category
-   *Integration*.
+2. Click the badge above, or add the repository manually: Settings →
+   Marketplace → *Add from link* →
+   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`.
+   The Marketplace is built into Home Assistant since 2026.11 (it replaces
+   HACS). On older versions the badge opens HACS instead; there use HACS →
+   ⋮ → Custom repositories, category *Integration*.
 3. Install *Smartmeter Austria* and restart Home Assistant.
 4. Settings → Devices & services → Add integration → *Smartmeter Austria*.
 5. Select grid operator, serial port and enter the key. The integration reads
@@ -180,9 +185,10 @@ The update interval (default 10 s) is set under the integration's
 meter type; unlike the add-on, it has no baudrate or frame-size overrides.
 Entities become unavailable when no telegram arrives for about a minute.
 
-HACS installs the integration from a release that contains the
-`smartmeter_at.zip` asset. This is attached to the first release published
-after the integration was added; until then HACS has nothing to download.
+The Marketplace (or HACS) installs the integration from a release that
+contains the `smartmeter_at.zip` asset. This is attached to the first release
+published after the integration was added; until then there is nothing to
+download.
 
 ### Standalone (systemd / uv)
 
@@ -275,8 +281,9 @@ Notes on the symlink:
   absolute host path, is dangling inside the container.
 - The nested links (`meter/`, `fix_source_encoding.py`) resolve through the
   clone, so they keep working.
-- Do not install the integration via HACS at the same time, both would use
-  `custom_components/smartmeter_at`. Remove the link before switching to HACS.
+- Do not install the integration via the Marketplace at the same time, both
+  would use `custom_components/smartmeter_at`. Remove the link before switching
+  to the Marketplace.
 - The clone ends up in Home Assistant backups. Exclude it, or remove it once you
   no longer need it.
 
