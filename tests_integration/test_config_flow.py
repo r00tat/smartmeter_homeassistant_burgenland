@@ -87,9 +87,19 @@ async def test_same_meter_cannot_be_added_twice(hass: HomeAssistant) -> None:
     MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, unique_id=METER_ID).add_to_hass(hass)
     result = await _start(hass)
     with patch(f"{FLOW}.async_probe", return_value=sample_reading()):
-        result = await hass.config_entries.flow.async_configure(result["flow_id"], ENTRY_DATA)
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {**ENTRY_DATA, CONF_PORT: "/dev/ttyUSB1"}
+        )
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+async def test_same_port_is_a_field_error(hass: HomeAssistant) -> None:
+    MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, unique_id=METER_ID).add_to_hass(hass)
+    result = await _start(hass)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], ENTRY_DATA)
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_PORT: "port_in_use"}
 
 
 async def test_options_flow_sets_update_interval(hass: HomeAssistant) -> None:
@@ -124,7 +134,7 @@ async def test_port_check_opens_and_closes_the_port(hass: HomeAssistant) -> None
     port.return_value.close.assert_called_once()
 
 
-async def test_port_of_existing_entry_is_aborted_before_probe(
+async def test_port_of_existing_entry_is_a_field_error_before_probe(
     hass: HomeAssistant, tmp_path
 ) -> None:
     device = tmp_path / "ttyUSB0"
@@ -135,13 +145,17 @@ async def test_port_of_existing_entry_is_aborted_before_probe(
         domain=DOMAIN, data={**ENTRY_DATA, CONF_PORT: str(device)}, unique_id=METER_ID
     ).add_to_hass(hass)
     result = await _start(hass)
-    with patch(f"{FLOW}.async_probe") as probe:
+    with (
+        patch(f"{FLOW}.async_probe") as probe,
+        patch(f"{FLOW}.async_check_port") as check_port,
+    ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {**ENTRY_DATA, CONF_PORT: str(link)}
         )
     probe.assert_not_called()
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "already_configured"
+    check_port.assert_not_called()
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_PORT: "port_in_use"}
 
 
 async def test_known_meter_on_new_port_updates_the_entry(hass: HomeAssistant) -> None:

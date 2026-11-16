@@ -18,6 +18,7 @@
     },
     "error": {
       "invalid_key": "The key must be exactly 32 hex characters.",
+      "port_in_use": "This port is already used by another smart meter entry.",
       "cannot_connect": "The serial port cannot be opened.",
       "no_data": "No valid telegram received. Check the key, the meter type, the reading head position and that the customer interface is activated.",
       "unknown": "Unexpected error, see the log."

@@ -18,6 +18,7 @@
     },
     "error": {
       "invalid_key": "Der Schlüssel muss genau 32 Hex-Zeichen lang sein.",
+      "port_in_use": "Dieser Port wird bereits von einem anderen Smart-Meter-Eintrag verwendet.",
       "cannot_connect": "Der serielle Port kann nicht geöffnet werden.",
       "no_data": "Kein gültiges Telegramm empfangen. Prüfe Schlüssel, Zählertyp, Position des Lesekopfs und ob die Kundenschnittstelle aktiviert ist.",
       "unknown": "Unerwarteter Fehler, siehe Protokoll."

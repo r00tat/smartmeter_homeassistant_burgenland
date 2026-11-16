@@ -16,7 +16,6 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
@@ -142,8 +141,9 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
             data = {**user_input, CONF_KEY: "".join(user_input[CONF_KEY].split())}
             if not core.config_validation.HEX_KEY_RE.match(data[CONF_KEY]):
                 errors[CONF_KEY] = "invalid_key"
+            elif await self._port_in_use(data[CONF_PORT]):
+                errors[CONF_PORT] = "port_in_use"
             else:
-                await self._abort_if_port_in_use(data[CONF_PORT])
                 try:
                     await async_check_port(self.hass, data[CONF_PORT])
                     reading = await async_probe(self.hass, core, data)
@@ -170,13 +170,13 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
-
-    async def _abort_if_port_in_use(self, port: str) -> None:
-        """Abort if an entry already reads this device (never open it twice)."""
+    async def _port_in_use(self, port: str) -> bool:
+        """Return True if an entry already reads this device (never open it twice)."""
         wanted = await async_realpath(self.hass, port)
         for entry in self._async_current_entries(include_ignore=False):
             if await async_realpath(self.hass, entry.data[CONF_PORT]) == wanted:
-                raise AbortFlow("already_configured")
+                return True
+        return False
 
 
 class SmartMeterOptionsFlow(OptionsFlow):
