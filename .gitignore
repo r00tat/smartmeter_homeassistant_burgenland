@@ -184,3 +184,4 @@ smartmeter-config.yaml
 .worktrees/
 
 .venv-ha/
+!/.github/scripts/
