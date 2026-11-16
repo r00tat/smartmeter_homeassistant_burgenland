@@ -31,6 +31,17 @@ detail: <https://github.com/r00tat/smartmeter_homeassistant_burgenland>.
 - The Smartmeter add-on does not read the same port. Use either the add-on or
   the integration for a meter, never both.
 
+## Switching from the add-on
+
+Stop the add-on and disable its autostart (keep MQTT running), wait a minute
+and add the integration. After the connection check it finds the add-on's MQTT
+device and offers *Take over the add-on sensors*. With that, the integration
+registers its sensors under the add-on's entity ids and keeps their settings
+and unit (Wh), so dashboards, automations, the energy dashboard, history and
+statistics keep working. The add-on device is removed. Do not start the add-on
+again afterwards. Details: *Switching from the add-on* in the repository
+README.
+
 ## Installation
 
 ### HACS

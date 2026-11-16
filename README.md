@@ -141,10 +141,33 @@ adapter) must be connected to the Home Assistant host.
    right away.
 
 Use either the add-on or the integration for a meter, never both: both would
-read the same serial port and corrupt each other's telegrams. Stop the add-on
-and disable its autostart before you add the integration. When you switch from
-the add-on, the integration creates new entities; the energy dashboard has to
-be pointed to the new *Total Energy consumed/provided* sensors.
+read the same serial port and corrupt each other's telegrams.
+
+#### Switching from the add-on
+
+The integration can take over the add-on's sensors, so dashboards,
+automations, scripts, the energy dashboard, history and long-term statistics
+keep working:
+
+1. Stop the add-on and disable its autostart. Leave the MQTT integration and
+   the broker running.
+2. Wait about a minute, then add the integration as above.
+3. After the connection check the integration finds the add-on's MQTT device
+   and offers *Take over the add-on sensors*. Keep it switched on.
+
+The integration then removes the add-on device and its entities (the MQTT
+integration also clears the retained discovery message) and registers its own
+sensors under the add-on's entity ids. It keeps names, icons, areas, aliases,
+labels, enabled/hidden state and the unit: energy stays in Wh, so templates and
+cards show the same numbers as before. You can switch a sensor to kWh in its
+settings; the statistics are converted. The add-on's *Raw Data* sensor has no
+counterpart and is removed.
+
+If the add-on still reports values, the step refuses with *The add-on still
+reports values*. Do not start the add-on again afterwards: it would recreate
+its sensors under new entity ids. To go back, delete the integration entry and
+start the add-on; it creates its sensors again with default entity ids, so
+entity ids you had changed have to be set again.
 
 The update interval (default 10 s) is set under the integration's
 *Configure* button. The integration uses the serial defaults of the selected
