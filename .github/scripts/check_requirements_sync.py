@@ -30,6 +30,14 @@ def main() -> int:
     if addon != integration:
         print(f"gurux pins differ: add-on {addon}, integration {integration}")
         return 1
+    test_lines = {
+        line.strip()
+        for line in (ROOT / "requirements-ha-test.txt").read_text().splitlines()
+    }
+    missing = [req for req in manifest["requirements"] if req not in test_lines]
+    if missing:
+        print(f"requirements-ha-test.txt lacks manifest requirements: {missing}")
+        return 1
     print(f"gurux pins in sync: {addon}")
     return 0
 

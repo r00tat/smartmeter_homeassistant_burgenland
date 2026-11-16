@@ -13,8 +13,8 @@
     "gurux-dlms==1.0.197",
     "pycryptodomex>=3.24",
     "pyserial>=3.5",
-    "beautifulsoup4>=4.15",
-    "lxml>=6.1"
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0"
   ],
   "version": "0.8.1"
 }
