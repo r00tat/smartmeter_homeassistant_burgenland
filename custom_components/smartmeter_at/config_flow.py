@@ -19,9 +19,11 @@ from homeassistant.config_entries import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -31,9 +33,11 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_ADDON_DEVICE,
     CONF_INTERFACE_TYPE,
     CONF_KEY,
     CONF_METER_TYPE,
+    CONF_MIGRATE,
     CONF_PORT,
     CONF_UPDATE_INTERVAL,
     DEFAULT_INTERFACE_TYPE,
@@ -44,6 +48,12 @@ from .const import (
 )
 from .coordinator import build_reader_factory
 from .core import Core, async_load_core
+from .migration import (
+    AddonDevice,
+    async_addon_active,
+    async_find_addon_devices,
+    sensor_suffixes,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -125,6 +135,11 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        self._data: dict[str, Any] = {}
+        self._title = ""
+        self._addon_devices: list[AddonDevice] = []
+
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
@@ -159,16 +174,63 @@ class SmartMeterConfigFlow(ConfigFlow, domain=DOMAIN):
                         await self.async_set_unique_id(reading.meter_id or data[CONF_PORT])
                         self._abort_if_unique_id_configured(updates={CONF_PORT: data[CONF_PORT]})
                         profile = core.profile.get_profile(data[CONF_METER_TYPE])
-                        return self.async_create_entry(
-                            title=f"Smart Meter {profile.manufacturer} {profile.model}",
-                            data=data,
+                        self._data = data
+                        self._title = f"Smart Meter {profile.manufacturer} {profile.model}"
+                        self._addon_devices = async_find_addon_devices(
+                            self.hass, sensor_suffixes(profile)
                         )
+                        if self._addon_devices:
+                            return await self.async_step_migrate()
+                        return self.async_create_entry(title=self._title, data=data)
 
         ports = await async_list_ports(self.hass)
         schema = self.add_suggested_values_to_schema(
             _user_schema(core.profile.known_meter_types(), ports), user_input
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
+
+    async def async_step_migrate(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Offer to take over the sensors of the Smartmeter add-on."""
+        devices = {device.device_id: device for device in self._addon_devices}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if not user_input[CONF_MIGRATE]:
+                return self.async_create_entry(title=self._title, data=self._data)
+            device = devices[user_input.get(CONF_ADDON_DEVICE, self._addon_devices[0].device_id)]
+            if async_addon_active(self.hass, device):
+                errors["base"] = "addon_running"
+            else:
+                return self.async_create_entry(
+                    title=self._title, data={**self._data, CONF_ADDON_DEVICE: device.device_id}
+                )
+
+        fields: dict[Any, Any] = {vol.Required(CONF_MIGRATE, default=True): BooleanSelector()}
+        if len(self._addon_devices) > 1:
+            fields[
+                vol.Required(CONF_ADDON_DEVICE, default=self._addon_devices[0].device_id)
+            ] = SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(
+                            value=device.device_id,
+                            label=f"{device.name} ({len(device.entities)})",
+                        )
+                        for device in self._addon_devices
+                    ]
+                )
+            )
+        first = self._addon_devices[0]
+        return self.async_show_form(
+            step_id="migrate",
+            data_schema=self.add_suggested_values_to_schema(vol.Schema(fields), user_input),
+            errors=errors,
+            description_placeholders={
+                "device": first.name,
+                "count": str(len(first.entities)),
+            },
+        )
 
     async def _port_in_use(self, port: str) -> bool:
         """Return True if an entry already reads this device (never open it twice)."""

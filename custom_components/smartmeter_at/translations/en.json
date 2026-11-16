@@ -14,6 +14,17 @@
           "key": "32 hex characters, sent to you by your grid operator.",
           "interface_type": "Only used for Burgenland and Wien."
         }
+      },
+      "migrate": {
+        "title": "Take over add-on sensors",
+        "description": "Found the Smartmeter add-on device **{device}** with {count} sensors that match this meter. Taking them over keeps their entity ids, names, areas and history, so dashboards, automations and the energy dashboard keep working. The add-on device and its entities are removed.\n\nStop the add-on and disable its autostart first, otherwise it recreates its sensors.",
+        "data": {
+          "migrate": "Take over the add-on sensors",
+          "addon_device": "Add-on device"
+        },
+        "data_description": {
+          "migrate": "Without taking them over, the integration creates new sensors and the add-on sensors stay as they are."
+        }
       }
     },
     "error": {
@@ -21,7 +32,8 @@
       "port_in_use": "This port is already used by another smart meter entry.",
       "cannot_connect": "The serial port cannot be opened.",
       "no_data": "No valid telegram received. Check the key, the meter type, the reading head position and that the customer interface is activated.",
-      "unknown": "Unexpected error, see the log."
+      "unknown": "Unexpected error, see the log.",
+      "addon_running": "The add-on still reports values. Stop the add-on, wait a minute and try again."
     },
     "abort": {
       "already_configured": "This meter is already configured.",

@@ -5,8 +5,10 @@ from __future__ import annotations
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant
 
+from .const import CONF_ADDON_DEVICE
 from .coordinator import SmartMeterConfigEntry, SmartMeterCoordinator
 from .core import async_load_core
+from .migration import async_migrate_from_addon
 
 PLATFORMS = [Platform.SENSOR]
 
@@ -16,6 +18,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartMeterConfigEntry) -
     core = await async_load_core(hass)
     coordinator = SmartMeterCoordinator(hass, entry, core)
     entry.runtime_data = coordinator
+
+    if addon_device := entry.data.get(CONF_ADDON_DEVICE):
+        # One-off, before the sensors exist: they must be registered under the
+        # add-on's entity ids. Updating the data does not reload the entry,
+        # the update listener is only added below.
+        await async_migrate_from_addon(hass, entry, coordinator.profile, addon_device)
+        hass.config_entries.async_update_entry(
+            entry, data={k: v for k, v in entry.data.items() if k != CONF_ADDON_DEVICE}
+        )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # Start after the platforms so the device exists when the first reading

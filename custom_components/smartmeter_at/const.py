@@ -19,3 +19,12 @@ DEFAULT_INTERFACE_TYPE = "optical"
 DEFAULT_UPDATE_INTERVAL = 10
 
 DATA_CORE = f"{DOMAIN}_core"
+
+# Device name of every meter. Matches the add-on's MQTT device name, so a
+# fresh setup gets the entity ids older add-on installations had.
+DEVICE_NAME = "Smart Meter"
+
+# Config flow / entry data: take over the sensors of this add-on MQTT device
+# (device registry id). Removed from the entry data once the migration ran.
+CONF_MIGRATE = "migrate"
+CONF_ADDON_DEVICE = "addon_device"

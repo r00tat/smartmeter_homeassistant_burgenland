@@ -16,7 +16,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DEVICE_NAME, DOMAIN
 from .coordinator import SmartMeterConfigEntry, SmartMeterCoordinator
 
 
@@ -68,7 +68,7 @@ class SmartMeterSensor(CoordinatorEntity[SmartMeterCoordinator], SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}{unique_suffix}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.title,
+            name=DEVICE_NAME,
             manufacturer=coordinator.profile.manufacturer,
             model=coordinator.profile.model,
         )
