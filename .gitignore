@@ -185,3 +185,6 @@ smartmeter-config.yaml
 
 .venv-ha/
 !/.github/scripts/
+
+# Home Assistant test instance created by dev.sh
+/config

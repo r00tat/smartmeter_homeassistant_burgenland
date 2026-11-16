@@ -196,6 +196,49 @@ pip3 install -r requirements.txt
 If you install additional pacakges, save the current installed dependencies to `requirements.txt` with:
 `pip freeze -l | grep -v flake8 > requirements.txt`
 
+### Integration Development
+
+The integration in `custom_components/smartmeter_at/` does not carry its own
+copy of the meter code: `meter/` and `fix_source_encoding.py` are symlinks into
+`smartmeter/`. Copying only `custom_components/smartmeter_at/` therefore leaves
+dangling links. Always clone the whole repository and resolve the links when
+copying (the release zip does the same).
+
+**Local test instance (Docker):** `./dev.sh` mirrors the integration (links
+resolved) into `config/` and starts Home Assistant in the container
+`smartmeter-ha-dev` on <http://localhost:8124>. Run it again after a change to
+sync and restart. `HTTP_PORT` changes the port, `--recreate` recreates the
+container, `--no-logs` keeps it running in the background. On a Linux host,
+`SERIAL_DEVICE=/dev/ttyUSB0 ./dev.sh` passes the reading head into the
+container; Docker Desktop on macOS/Windows cannot pass USB serial devices.
+
+**On a real Home Assistant (`/config/custom_components`):** clone the
+repository on the Home Assistant host, e.g. via the *Terminal & SSH* add-on, and
+copy the integration with links resolved:
+
+```bash
+cd /config
+git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
+# to test a branch that is not released yet:
+# git clone -b <branch> https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
+mkdir -p /config/custom_components
+rm -rf /config/custom_components/smartmeter_at
+cp -rL smartmeter-src/custom_components/smartmeter_at /config/custom_components/
+```
+
+Restart Home Assistant, then add the integration under Settings → Devices &
+services. To update, run `git -C /config/smartmeter-src pull`, repeat the
+`rm`/`cp` and restart. Do not install the integration via HACS at the same
+time, both would use `custom_components/smartmeter_at`. Remove
+`/config/smartmeter-src` when you are done, or exclude it from backups if you
+keep it.
+
+If you develop on another machine, copy the resolved directory over instead,
+e.g. `rsync -aL --delete --exclude __pycache__
+custom_components/smartmeter_at/ root@homeassistant.local:/config/custom_components/smartmeter_at/`
+(the SSH add-on needs `rsync`, otherwise use `scp -r`, which follows links as
+well).
+
 ### Addon Development
 
 Building a version and pushing to docker hub:
