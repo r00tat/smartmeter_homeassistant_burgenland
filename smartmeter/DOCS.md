@@ -21,6 +21,28 @@ Supported meters (select via `meter_type`):
   at 9600 baud (8N1). Activate the customer interface and copy the AES key
   from the [Wiener Netze Smart Meter portal](https://smartmeter-web.wienernetze.at/).
 
+Implemented from the grid operators' specifications but **not yet tested
+with a real meter** (please report your results, see
+[Real data wanted](https://github.com/r00tat/smartmeter_homeassistant_burgenland#real-data-wanted)):
+
+- `steiermark` — Energienetze Steiermark, Landis+Gyr E450 on the wired M-Bus
+  customer interface (RJ12) at 2400 baud (8E1). Use the GUEK from the
+  [Energienetze portal](https://portal.e-netze.at/) as key.
+- `steiermark_sagemcom` — Energienetze Steiermark, Sagemcom on the DSMR P1
+  customer interface (RJ12) at 115200 baud (8N1). Use the GUEK as key.
+- `salzburg` — Salzburg Netz, Kaifa / Honeywell on the wired M-Bus customer
+  interface (RJ12) at 2400 baud (8E1). Activate it and download the key in the
+  [Salzburg Netz portal](https://portal.salzburgnetz.at/).
+- `tirol` — TINETZ, Kaifa / Honeywell on the wired M-Bus customer interface
+  (RJ12) at 2400 baud (8E1). Activate it in the TINETZ customer portal; the
+  key is sent to you.
+- `h1` — the *Smart Meter 2.0* customer interface H1 that all Austrian grid
+  operators will install (DSMR P1, 115200 baud, one telegram per second).
+
+The wired M-Bus interfaces need an M-Bus slave adapter (M-Bus to USB); the
+DSMR P1 interfaces need a P1 cable. `interface_type` is ignored by these
+profiles.
+
 You can read more about the underlying python program at the [github page](https://github.com/r00tat/smartmeter_homeassistant_burgenland).
 
 ## Meter selection
@@ -28,8 +50,9 @@ You can read more about the underlying python program at the [github page](https
 Set the top-level `meter_type` option to switch between providers. When
 omitted, the addon behaves exactly as before and uses the `burgenland`
 profile. The profile decides everything about the meter's interface: the
-serial settings (9600 8N1 for `burgenland` and `wien`, 2400 8E1 for
-`noe_evn`), how often the meter sends data, how the data is decoded, the
+serial settings (9600 8N1 for `burgenland` and `wien`; 2400 8E1 for
+`noe_evn`, `steiermark`, `salzburg` and `tirol`; 115200 8N1 for `h1` and
+`steiermark_sagemcom`), how often the meter sends data, how the data is decoded, the
 Home Assistant device manufacturer/model metadata and the sensor list.
 
 Leave `baudrate`, `bytesize`, `parity` and `stopbits` empty to use the
@@ -48,6 +71,14 @@ reactive energy and reactive power in/out. The meters send no voltages or
 currents. The meter clock is included in the raw state as `meter_time`.
 `publish_interval` is respected: with the default of 30 seconds every 30th
 reading is published.
+
+The `steiermark`, `steiermark_sagemcom`, `salzburg`, `tirol` and `h1`
+profiles publish the values their meters send, named as in the other
+profiles: energy and power in/out, voltages and currents (Salzburg, Tirol,
+H1), tariff 1/2 energy (Steiermark), and, disabled by default, reactive
+energy and power. Values a meter does not send are published as `null`.
+With `logging: DEBUG` the raw serial bytes and every telegram are logged
+as hex — please attach them when you report a problem.
 
 ## Optional MQTT TLS
 

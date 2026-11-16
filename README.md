@@ -13,6 +13,48 @@ Supported meters (select via `meter_type`):
 - `wien` — Wiener Netze (Siemens IM150/IM350/IM351, Iskraemeco AM550,
   Landis+Gyr E450) via DLMS/HDLC on the infrared interface at 9600 baud.
 
+Implemented from the grid operators' specifications, **not yet tested with
+a real meter** — [real telegrams wanted](#real-data-wanted):
+
+- `steiermark` — Energienetze Steiermark, Landis+Gyr E450 via wired M-Bus
+  (RJ12) at 2400 baud (8E1).
+- `steiermark_sagemcom` — Energienetze Steiermark, Sagemcom via DSMR P1
+  (RJ12) at 115200 baud (8N1).
+- `salzburg` — Salzburg Netz, Kaifa / Honeywell via wired M-Bus (RJ12) at
+  2400 baud (8E1).
+- `tirol` — TINETZ, Kaifa / Honeywell via wired M-Bus (RJ12) at 2400 baud
+  (8E1).
+- `h1` — the future *Smart Meter 2.0* customer interface H1 (Oesterreichs
+  Energie Companion Standard 2026, all Austrian grid operators): DSMR P1 at
+  115200 baud, one telegram per second, DLMS Security Suite 0.
+
+## Real data wanted
+
+The profiles `steiermark`, `steiermark_sagemcom`, `salzburg`, `tirol` and
+`h1` follow the published specifications and are covered by tests with
+telegrams built exactly to those specifications. **No telegram from a real
+meter has been decoded with them yet.** Meters do not always behave as
+their documentation says (Salzburg Netz, for example, documents AES-CBC,
+while community projects report AES-GCM), so expect rough edges until
+someone confirms a profile.
+
+If you have one of these meters, please help:
+
+1. Set `logging: DEBUG` and the matching `meter_type`, and let the add-on run
+   for a minute.
+2. Open an [issue](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues)
+   with your grid operator, meter model, the `raw bytes:` / `telegram (…):`
+   log lines and whether values showed up in Home Assistant.
+3. If you can, include a capture together with its key so it can become a
+   test fixture. The key only decrypts the customer interface of your own
+   meter; you can have your grid operator issue a new one afterwards. If you
+   do not want to share the key, the decoded values the add-on logged (or the
+   values on the meter display at that moment) help as well.
+
+Not supported yet: Netz Oberösterreich (AMIS, plain OMS M-Bus with AES
+mode 5), Vorarlberg Netz (AES-CBC with CMAC) and Kärnten Netz (no public
+specification found). Captures for these are welcome too.
+
 It has been tested with a Raspberry Pi Zero 2 W as a standalone device
 and with a Raspberry Pi 4 as Home Assistant Addon.
 
@@ -177,6 +219,50 @@ Further reading: [Wiener Netze Kundenschnittstelle](https://www.wienernetze.at/s
 [bernikr/esphome-wienernetze-smartmeter](https://github.com/bernikr/esphome-wienernetze-smartmeter),
 [tofuSCHNITZEL/wiener-netze-smartmeter-serial](https://github.com/tofuSCHNITZEL/wiener-netze-smartmeter-serial).
 
+#### OBIS pipeline: Steiermark, Salzburg, Tirol, H1
+
+These meters name every value by its OBIS code, so they share one
+pipeline in `smartmeter/meter/obis/` instead of a reader each:
+
+```text
+serial bytes → framing → general-glo-ciphering (AES-128-GCM)
+             → data-notification (A-XDR) or DSMR text → OBIS registers
+```
+
+- **Salzburg Netz / TINETZ (Kaifa, Honeywell):** wired M-Bus master on RJ12
+  pins 3/4, 2400 baud 8E1, push every 5 s. Messages above 250 bytes are
+  split into several M-Bus frames; bit 4 of the CI field marks the last
+  segment (`CI=00`, then `CI=11`). The payload is
+  `DB 08 <system title> <length> <SC> <frame counter> <ciphertext>`;
+  register values come with scaler and unit. Activate the interface and
+  get the key in the [Salzburg Netz portal](https://portal.salzburgnetz.at/)
+  or the TINETZ customer portal.
+  Specifications: [Salzburg Netz](https://www.salzburgnetz.at/content/dam/salzburgnetz/dokumente/stromnetz/Technische-Beschreibung-Kundenschnittstelle.pdf),
+  [TINETZ](https://www.tinetz.at/uploads/tx_bh/101/tinetz_smart-meter_beschreibung-kundenschnittstelle_001.pdf).
+- **Energienetze Steiermark, Landis+Gyr E450:** wired M-Bus on RJ12 pins 3/4
+  at 2400 baud, push every 10 s. Community reports show three HDLC frames
+  per push carrying DLMS general-block-transfer blocks; the notification
+  holds the clock and 16 OBIS/value pairs (energy and power ±A/±R, tariffs
+  1 and 2) without scalers. The reader also accepts M-Bus long frames in
+  case your meter uses them. Use the GUEK from the
+  [Energienetze portal](https://portal.e-netze.at/) as `key`; the GAK is not
+  needed.
+- **Energienetze Steiermark, Sagemcom:** DSMR 5.0.2 P1 on RJ12 at 115200 baud,
+  push every 10 s, encrypted with the GUEK. Use `meter_type:
+  steiermark_sagemcom`.
+  Specification: [Energienetze Steiermark](https://www.e-netze.at/downloads-data/pdf.aspx?pdf=EN_Update+Kundenschnittstelle+Smart+Meter+%2803_2024%29_WEB_RGB.pdf).
+- **Smart Meter 2.0 H1:** the Oesterreichs Energie Companion Standard 2026
+  defines H1 as DSMR P1 at 115200 baud, one push per second, encrypted with
+  DLMS Security Suite 0 (AES-GCM-128), carrying voltages, currents, ±P, ±Q,
+  ±A and ±R. The exact frame format is not public yet, so `h1` accepts
+  encrypted DSMR telegrams, plain DSMR telegrams and DLMS notifications
+  (raw or in HDLC frames).
+  Specification: [OE Companion Standard Smart Meter 2.0](https://oesterreichsenergie.at/fileadmin/user_upload/Oesterreichs_Energie/Publikationsdatenbank/Diverses/2026/OE_Companion_Standard_V1.0.pdf),
+  chapter C.6.
+
+Fields a meter does not send (for example L2/L3 on single-phase meters) are
+published as `null`, so Home Assistant shows them as unknown.
+
 #### Adding another meter
 
 Everything that is specific to a meter's customer interface lives in its
@@ -184,10 +270,13 @@ profile in `smartmeter/meter/profile.py`: serial defaults, push interval,
 which reader handles the line, how a decoded telegram becomes a
 `MeterData` object, and the Home Assistant metadata and sensors.
 `MeterProfile` is the abstract base class; `HdlcDlmsProfile` (DLMS in HDLC
-frames, e.g. Burgenland and Wien) and `MBusDlmsProfile` (DLMS in M-Bus
-frames, Netz NÖ) implement `create_reader`. A meter that reuses one of
-these interfaces only needs a new profile instance, a `MeterData`
-subclass of `BaseMeterData` and a sensor catalog. Register the name in
+frames, e.g. Burgenland and Wien), `MBusDlmsProfile` (DLMS in M-Bus
+frames, Netz NÖ) and `ObisProfile` (the OBIS pipeline)
+implement `create_reader`. A meter that sends OBIS codes usually only needs
+a new `ObisProfile` instance with the right transports and field list.
+A meter with a fixed, OBIS-less layout that reuses one of the other
+interfaces needs a new profile instance, a `MeterData` subclass of
+`BaseMeterData` and a sensor catalog. Register the name in
 `config.yaml` and `config.schema.json` too; a test checks that the lists
 match.
 

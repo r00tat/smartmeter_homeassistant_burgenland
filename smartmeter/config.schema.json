@@ -12,7 +12,7 @@
     },
     "meter_type": {
       "type": "string",
-      "enum": ["burgenland", "noe_evn", "wien"],
+      "enum": ["burgenland", "noe_evn", "wien", "steiermark", "steiermark_sagemcom", "salzburg", "tirol", "h1"],
       "default": "burgenland"
     },
     "interface_type": {
