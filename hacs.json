@@ -1,0 +1,7 @@
+{
+  "name": "Smartmeter Austria",
+  "homeassistant": "2025.2.0",
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "smartmeter_at.zip"
+}
