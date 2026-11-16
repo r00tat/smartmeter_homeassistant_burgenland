@@ -60,7 +60,12 @@ class ReaderSupervisor:
         return self._thread is not None and self._thread.is_alive()
 
     def stop(self, timeout: float = 10.0) -> None:
-        """Stop the reader and wait for the thread. Safe to call twice."""
+        """Stop the reader and wait for the thread. Safe to call twice.
+
+        Blocks for up to ``timeout`` seconds, so do not call it on an asyncio
+        event loop (use an executor). A stopped supervisor cannot be
+        restarted; create a new one.
+        """
         self._stop.set()
         with self._lock:
             reader = self._reader
@@ -78,6 +83,7 @@ class ReaderSupervisor:
                 with self._lock:
                     if self._stop.is_set():
                         break
+                    self._count = 0
                     reader = self._factory(self._handle)
                     self._reader = reader
                 reader.start()
@@ -90,12 +96,21 @@ class ReaderSupervisor:
                 with self._lock:
                     self._reader = None
             if error is not None and not self._stop.is_set():
-                self._on_error(error)
+                try:
+                    self._on_error(error)
+                except Exception:
+                    log.exception("on_error callback failed")
             self._stop.wait(self._retry_seconds)
 
     def _handle(self, data: Any) -> None:
+        if self._stop.is_set():
+            return
         if self._count % self._every == 0:
-            self._on_data(data)
+            try:
+                self._on_data(data)
+            except Exception:
+                # Must not reach the reader, which counts exceptions as parse failures.
+                log.exception("on_data callback failed")
         self._count += 1
 
 
@@ -105,6 +120,9 @@ def probe(reader_factory: ReaderFactory, timeout: float) -> Any | None:
     Returns the first reading, ``None`` on timeout, and re-raises the
     reader's exception if it failed before delivering anything (e.g. the
     serial port does not exist).
+
+    Blocks for up to ``timeout`` plus a few seconds, so do not call it on an
+    asyncio event loop (use an executor).
     """
     received: list[Any] = []
     errors: list[Exception] = []
@@ -130,6 +148,8 @@ def probe(reader_factory: ReaderFactory, timeout: float) -> Any | None:
     done.wait(timeout)
     reader.stop()
     thread.join(timeout=5.0)
+    if thread.is_alive():
+        log.warning("probe thread did not exit after stop()")
     if received:
         return received[0]
     if errors:

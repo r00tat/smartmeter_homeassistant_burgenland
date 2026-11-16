@@ -27,8 +27,10 @@ class FakeReader:
         self.fail = fail
         self.block = block
         self.stopped = threading.Event()
+        self.started = threading.Event()
 
     def start(self) -> None:
+        self.started.set()
         for item in self.items:
             self.callback(item)
         if self.fail is not None:
@@ -100,13 +102,21 @@ def test_reader_that_returns_on_its_own_is_reported() -> None:
 
 def test_stop_ends_thread_without_reporting_an_error() -> None:
     errors: list[Exception] = []
-    supervisor = ReaderSupervisor(
-        lambda cb: FakeReader(cb), on_data=lambda data: None, on_error=errors.append
-    )
+    created: list[FakeReader] = []
+
+    def factory(cb: Callable[[Any], None]) -> FakeReader:
+        reader = FakeReader(cb)
+        created.append(reader)
+        return reader
+
+    supervisor = ReaderSupervisor(factory, on_data=lambda data: None, on_error=errors.append)
     supervisor.start()
-    assert wait_for(supervisor.is_running)
+    assert wait_for(lambda: bool(created) and created[0].started.is_set())
+    began = time.monotonic()
     supervisor.stop()
+    assert time.monotonic() - began < 1.0
     assert not supervisor.is_running()
+    assert created[0].stopped.is_set()
     assert errors == []
 
 
@@ -125,4 +135,105 @@ def test_probe_raises_reader_error() -> None:
 
 
 def test_probe_returns_none_on_timeout() -> None:
-    assert probe(lambda cb: FakeReader(cb), timeout=0.05) is None
+    created: list[FakeReader] = []
+
+    def factory(cb: Callable[[Any], None]) -> FakeReader:
+        reader = FakeReader(cb)
+        created.append(reader)
+        return reader
+
+    assert probe(factory, timeout=0.05) is None
+    assert created[0].stopped.is_set()
+
+
+def test_factory_failure_is_reported_and_retried() -> None:
+    errors: list[Exception] = []
+    calls: list[int] = []
+
+    def factory(cb: Callable[[Any], None]) -> FakeReader:
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("cannot build")
+        return FakeReader(cb)
+
+    supervisor = ReaderSupervisor(
+        factory, on_data=lambda d: None, on_error=errors.append, retry_seconds=0.01
+    )
+    supervisor.start()
+    assert wait_for(lambda: len(calls) >= 2)
+    supervisor.stop()
+    assert [str(err) for err in errors] == ["cannot build"]
+
+
+def test_failing_on_error_does_not_kill_the_supervisor() -> None:
+    calls: list[int] = []
+
+    def factory(cb: Callable[[Any], None]) -> FakeReader:
+        calls.append(1)
+        return FakeReader(cb, fail=OSError("boom"))
+
+    def on_error(err: Exception) -> None:
+        raise RuntimeError("event loop closed")
+
+    supervisor = ReaderSupervisor(
+        factory, on_data=lambda d: None, on_error=on_error, retry_seconds=0.01
+    )
+    supervisor.start()
+    assert wait_for(lambda: len(calls) >= 2)
+    assert supervisor.is_running()
+    supervisor.stop()
+
+
+def test_failing_on_data_does_not_reach_the_reader() -> None:
+    seen: list[Any] = []
+    errors: list[Exception] = []
+
+    def on_data(data: Any) -> None:
+        seen.append(data)
+        raise RuntimeError("callback bug")
+
+    supervisor = ReaderSupervisor(
+        lambda cb: FakeReader(cb, items=[1, 2, 3]), on_data=on_data, on_error=errors.append
+    )
+    supervisor.start()
+    assert wait_for(lambda: seen == [1, 2, 3])
+    assert supervisor.is_running()
+    supervisor.stop()
+    assert errors == []
+
+
+def test_counter_resets_for_every_new_reader() -> None:
+    data: list[Any] = []
+    readers = iter(
+        [
+            lambda cb: FakeReader(cb, items=["first"], fail=OSError("gone")),
+            lambda cb: FakeReader(cb, items=["second"]),
+        ]
+    )
+    supervisor = ReaderSupervisor(
+        lambda cb: next(readers)(cb),
+        on_data=data.append,
+        on_error=lambda err: None,
+        every=3,
+        retry_seconds=0.01,
+    )
+    supervisor.start()
+    assert wait_for(lambda: len(data) == 2)
+    supervisor.stop()
+    assert data == ["first", "second"]
+
+
+def test_no_data_forwarded_after_stop() -> None:
+    data: list[Any] = []
+    callbacks: list[Callable[[Any], None]] = []
+
+    def factory(cb: Callable[[Any], None]) -> FakeReader:
+        callbacks.append(cb)
+        return FakeReader(cb)
+
+    supervisor = ReaderSupervisor(factory, on_data=data.append, on_error=lambda err: None)
+    supervisor.start()
+    assert wait_for(lambda: bool(callbacks))
+    supervisor.stop()
+    callbacks[0]("late")
+    assert data == []

@@ -111,10 +111,13 @@ class MeterReader:
         if min_size <= 1:
             return self._read_optical_frame()
         received_data = self.ser.read()
-        while len(received_data) < min_size:
+        while len(received_data) < min_size and self.should_run:
             sleep(0.5)
             data_left = self.ser.inWaiting()
             received_data += self.ser.read(data_left)
+        if not self.should_run:
+            # Shutting down: do not hand a partial frame to the parser.
+            return b""
         return received_data
 
     def _read_optical_frame(self) -> bytes:

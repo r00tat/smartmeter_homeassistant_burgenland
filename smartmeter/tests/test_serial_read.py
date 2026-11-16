@@ -185,3 +185,28 @@ def test_start_closes_port_when_loop_raises(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert port.closed
     assert reader.is_running is False
+
+
+class SilentSerial:
+    def read(self, size: int = 1) -> bytes:
+        return b""
+
+    def inWaiting(self) -> int:
+        return 0
+
+
+def test_read_frame_on_silent_line_ends_when_stopped(monkeypatch: pytest.MonkeyPatch) -> None:
+    reader = MeterReader(key="00" * 16, interface_type="PHYSICAL")
+    reader.ser = SilentSerial()  # type: ignore[assignment]
+    sleeps: list[float] = []
+
+    def fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+        if len(sleeps) == 3:
+            reader.stop()
+        assert len(sleeps) < 100, "_read_frame ignores stop()"
+
+    monkeypatch.setattr(serial_read, "sleep", fake_sleep)
+
+    assert reader._read_frame(120) == b""
+    assert len(sleeps) == 3
