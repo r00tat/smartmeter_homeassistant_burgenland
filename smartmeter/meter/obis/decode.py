@@ -13,7 +13,7 @@ class WrongKeyError(ValueError):
 
 
 def decode_unit(unit: bytes, key: bytes) -> ObisMeterData:
-    """Decrypt (if needed) and decode a unit produced by ``PushFramer``."""
+    """Decrypt (if needed) and decode a unit produced by ``TelegramFramer``."""
     if unit and unit[0] in GLO_CIPHERING_TAGS:
         plain = decrypt_envelope(unit, key)
         if not plain or plain[0] not in (DATA_NOTIFICATION_TAG, ord("/")):

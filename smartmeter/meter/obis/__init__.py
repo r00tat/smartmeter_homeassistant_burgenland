@@ -1,4 +1,4 @@
-"""Generic pipeline for meters that push encrypted DLMS or DSMR telegrams.
+"""Generic pipeline for meters that name their values by OBIS code.
 
 Used by the Steiermark, Salzburg, Tirol and Smart Meter 2.0 (H1) profiles::
 

@@ -2,7 +2,7 @@
 
 Covers the Steiermark, Salzburg, Tirol and H1 profiles. The telegrams
 follow the operators' specifications but are synthetic (see
-tests/fixtures/push_frames.py); real telegrams are still wanted.
+tests/fixtures/obis_frames.py); real telegrams are still wanted.
 """
 
 from __future__ import annotations
@@ -12,10 +12,10 @@ from collections import deque
 import pytest
 import serial
 
-from meter.profile import PushDlmsProfile, get_profile
-from meter.push.reader import PushMeterReader
-from meter.push.registers import FIELDS, ObisMeterData
-from tests.fixtures.push_frames import (
+from meter.profile import ObisProfile, get_profile
+from meter.obis.reader import ObisMeterReader
+from meter.obis.registers import FIELDS, ObisMeterData
+from tests.fixtures.obis_frames import (
     DSMR_EXPECTED,
     DSMR_TIME_ISO,
     E450_EXPECTED,
@@ -33,7 +33,7 @@ from tests.fixtures.push_frames import (
     kaifa_mbus_stream,
 )
 
-PUSH_PROFILES = ["steiermark", "steiermark_sagemcom", "salzburg", "tirol", "h1"]
+OBIS_PROFILES = ["steiermark", "steiermark_sagemcom", "salzburg", "tirol", "h1"]
 
 
 class FakeSerial:
@@ -58,7 +58,7 @@ def run_reader(meter_type: str, payload: bytes, key_hex: str = TEST_KEY_HEX) -> 
     received: list = []
     profile = get_profile(meter_type)
     reader = profile.create_reader({"dlms": {"key": key_hex}}, received.append)
-    assert isinstance(reader, PushMeterReader)
+    assert isinstance(reader, ObisMeterReader)
     ref = [reader]
     reader._serial_factory = lambda: FakeSerial(payload, ref)
     reader.start()
@@ -106,7 +106,7 @@ def test_wrong_key_decodes_nothing_and_hints_at_key() -> None:
     reader = get_profile("tirol").create_reader(
         {"dlms": {"key": "00" * 16}}, received.append
     )
-    assert isinstance(reader, PushMeterReader)
+    assert isinstance(reader, ObisMeterReader)
     ref = [reader]
     reader._serial_factory = lambda: FakeSerial(kaifa_mbus_stream(), ref)
     reader.start()
@@ -135,11 +135,11 @@ def test_garbled_telegram_does_not_stop_the_reader() -> None:
         ("h1", (115200, 8, serial.PARITY_NONE, 1), 1.0),
     ],
 )
-def test_push_profile_defaults(
+def test_obis_profile_defaults(
     meter_type: str, serial_defaults: tuple, push_seconds: float
 ) -> None:
     profile = get_profile(meter_type)
-    assert isinstance(profile, PushDlmsProfile)
+    assert isinstance(profile, ObisProfile)
     settings = profile.serial_settings({"dlms": {}})
     assert (
         settings.baudrate,
@@ -150,8 +150,8 @@ def test_push_profile_defaults(
     assert profile.push_interval_seconds == push_seconds
 
 
-@pytest.mark.parametrize("meter_type", PUSH_PROFILES)
-def test_push_profile_sensors_read_published_keys(meter_type: str) -> None:
+@pytest.mark.parametrize("meter_type", OBIS_PROFILES)
+def test_obis_profile_sensors_read_published_keys(meter_type: str) -> None:
     profile = get_profile(meter_type)
     specs = profile.sensor_specs
     assert specs[0].raw

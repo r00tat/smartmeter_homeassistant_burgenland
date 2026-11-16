@@ -1,21 +1,21 @@
-"""Unit tests for the layers of the generic push pipeline (meter.push)."""
+"""Unit tests for the layers of the generic OBIS pipeline (meter.obis)."""
 
 from __future__ import annotations
 
 import pytest
 
-from meter.push.axdr import AxdrError, decode_data, decode_data_notification
-from meter.push.cipher import CipherError, decrypt_envelope, envelope_size, parse_envelope
-from meter.push.decode import WrongKeyError, decode_unit
-from meter.push.dsmr import DsmrError, crc16, parse_telegram
-from meter.push.framing import PushFramer, hdlc_fcs
-from meter.push.registers import (
+from meter.obis.axdr import AxdrError, decode_data, decode_data_notification
+from meter.obis.cipher import CipherError, decrypt_envelope, envelope_size, parse_envelope
+from meter.obis.decode import WrongKeyError, decode_unit
+from meter.obis.dsmr import DsmrError, crc16, parse_telegram
+from meter.obis.framing import TelegramFramer, hdlc_fcs
+from meter.obis.registers import (
     FIELDS,
     obis_to_str,
     parse_dsmr_timestamp,
     registers_from_notification,
 )
-from tests.fixtures.push_frames import (
+from tests.fixtures.obis_frames import (
     DSMR_EXPECTED,
     DSMR_METER_ID,
     DSMR_TIME_ISO,
@@ -96,7 +96,7 @@ def test_rejects_non_notification() -> None:
 
 def test_salzburg_spec_example_envelope() -> None:
     """Real example frame from the Salzburg Netz specification."""
-    units = PushFramer(mbus=True).feed(SALZBURG_SPEC_FRAME)
+    units = TelegramFramer(mbus=True).feed(SALZBURG_SPEC_FRAME)
     assert len(units) == 1
     parsed = parse_envelope(units[0])
     assert parsed.system_title == bytes.fromhex("454C536570000001")  # "ELSep"
@@ -201,7 +201,7 @@ def test_dsmr_registers() -> None:
 
 
 def test_telegram_without_known_registers_raises() -> None:
-    from tests.fixtures.push_frames import data_notification, octets, structure, uint32
+    from tests.fixtures.obis_frames import data_notification, octets, structure, uint32
 
     apdu = data_notification(structure([octets(bytes.fromhex("0100630700FF")), uint32(1)]))
     with pytest.raises(ValueError, match="no known OBIS"):
@@ -214,7 +214,7 @@ def test_telegram_without_known_registers_raises() -> None:
 def test_mbus_reassembles_two_segments() -> None:
     stream = kaifa_mbus_stream()
     assert stream[6] == 0x00  # first segment CI
-    units = PushFramer(mbus=True).feed(stream)
+    units = TelegramFramer(mbus=True).feed(stream)
     assert units == [envelope(kaifa_apdu())]
 
 
@@ -222,12 +222,12 @@ def test_mbus_single_segment_has_ci_0x10() -> None:
     unit = envelope(e450_apdu())
     stream = mbus_frames(unit, segment_size=250)
     assert stream[6] == 0x10
-    assert PushFramer(mbus=True).feed(stream) == [unit]
+    assert TelegramFramer(mbus=True).feed(stream) == [unit]
 
 
 def test_mbus_resyncs_after_garbage_and_split_reads() -> None:
     stream = b"\x00\x68\x01\xe5" + kaifa_mbus_stream() + kaifa_mbus_stream()
-    framer = PushFramer(mbus=True)
+    framer = TelegramFramer(mbus=True)
     units: list[bytes] = []
     for i in range(0, len(stream), 7):
         units += framer.feed(stream[i : i + 7])
@@ -238,13 +238,13 @@ def test_mbus_resyncs_after_garbage_and_split_reads() -> None:
 def test_mbus_bad_checksum_is_dropped() -> None:
     stream = bytearray(kaifa_mbus_stream())
     stream[20] ^= 0xFF
-    assert PushFramer(mbus=True).feed(bytes(stream)) == []
+    assert TelegramFramer(mbus=True).feed(bytes(stream)) == []
 
 
 def test_mbus_missing_first_segment_is_discarded() -> None:
     stream = kaifa_mbus_stream()
     first_len = stream[1] + 6
-    assert PushFramer(mbus=True).feed(stream[first_len:]) == []
+    assert TelegramFramer(mbus=True).feed(stream[first_len:]) == []
 
 
 def test_hdlc_fcs_matches_real_steiermark_header() -> None:
@@ -256,7 +256,7 @@ def test_hdlc_fcs_matches_real_steiermark_header() -> None:
 def test_hdlc_general_block_transfer_is_reassembled() -> None:
     stream = e450_hdlc_stream()
     assert stream.count(b"\xe6\xe7\x00\xe0") >= 2  # really split into blocks
-    units = PushFramer(hdlc=True).feed(stream)
+    units = TelegramFramer(hdlc=True).feed(stream)
     assert len(units) == 1
     assert decrypt_envelope(units[0], TEST_KEY) == e450_apdu()
 
@@ -264,18 +264,18 @@ def test_hdlc_general_block_transfer_is_reassembled() -> None:
 def test_hdlc_bad_fcs_drops_the_message() -> None:
     stream = bytearray(e450_hdlc_stream())
     stream[30] ^= 0x01
-    assert PushFramer(hdlc=True).feed(bytes(stream)) == []
+    assert TelegramFramer(hdlc=True).feed(bytes(stream)) == []
 
 
 def test_p1_framer_splits_dsmr_and_envelopes() -> None:
     stream = b"garbage" + dsmr_telegram() + encrypted_dsmr() + dsmr_telegram()
-    units = PushFramer(p1=True, hdlc=True).feed(stream)
+    units = TelegramFramer(p1=True, hdlc=True).feed(stream)
     assert units == [dsmr_telegram(), encrypted_dsmr(), dsmr_telegram()]
 
 
 def test_framer_needs_a_transport() -> None:
     with pytest.raises(ValueError):
-        PushFramer()
+        TelegramFramer()
 
 
 def test_system_title_is_kaifa() -> None:

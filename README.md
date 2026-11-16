@@ -219,10 +219,10 @@ Further reading: [Wiener Netze Kundenschnittstelle](https://www.wienernetze.at/s
 [bernikr/esphome-wienernetze-smartmeter](https://github.com/bernikr/esphome-wienernetze-smartmeter),
 [tofuSCHNITZEL/wiener-netze-smartmeter-serial](https://github.com/tofuSCHNITZEL/wiener-netze-smartmeter-serial).
 
-#### Push pipeline: Steiermark, Salzburg, Tirol, H1
+#### OBIS pipeline: Steiermark, Salzburg, Tirol, H1
 
 These meters name every value by its OBIS code, so they share one
-pipeline in `smartmeter/meter/push/` instead of a reader each:
+pipeline in `smartmeter/meter/obis/` instead of a reader each:
 
 ```text
 serial bytes → framing → general-glo-ciphering (AES-128-GCM)
@@ -271,9 +271,9 @@ which reader handles the line, how a decoded telegram becomes a
 `MeterData` object, and the Home Assistant metadata and sensors.
 `MeterProfile` is the abstract base class; `HdlcDlmsProfile` (DLMS in HDLC
 frames, e.g. Burgenland and Wien), `MBusDlmsProfile` (DLMS in M-Bus
-frames, Netz NÖ) and `PushDlmsProfile` (the OBIS-based push pipeline)
+frames, Netz NÖ) and `ObisProfile` (the OBIS pipeline)
 implement `create_reader`. A meter that sends OBIS codes usually only needs
-a new `PushDlmsProfile` instance with the right transports and field list.
+a new `ObisProfile` instance with the right transports and field list.
 A meter with a fixed, OBIS-less layout that reuses one of the other
 interfaces needs a new profile instance, a `MeterData` subclass of
 `BaseMeterData` and a sensor catalog. Register the name in

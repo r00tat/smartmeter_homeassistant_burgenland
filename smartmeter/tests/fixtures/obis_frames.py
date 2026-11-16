@@ -14,8 +14,8 @@ import struct
 
 from Cryptodome.Cipher import AES
 
-from meter.push.dsmr import crc16
-from meter.push.framing import hdlc_fcs
+from meter.obis.dsmr import crc16
+from meter.obis.framing import hdlc_fcs
 
 TEST_KEY = bytes.fromhex("000102030405060708090A0B0C0D0E0F")
 TEST_KEY_HEX = TEST_KEY.hex().upper()

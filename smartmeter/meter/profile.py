@@ -31,9 +31,9 @@ from .meter_data import BaseMeterData
 from .mqtt.sensor_spec import SensorSpec
 from .noe.read import NoeMeterReader
 from .noe.sensors import SENSOR_SPECS as NOE_SENSORS
-from .push.framing import PushFramer
-from .push.reader import PushMeterReader
-from .push.sensors import (
+from .obis.framing import TelegramFramer
+from .obis.reader import ObisMeterReader
+from .obis.sensors import (
     E450_STEIERMARK_FIELDS,
     H1_FIELDS,
     KAIFA_FIELDS,
@@ -180,8 +180,8 @@ class MBusDlmsProfile(MeterProfile):
 
 
 @dataclass(frozen=True)
-class PushDlmsProfile(MeterProfile):
-    """Encrypted push telegrams decoded by the generic ``meter.push`` pipeline.
+class ObisProfile(MeterProfile):
+    """Encrypted OBIS telegrams decoded by the generic ``meter.obis`` pipeline.
 
     The flags pick the transports the framer looks for; the payload is
     always a (ciphered) DLMS data-notification or a DSMR telegram whose
@@ -192,15 +192,15 @@ class PushDlmsProfile(MeterProfile):
     hdlc: bool = False
     p1: bool = False
 
-    def framer(self) -> PushFramer:
-        return PushFramer(mbus=self.mbus, hdlc=self.hdlc, p1=self.p1)
+    def framer(self) -> TelegramFramer:
+        return TelegramFramer(mbus=self.mbus, hdlc=self.hdlc, p1=self.p1)
 
     def create_reader(
         self, config: dict, callback: MeterDataCallback
-    ) -> PushMeterReader:
+    ) -> ObisMeterReader:
         dlms = config.get("dlms") or {}
         settings = self.serial_settings(config)
-        return PushMeterReader(
+        return ObisMeterReader(
             key_hex=dlms.get("key") or "",
             framer_factory=self.framer,
             port=settings.port,
@@ -247,7 +247,7 @@ _PROFILES: dict[str, MeterProfile] = {
         ),
         # The profiles below follow the operators' published specifications
         # but have not been verified with a real telegram yet (see README).
-        PushDlmsProfile(
+        ObisProfile(
             name="steiermark",
             manufacturer="Landis+Gyr",
             model="E450 (Energienetze Steiermark)",
@@ -259,7 +259,7 @@ _PROFILES: dict[str, MeterProfile] = {
             hdlc=True,
             mbus=True,
         ),
-        PushDlmsProfile(
+        ObisProfile(
             name="steiermark_sagemcom",
             manufacturer="Sagemcom",
             model="DSMR P1 (Energienetze Steiermark)",
@@ -269,7 +269,7 @@ _PROFILES: dict[str, MeterProfile] = {
             p1=True,
             hdlc=True,
         ),
-        PushDlmsProfile(
+        ObisProfile(
             name="salzburg",
             manufacturer="Kaifa / Honeywell",
             model="MA309M (Salzburg Netz)",
@@ -279,7 +279,7 @@ _PROFILES: dict[str, MeterProfile] = {
             push_interval_seconds=5.0,
             mbus=True,
         ),
-        PushDlmsProfile(
+        ObisProfile(
             name="tirol",
             manufacturer="Kaifa / Honeywell",
             model="MA110M / MA309M (TINETZ)",
@@ -289,7 +289,7 @@ _PROFILES: dict[str, MeterProfile] = {
             push_interval_seconds=5.0,
             mbus=True,
         ),
-        PushDlmsProfile(
+        ObisProfile(
             name="h1",
             manufacturer="Smart Meter 2.0",
             model="H1 customer interface (DSMR P1)",

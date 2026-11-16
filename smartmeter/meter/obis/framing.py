@@ -1,7 +1,7 @@
 """Cut a serial byte stream into application units.
 
 A *unit* is what the decoder works on: a ciphered APDU (``DB …``), a
-plain APDU (``0F …``) or a DSMR telegram (``/ … !CRC``). ``PushFramer``
+plain APDU (``0F …``) or a DSMR telegram (``/ … !CRC``). ``TelegramFramer``
 scans for the start bytes of the transports a profile enables:
 
 - ``mbus``  — wired M-Bus long frames (``68 L L 68 … CS 16``) with the
@@ -28,7 +28,7 @@ from .axdr import AxdrError, decode_length
 from .cipher import GLO_CIPHERING_TAGS, CipherError, envelope_size
 from .dsmr import telegram_end
 
-log = logging.getLogger("meter.push.framing")
+log = logging.getLogger("meter.obis.framing")
 
 _MBUS_START = 0x68
 _MBUS_STOP = 0x16
@@ -69,7 +69,7 @@ class _Invalid(Exception):
 
 
 @dataclass
-class PushFramer:
+class TelegramFramer:
     """Stateful framer; feed it bytes, get complete units back."""
 
     mbus: bool = False

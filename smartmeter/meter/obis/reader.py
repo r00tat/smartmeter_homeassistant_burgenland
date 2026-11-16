@@ -1,6 +1,6 @@
-"""Serial reader for the push-pipeline profiles.
+"""Serial reader for the OBIS profiles.
 
-Thin shell around ``PushFramer`` and ``decode_unit``: open the port, feed
+Thin shell around ``TelegramFramer`` and ``decode_unit``: open the port, feed
 bytes to the framer, decode each unit, hand the result to the callback.
 Faults reopen the port after a backoff instead of ending the thread, and
 a periodic heartbeat says which layer is failing (no bytes, no frames,
@@ -17,10 +17,10 @@ from typing import Protocol
 import serial
 
 from .decode import decode_unit
-from .framing import PushFramer
+from .framing import TelegramFramer
 from .registers import ObisMeterData
 
-log = logging.getLogger("meter.push.reader")
+log = logging.getLogger("meter.obis.reader")
 
 _MAX_CONSECUTIVE_FAILURES = 10
 _HEARTBEAT_SECONDS = 30.0
@@ -33,13 +33,13 @@ class _SerialLike(Protocol):
     def close(self) -> None: ...
 
 
-class PushMeterReader:
+class ObisMeterReader:
     """Read framed, optionally encrypted push telegrams from a serial port."""
 
     def __init__(
         self,
         key_hex: str,
-        framer_factory: Callable[[], PushFramer],
+        framer_factory: Callable[[], TelegramFramer],
         port: str = "/dev/ttyUSB0",
         baudrate: int = 2400,
         bytesize: int = serial.EIGHTBITS,
