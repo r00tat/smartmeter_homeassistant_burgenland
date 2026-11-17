@@ -8,7 +8,9 @@ import pytest
 
 from meter.dlms.read import parse_dlms_data, parse_pyhiscal_dlms_data, parse_xml
 from meter.profile import get_profile
+from meter.serial import read as serial_read
 from meter.serial.read import MeterReader
+from tests.fake_port import EOF, FakePort, run_until
 from meter.wien.data import MeterData, parse_dlms_datetime
 from tests.fixtures.wien_sample_frame import (
     COUNTERS,
@@ -122,31 +124,30 @@ def test_wrong_key_is_not_decoded() -> None:
 
 
 @pytest.mark.parametrize("interface_type", ["OPTICAL", "PHYSICAL"])
-def test_profile_reader_publishes_wien_data(interface_type: str) -> None:
+async def test_profile_reader_publishes_wien_data(
+    interface_type: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(serial_read, "OPTICAL_IDLE_GAP_SECONDS", 0.02)
     telegram = build_telegram()
     received: list = []
     cfg = {
         "interface_type": interface_type,
-        "dlms": {"key": telegram.key_hex, "port": "/dev/ttyUSB0"},
+        "dlms": {
+            "key": telegram.key_hex,
+            "port": "/dev/ttyUSB0",
+            "hdlc_frame_size": len(telegram.frame),
+        },
     }
     reader = get_profile("wien").create_reader(cfg, received.append)
     assert isinstance(reader, MeterReader)
+    assert reader.settings.port == "/dev/ttyUSB0"
 
     corrupted = bytearray(telegram.frame)
     corrupted[40] ^= 0xFF
-    pending = [bytes(corrupted), telegram.frame, telegram.frame]
-
-    def read_frame(_min_size: int) -> bytes:
-        if not pending:
-            reader.stop()
-            return b""
-        return pending.pop(0)
-
-    reader._read_frame = read_frame  # type: ignore[method-assign]
-    if interface_type == "OPTICAL":
-        reader.optical_loop()
-    else:
-        reader.physical_loop()
+    reader._open_stream = FakePort(
+        [bytes(corrupted), 0.1, telegram.frame, 0.1, telegram.frame, 0.1, EOF]
+    )
+    await run_until(reader.run, lambda: False)
 
     assert [type(d) for d in received] == [MeterData, MeterData]
     assert [d.to_dict() for d in received] == [EXPECTED_DICT, EXPECTED_DICT]

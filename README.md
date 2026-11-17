@@ -231,6 +231,35 @@ pip3 install -r requirements.txt
 If you install additional pacakges, save the current installed dependencies to `requirements.txt` with:
 `pip freeze -l | grep -v flake8 > requirements.txt`
 
+### Architecture
+
+The add-on and the integration share the meter core in `smartmeter/meter/`
+(the integration links it as `custom_components/smartmeter_at/meter`).
+Everything runs on one asyncio event loop, without threads:
+
+```text
+serial port ──(pyserial-asyncio-fast)──> reader.run() ──callback──> supervisor
+                                                                   │
+              add-on: SmartMeterDevice (aiomqtt) <── on_data ──────┤
+       integration: SmartMeterCoordinator        <── on_error ─────┘
+```
+
+- `meter/serial/transport.py` opens the port in an executor and delivers
+  bytes as they arrive, so readers await data instead of polling with read
+  timeouts. An unplugged adapter ends the stream with an error right away.
+- A reader (`MeterReaderLike`) has one method, `async run()`: it reads until
+  it is cancelled and raises on any fault. Readers never retry themselves.
+- `meter/supervisor.py` (`ReaderSupervisor`) is the single place for
+  recovery: it replaces a failed reader after a pause, reports a silent
+  meter (`stale_after`) and reopens the port when it stays silent
+  (`restart_after`). Cancelling it stops the reader and closes the port.
+- Parsing (gurux, about 1–2 ms per telegram) runs on the loop; at one
+  telegram every 1–5 seconds that is well below 1 % of the loop's time.
+
+Tests use a scripted port (`smartmeter/tests/fake_port.py`), a small MQTT
+broker (`smartmeter/tests/fake_broker.py`) and pseudo terminals for the real
+serial transport, so no hardware or broker is needed.
+
 ### Integration Development
 
 The integration in `custom_components/smartmeter_at/` does not carry its own
@@ -403,7 +432,8 @@ which reader handles the line, how a decoded telegram becomes a
 `MeterProfile` is the abstract base class; `HdlcDlmsProfile` (DLMS in HDLC
 frames, e.g. Burgenland and Wien), `MBusDlmsProfile` (DLMS in M-Bus
 frames, Netz NÖ) and `ObisProfile` (the OBIS pipeline)
-implement `create_reader`. A meter that sends OBIS codes usually only needs
+implement `create_reader`, which returns a reader with an `async run()`
+method (see *Architecture*). A meter that sends OBIS codes usually only needs
 a new `ObisProfile` instance with the right transports and field list.
 A meter with a fixed, OBIS-less layout that reuses one of the other
 interfaces needs a new profile instance, a `MeterData` subclass of

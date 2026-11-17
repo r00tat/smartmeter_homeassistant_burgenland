@@ -14,7 +14,7 @@ from typing import Any, Protocol
 
 from ..config import get_sw_version
 from ..profile import MeterProfile, get_profile
-from .client import MqttClient
+from .client import Message, MqttClient
 from .sensor_spec import SensorSpec
 
 log = logging.getLogger("meter.mqtt.device")
@@ -50,13 +50,26 @@ class SmartMeterDevice(MqttClient):
         self.sensors_migrated = config.get("sensors_migrated", False)
         self.serial_number = ""
         self.sw_version = get_sw_version()
+        self.available = True
 
     def publish_status(self, data: _MeterDataLike) -> None:
         """Publish the current status from meter data"""
-        self.publish(self.topic_with_prefix("state"), data.to_json())
+        was_available = self.available
+        self.available = True
         if self.serial_number == "" and data.meter_id:
+            # Discovery again, now with the serial number (and "online").
             self.serial_number = data.meter_id
             self.ha_discovery()
+        elif not was_available:
+            self.set_available(True)
+        self.publish(self.topic_with_prefix("state"), data.to_json())
+
+    def set_available(self, available: bool) -> None:
+        """Mark the sensors (un)available, e.g. while the meter is silent."""
+        self.available = available
+        self.publish(
+            self.topic_with_prefix("availability"), "online" if available else "offline"
+        )
 
     @property
     def mqtt_device(self) -> dict[str, Any]:
@@ -69,8 +82,7 @@ class SmartMeterDevice(MqttClient):
             "sn": self.serial_number,
         }
 
-    def ha_discovery(self) -> None:
-        log.info("publishing additional sensors")
+    def discovery_messages(self) -> list[Message]:
         components = {}
 
         for device in self.devices():
@@ -83,11 +95,8 @@ class SmartMeterDevice(MqttClient):
                 "device": self.mqtt_device,
             }
 
-        if not self.sensors_migrated:
-            self.migrate_old_sensors()
-
-        log.info("publishing home assistant auto discovery")
-        self.publish(
+        messages = [] if self.sensors_migrated else self.migration_messages()
+        messages.append((
             f"homeassistant/device/{self.device_id}/config",
             json.dumps(
                 {
@@ -100,12 +109,18 @@ class SmartMeterDevice(MqttClient):
                     "components": components,
                 }
             ),
+            False,
+        ))
+        messages.append(
+            (
+                f"{self.base_topic}/availability",
+                "online" if self.available else "offline",
+                False,
+            )
         )
+        return messages
 
-        log.info("setting sensor to online")
-        self.publish(f"{self.base_topic}/availability", "online")
-
-    def migrate_old_sensors(self) -> None:
+    def migration_messages(self) -> list[Message]:
         """Migrate the legacy single-component sensors to device discovery.
 
         Home Assistant validates migration messages against a schema that
@@ -113,18 +128,19 @@ class SmartMeterDevice(MqttClient):
         option in the payload makes it reject the whole message and log a
         warning. Publish the bare flag to every legacy discovery topic.
         """
-        log.info("migrating old sensors")
         migrate_payload = json.dumps({"migrate_discovery": True})
-
-        self.publish(
-            f"homeassistant/sensor/{self.device_id}/config",
-            migrate_payload,
-        )
+        messages: list[Message] = [
+            (f"homeassistant/sensor/{self.device_id}/config", migrate_payload, False)
+        ]
         for device in self.devices()[1:]:
-            self.publish(
-                f"homeassistant/sensor/{self.device_id}_{device.get('unique_id')}/config",
-                migrate_payload,
+            messages.append(
+                (
+                    f"homeassistant/sensor/{self.device_id}_{device.get('unique_id')}/config",
+                    migrate_payload,
+                    False,
+                )
             )
+        return messages
 
     def _spec_to_device(self, spec: SensorSpec) -> dict[str, Any]:
         if spec.raw:

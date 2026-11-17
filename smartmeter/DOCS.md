@@ -80,6 +80,23 @@ energy and power. Values a meter does not send are published as `null`.
 With `logging: DEBUG` the raw serial bytes and every telegram are logged
 as hex — please attach them when you report a problem.
 
+## Availability and recovery
+
+The add-on recovers on its own, so no restart automation is needed:
+
+- If the serial port fails (for example the USB adapter was unplugged), the
+  sensors are marked unavailable and the port is opened again every 10
+  seconds until it works.
+- If no telegram arrives for about a minute (six missed telegrams, at least
+  60 seconds), the sensors are marked unavailable until the next telegram.
+- If the port stays open but no telegram arrives for 5 minutes (for example a
+  hung USB adapter), the port is closed and opened again.
+- If the MQTT broker is unreachable or restarts, the add-on reconnects every
+  10 seconds and announces the device again. Readings received in the
+  meantime are queued (up to 100 messages).
+- The MQTT last will marks the sensors unavailable if the add-on stops
+  without a clean shutdown.
+
 ## Optional MQTT TLS
 
 TLS is disabled by default. To connect to an MQTT broker over TLS, set

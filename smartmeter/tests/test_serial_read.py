@@ -1,212 +1,177 @@
-"""Tests for telegram assembly on the optical interface (``meter.serial.read``).
+"""Tests for the HDLC reader (``meter.serial.read``) on a scripted port.
 
-The meter pushes one telegram every 5 seconds. These tests replay such a
-line on a simulated clock to make sure telegrams are never cut in two,
-whatever the phase between the reader loop and the meter (#128).
+The optical interface pushes one telegram every few seconds; the reader
+must hand each one to the parser complete, whatever the phase between
+the reader and the meter and however the USB adapter chunks the bytes
+(#128). Time is scaled down: idle gap 50 ms, telegrams 300 ms apart.
 """
 
 from __future__ import annotations
+
+import asyncio
 
 import pytest
 
 from meter.serial import read as serial_read
 from meter.serial.read import MeterReader
+from meter.serial.transport import PortClosedError
+from tests.fake_port import EOF, SETTINGS, FakePort, chunks, run_until
+from tests.fixtures.bgld_sample_frame import build_sample_telegram
 
-TIMEOUT = 1.0
-BYTE_TIME = 0.00104  # one byte at 9600 baud, 8N1
-
-
-class FakeClock:
-    def __init__(self) -> None:
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        return self.now
-
-    def sleep(self, seconds: float) -> None:
-        self.now += seconds
+IDLE_GAP = 0.05
+PERIOD = 0.3
 
 
-class TimedSerial:
-    """Serial port replaying bytes at fixed points in simulated time."""
-
-    def __init__(self, clock: FakeClock, schedule: list[tuple[float, int]]) -> None:
-        # schedule: list of (arrival time, byte value)
-        self.clock = clock
-        self.schedule = sorted(schedule, key=lambda item: item[0])
-        self.pos = 0
-        self.closed = False
-
-    def _available(self) -> int:
-        count = 0
-        while (
-            self.pos + count < len(self.schedule)
-            and self.schedule[self.pos + count][0] <= self.clock.now
-        ):
-            count += 1
-        return count
-
-    def _take(self, n: int) -> bytes:
-        data = bytes(b for _, b in self.schedule[self.pos : self.pos + n])
-        self.pos += n
-        return data
-
-    def read(self, size: int = 1) -> bytes:
-        if self._available() == 0:
-            if self.pos >= len(self.schedule):
-                self.clock.now += TIMEOUT
-                return b""
-            next_at = self.schedule[self.pos][0]
-            if next_at - self.clock.now > TIMEOUT:
-                self.clock.now += TIMEOUT
-                return b""
-            self.clock.now = next_at
-        return self._take(min(size, self._available()))
-
-    def inWaiting(self) -> int:
-        return self._available()
-
-    def close(self) -> None:
-        self.closed = True
+@pytest.fixture(autouse=True)
+def fast_timing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(serial_read, "OPTICAL_IDLE_GAP_SECONDS", IDLE_GAP)
+    monkeypatch.setattr(serial_read, "OPTICAL_MAX_FRAME_SECONDS", 0.5)
 
 
 def telegram(index: int, length: int = 250) -> bytes:
-    return (
-        bytes([0x7E, index])
-        + bytes((index + i) % 256 for i in range(length - 3))
-        + b"\x7e"
+    return bytes([0x7E, index]) + bytes((index + i) % 256 for i in range(length - 3)) + b"\x7e"
+
+
+def make_reader(port: FakePort, interface_type: str = "OPTICAL", **kwargs) -> MeterReader:
+    return MeterReader(
+        key="00" * 16,
+        settings=SETTINGS,
+        interface_type=interface_type,
+        open_stream=port,
+        **kwargs,
     )
 
 
-def schedule_for(telegrams: list[bytes], start: float, period: float = 5.0):
-    schedule = []
-    for n, frame in enumerate(telegrams):
-        t0 = start + n * period
-        schedule += [(t0 + i * BYTE_TIME, b) for i, b in enumerate(frame)]
-    return schedule
-
-
-@pytest.fixture
-def clock(monkeypatch: pytest.MonkeyPatch) -> FakeClock:
-    fake = FakeClock()
-    monkeypatch.setattr(serial_read, "sleep", fake.sleep)
-    monkeypatch.setattr(serial_read, "monotonic", fake.monotonic, raising=False)
-    return fake
-
-
-def make_reader(ser: TimedSerial) -> MeterReader:
-    reader = MeterReader(key="00" * 16, interface_type="OPTICAL", timeout=TIMEOUT)
-    reader.ser = ser  # type: ignore[assignment]
-    return reader
-
-
-def run_loop(reader: MeterReader, ser: TimedSerial, clock: FakeClock, until: float):
+async def collect_frames(reader: MeterReader, count: int) -> list[bytes]:
+    """Run the reader with a recording parser until ``count`` frames arrived."""
     frames: list[bytes] = []
-
-    def handler(data: bytes) -> None:
-        frames.append(data)
-
-    original_read = ser.read
-
-    def read(size: int = 1) -> bytes:
-        if clock.now >= until:
-            reader.stop()
-        return original_read(size)
-
-    ser.read = read  # type: ignore[method-assign]
-    reader._read_loop(handler, 1)
+    reader._handle_optical_frame = frames.append  # type: ignore[method-assign]
+    reader._handle_physical_frame = frames.append  # type: ignore[method-assign]
+    await run_until(reader.run, lambda: len(frames) >= count)
     return frames
 
 
-@pytest.mark.parametrize("start", [i * 0.05 for i in range(40)])
-def test_every_telegram_is_received_complete(clock: FakeClock, start: float) -> None:
-    """Regardless of the phase, no telegram may be split or dropped."""
-    telegrams = [telegram(i) for i in range(12)]
-    ser = TimedSerial(clock, schedule_for(telegrams, start=start))
-    reader = make_reader(ser)
+@pytest.mark.parametrize("start", [0.0, 0.01, 0.07, 0.15])
+async def test_every_telegram_is_received_complete(start: float) -> None:
+    """Regardless of the phase, no telegram may be split or merged."""
+    telegrams = [telegram(i) for i in range(4)]
+    steps: list = [start] if start else []
+    for frame in telegrams:
+        steps += chunks(frame, 64, pause=0.005)
+        steps.append(PERIOD)
+    reader = make_reader(FakePort(steps))
 
-    frames = run_loop(reader, ser, clock, until=start + 12 * 5.0)
-
-    assert frames == telegrams
+    assert await collect_frames(reader, 4) == telegrams
 
 
-def test_telegram_arriving_in_usb_chunks_is_assembled(clock: FakeClock) -> None:
-    """USB adapters deliver data in bursts; small pauses must not split it."""
+async def test_usb_bursts_shorter_than_the_idle_gap_are_one_telegram() -> None:
     frame = telegram(1, length=300)
-    schedule = [(0.3 + (i // 64) * 0.05, b) for i, b in enumerate(frame)]
-    ser = TimedSerial(clock, schedule)
-    reader = make_reader(ser)
+    reader = make_reader(FakePort(chunks(frame, 64, pause=IDLE_GAP / 3)))
 
-    assert reader._read_frame(1) == frame
+    assert await collect_frames(reader, 1) == [frame]
 
 
-def test_read_timeout_returns_no_data_and_skips_parsing(clock: FakeClock) -> None:
-    ser = TimedSerial(clock, [])
-    reader = make_reader(ser)
+async def test_endless_stream_is_cut_after_max_frame_time(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    steps: list = []
+    for _ in range(200):
+        steps += [b"\x55" * 8, 0.01]
+    reader = make_reader(FakePort(steps))
 
-    assert reader._read_frame(1) == b""
-    assert run_loop(reader, ser, clock, until=3.0) == []
+    frames = await collect_frames(reader, 1)
 
-
-def test_endless_stream_is_cut_after_max_frame_time(clock: FakeClock) -> None:
-    schedule = [(0.1 + i * 0.01, i % 256) for i in range(1000)]
-    ser = TimedSerial(clock, schedule)
-    reader = make_reader(ser)
-
-    data = reader._read_frame(1)
-
-    assert 0 < len(data) < 1000
-    assert clock.now - 0.1 <= serial_read.OPTICAL_MAX_FRAME_SECONDS + 0.1
+    assert 0 < len(frames[0]) < 200 * 8
+    assert "exceeded" in caplog.text
 
 
-class ClosableSerial:
-    def __init__(self) -> None:
-        self.closed = False
+async def test_physical_interface_reads_at_least_the_frame_size() -> None:
+    frame = telegram(2, length=150)
+    reader = make_reader(
+        FakePort(chunks(frame, 50, pause=0.01)), interface_type="PHYSICAL", hdlc_frame_size=120
+    )
 
-    def close(self) -> None:
-        self.closed = True
+    frames = await collect_frames(reader, 1)
 
-
-def test_start_closes_port_when_loop_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    reader = MeterReader(key="00" * 16, interface_type="OPTICAL")
-    port = ClosableSerial()
-
-    def connect() -> None:
-        reader.ser = port  # type: ignore[assignment]
-
-    def failing_loop() -> None:
-        raise RuntimeError("too many parse failures")
-
-    monkeypatch.setattr(reader, "connect", connect)
-    monkeypatch.setattr(reader, "optical_loop", failing_loop)
-
-    with pytest.raises(RuntimeError, match="parse failures"):
-        reader.start()
-
-    assert port.closed
-    assert reader.is_running is False
+    assert frames[0] == frame
 
 
-class SilentSerial:
-    def read(self, size: int = 1) -> bytes:
-        return b""
+async def test_port_closed_ends_the_reader_with_an_error() -> None:
+    port = FakePort([EOF])
+    reader = make_reader(port)
 
-    def inWaiting(self) -> int:
-        return 0
+    task = await run_until(reader.run, lambda: False)
+
+    assert isinstance(task.exception(), PortClosedError)
+    assert port.closed == 1
 
 
-def test_read_frame_on_silent_line_ends_when_stopped(monkeypatch: pytest.MonkeyPatch) -> None:
-    reader = MeterReader(key="00" * 16, interface_type="PHYSICAL")
-    reader.ser = SilentSerial()  # type: ignore[assignment]
-    sleeps: list[float] = []
+async def test_port_error_is_raised_and_the_port_closed() -> None:
+    port = FakePort([OSError("device disconnected")])
+    reader = make_reader(port)
 
-    def fake_sleep(seconds: float) -> None:
-        sleeps.append(seconds)
-        if len(sleeps) == 3:
-            reader.stop()
-        assert len(sleeps) < 100, "_read_frame ignores stop()"
+    task = await run_until(reader.run, lambda: False)
 
-    monkeypatch.setattr(serial_read, "sleep", fake_sleep)
+    assert isinstance(task.exception(), OSError)
+    assert port.closed == 1
 
-    assert reader._read_frame(120) == b""
-    assert len(sleeps) == 3
+
+async def test_open_failure_is_raised() -> None:
+    reader = make_reader(FakePort(OSError("no such port")))
+
+    task = await run_until(reader.run, lambda: False)
+
+    assert "no such port" in str(task.exception())
+
+
+async def test_cancel_closes_the_port_immediately() -> None:
+    port = FakePort([])  # silent line
+    reader = make_reader(port)
+    task = asyncio.create_task(reader.run())
+    while not port.is_open:
+        await asyncio.sleep(0)
+
+    task.cancel()
+    await asyncio.wait({task}, timeout=0.1)
+
+    assert task.cancelled()
+    assert port.closed == 1
+
+
+async def test_telegrams_are_decoded_and_garbage_is_skipped() -> None:
+    sample = build_sample_telegram()
+    corrupted = bytearray(sample.frame)
+    corrupted[40] ^= 0xFF
+    received: list = []
+    reader = MeterReader(
+        key=sample.key_hex,
+        settings=SETTINGS,
+        callback=received.append,
+        open_stream=FakePort([bytes(corrupted), 0.1, sample.frame, 0.1, sample.frame]),
+    )
+
+    task = await run_until(reader.run, lambda: len(received) == 2)
+
+    assert task.cancelled()
+    assert received[0].to_dict() == received[1].to_dict()
+
+
+async def test_repeated_parse_failures_end_the_reader() -> None:
+    sample = build_sample_telegram()
+    corrupted = bytearray(sample.frame)
+    corrupted[40] ^= 0xFF
+    steps: list = []
+    for _ in range(serial_read.MAX_CONSECUTIVE_FAILURES):
+        steps += [bytes(corrupted), 0.06]
+    received: list = []
+    reader = MeterReader(
+        key=sample.key_hex,
+        settings=SETTINGS,
+        callback=received.append,
+        open_stream=FakePort(steps),
+    )
+
+    task = await run_until(reader.run, lambda: False)
+
+    assert task.exception() is not None
+    assert received == []

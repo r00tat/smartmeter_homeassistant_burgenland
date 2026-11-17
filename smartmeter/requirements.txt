@@ -1,8 +1,9 @@
 gurux-common==1.0.13
 gurux-dlms==1.0.197
-paho-mqtt~=2.2.0
+aiomqtt~=2.5
 pycryptodomex~=3.24
 pyserial~=3.5
+pyserial-asyncio-fast~=0.16
 PyYAML~=6.0
 lxml~=6.1
 beautifulsoup4~=4.15

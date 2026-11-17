@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-import threading
-import time
+import asyncio
 from collections.abc import Callable
 from typing import Any
 
 import pytest
 
-from meter.supervisor import ReaderSupervisor, probe
+from meter.supervisor import ReaderSilentError, ReaderSupervisor, cancel_and_wait, probe
+from tests.fake_port import run_until
 
 
 class FakeReader:
-    """Emits ``items``, then raises ``fail`` or blocks until stopped."""
+    """Emits ``items`` (``float`` items are pauses), then fails or runs on."""
 
     def __init__(
         self,
@@ -26,128 +26,95 @@ class FakeReader:
         self.items = items or []
         self.fail = fail
         self.block = block
-        self.stopped = threading.Event()
-        self.started = threading.Event()
+        self.started = False
+        self.cancelled = False
 
-    def start(self) -> None:
-        self.started.set()
-        for item in self.items:
-            self.callback(item)
-        if self.fail is not None:
-            raise self.fail
-        if self.block:
-            self.stopped.wait(5)
-
-    def stop(self) -> None:
-        self.stopped.set()
-
-
-def wait_for(predicate: Callable[[], bool], timeout: float = 2.0) -> bool:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.01)
-    return False
+    async def run(self) -> None:
+        self.started = True
+        try:
+            for item in self.items:
+                if isinstance(item, float):
+                    await asyncio.sleep(item)
+                else:
+                    self.callback(item)
+            if self.fail is not None:
+                raise self.fail
+            if self.block:
+                await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            self.cancelled = True
+            raise
 
 
-def test_forwards_every_nth_reading() -> None:
+class Readers:
+    """Factory handing out readers built from ``specs`` (last one repeats)."""
+
+    def __init__(self, *specs: dict[str, Any]) -> None:
+        self.specs = list(specs) or [{}]
+        self.created: list[FakeReader] = []
+
+    def __call__(self, callback: Callable[[Any], None]) -> FakeReader:
+        spec = self.specs[min(len(self.created), len(self.specs) - 1)]
+        reader = FakeReader(callback, **spec)
+        self.created.append(reader)
+        return reader
+
+
+def supervisor(readers: Readers, **kwargs: Any) -> tuple[ReaderSupervisor, list, list]:
     data: list[Any] = []
-    supervisor = ReaderSupervisor(
-        lambda cb: FakeReader(cb, items=[0, 1, 2, 3, 4, 5]),
-        on_data=data.append,
-        on_error=lambda err: None,
-        every=2,
-    )
-    supervisor.start()
-    assert wait_for(lambda: len(data) == 3)
-    supervisor.stop()
+    errors: list[Exception] = []
+    kwargs.setdefault("retry_seconds", 0.01)
+    sup = ReaderSupervisor(readers, on_data=data.append, on_error=errors.append, **kwargs)
+    return sup, data, errors
+
+
+async def test_forwards_every_nth_reading() -> None:
+    sup, data, errors = supervisor(Readers({"items": [0, 1, 2, 3, 4, 5]}), every=2)
+
+    await run_until(sup.run, lambda: len(data) == 3)
+
     assert data == [0, 2, 4]
+    assert errors == []
 
 
-def test_restarts_reader_after_failure() -> None:
-    data: list[Any] = []
-    errors: list[Exception] = []
-    readers = iter(
-        [
-            lambda cb: FakeReader(cb, fail=OSError("port gone")),
-            lambda cb: FakeReader(cb, items=["ok"]),
-        ]
-    )
-    supervisor = ReaderSupervisor(
-        lambda cb: next(readers)(cb),
-        on_data=data.append,
-        on_error=errors.append,
-        retry_seconds=0.01,
-    )
-    supervisor.start()
-    assert wait_for(lambda: data == ["ok"])
-    supervisor.stop()
+async def test_restarts_reader_after_failure() -> None:
+    readers = Readers({"fail": OSError("port gone")}, {"items": ["ok"]})
+    sup, data, errors = supervisor(readers)
+
+    await run_until(sup.run, lambda: data == ["ok"])
+
     assert [str(err) for err in errors] == ["port gone"]
+    assert len(readers.created) == 2
 
 
-def test_reader_that_returns_on_its_own_is_reported() -> None:
-    errors: list[Exception] = []
-    supervisor = ReaderSupervisor(
-        lambda cb: FakeReader(cb, block=False),
-        on_data=lambda data: None,
-        on_error=errors.append,
-        retry_seconds=0.01,
-    )
-    supervisor.start()
-    assert wait_for(lambda: len(errors) >= 1)
-    supervisor.stop()
+async def test_reader_that_returns_on_its_own_is_reported() -> None:
+    sup, _, errors = supervisor(Readers({"block": False}))
+
+    await run_until(sup.run, lambda: len(errors) >= 1)
+
     assert isinstance(errors[0], RuntimeError)
 
 
-def test_stop_ends_thread_without_reporting_an_error() -> None:
-    errors: list[Exception] = []
-    created: list[FakeReader] = []
+async def test_cancel_stops_the_reader_without_reporting_an_error() -> None:
+    readers = Readers()
+    sup, _, errors = supervisor(readers)
+    task = asyncio.create_task(sup.run())
+    while not (readers.created and readers.created[0].started):
+        await asyncio.sleep(0)
 
-    def factory(cb: Callable[[Any], None]) -> FakeReader:
-        reader = FakeReader(cb)
-        created.append(reader)
-        return reader
+    await cancel_and_wait(task)
 
-    supervisor = ReaderSupervisor(factory, on_data=lambda data: None, on_error=errors.append)
-    supervisor.start()
-    assert wait_for(lambda: bool(created) and created[0].started.is_set())
-    began = time.monotonic()
-    supervisor.stop()
-    assert time.monotonic() - began < 1.0
-    assert not supervisor.is_running()
-    assert created[0].stopped.is_set()
+    assert task.cancelled()
+    assert readers.created[0].cancelled
     assert errors == []
 
 
 def test_every_must_be_positive() -> None:
     with pytest.raises(ValueError):
-        ReaderSupervisor(lambda cb: FakeReader(cb), lambda d: None, lambda e: None, every=0)
+        ReaderSupervisor(Readers(), lambda d: None, lambda e: None, every=0)
 
 
-def test_probe_returns_first_reading() -> None:
-    assert probe(lambda cb: FakeReader(cb, items=["a", "b"]), timeout=1.0) == "a"
-
-
-def test_probe_raises_reader_error() -> None:
-    with pytest.raises(OSError, match="no port"):
-        probe(lambda cb: FakeReader(cb, fail=OSError("no port")), timeout=1.0)
-
-
-def test_probe_returns_none_on_timeout() -> None:
-    created: list[FakeReader] = []
-
-    def factory(cb: Callable[[Any], None]) -> FakeReader:
-        reader = FakeReader(cb)
-        created.append(reader)
-        return reader
-
-    assert probe(factory, timeout=0.05) is None
-    assert created[0].stopped.is_set()
-
-
-def test_factory_failure_is_reported_and_retried() -> None:
-    errors: list[Exception] = []
+async def test_factory_failure_is_reported_and_retried() -> None:
     calls: list[int] = []
 
     def factory(cb: Callable[[Any], None]) -> FakeReader:
@@ -156,35 +123,30 @@ def test_factory_failure_is_reported_and_retried() -> None:
             raise OSError("cannot build")
         return FakeReader(cb)
 
-    supervisor = ReaderSupervisor(
+    errors: list[Exception] = []
+    sup = ReaderSupervisor(
         factory, on_data=lambda d: None, on_error=errors.append, retry_seconds=0.01
     )
-    supervisor.start()
-    assert wait_for(lambda: len(calls) >= 2)
-    supervisor.stop()
+
+    await run_until(sup.run, lambda: len(calls) >= 2)
+
     assert [str(err) for err in errors] == ["cannot build"]
 
 
-def test_failing_on_error_does_not_kill_the_supervisor() -> None:
-    calls: list[int] = []
-
-    def factory(cb: Callable[[Any], None]) -> FakeReader:
-        calls.append(1)
-        return FakeReader(cb, fail=OSError("boom"))
+async def test_failing_on_error_does_not_kill_the_supervisor() -> None:
+    readers = Readers({"fail": OSError("boom")})
 
     def on_error(err: Exception) -> None:
-        raise RuntimeError("event loop closed")
+        raise RuntimeError("callback bug")
 
-    supervisor = ReaderSupervisor(
-        factory, on_data=lambda d: None, on_error=on_error, retry_seconds=0.01
-    )
-    supervisor.start()
-    assert wait_for(lambda: len(calls) >= 2)
-    assert supervisor.is_running()
-    supervisor.stop()
+    sup = ReaderSupervisor(readers, on_data=lambda d: None, on_error=on_error, retry_seconds=0.01)
+
+    task = await run_until(sup.run, lambda: len(readers.created) >= 3)
+
+    assert task.cancelled()  # still running, cancelled by the test
 
 
-def test_failing_on_data_does_not_reach_the_reader() -> None:
+async def test_failing_on_data_does_not_reach_the_reader() -> None:
     seen: list[Any] = []
     errors: list[Exception] = []
 
@@ -192,79 +154,121 @@ def test_failing_on_data_does_not_reach_the_reader() -> None:
         seen.append(data)
         raise RuntimeError("callback bug")
 
-    supervisor = ReaderSupervisor(
-        lambda cb: FakeReader(cb, items=[1, 2, 3]), on_data=on_data, on_error=errors.append
-    )
-    supervisor.start()
-    assert wait_for(lambda: seen == [1, 2, 3])
-    assert supervisor.is_running()
-    supervisor.stop()
+    readers = Readers({"items": [1, 2, 3]})
+    sup = ReaderSupervisor(readers, on_data=on_data, on_error=errors.append)
+
+    await run_until(sup.run, lambda: seen == [1, 2, 3])
+
     assert errors == []
+    assert len(readers.created) == 1
 
 
-def test_counter_resets_for_every_new_reader() -> None:
-    data: list[Any] = []
-    readers = iter(
-        [
-            lambda cb: FakeReader(cb, items=["first"], fail=OSError("gone")),
-            lambda cb: FakeReader(cb, items=["second"]),
-        ]
-    )
-    supervisor = ReaderSupervisor(
-        lambda cb: next(readers)(cb),
-        on_data=data.append,
-        on_error=lambda err: None,
-        every=3,
-        retry_seconds=0.01,
-    )
-    supervisor.start()
-    assert wait_for(lambda: len(data) == 2)
-    supervisor.stop()
+async def test_counter_resets_for_every_new_reader() -> None:
+    readers = Readers({"items": ["first"], "fail": OSError("gone")}, {"items": ["second"]})
+    sup, data, _ = supervisor(readers, every=3)
+
+    await run_until(sup.run, lambda: len(data) == 2)
+
     assert data == ["first", "second"]
 
 
-def test_no_data_forwarded_after_stop() -> None:
-    data: list[Any] = []
-    callbacks: list[Callable[[Any], None]] = []
+async def test_silent_meter_is_reported_once_and_recovers() -> None:
+    readers = Readers({"items": ["a", 0.15, "b"]})
+    sup, data, errors = supervisor(readers, stale_after=0.05)
 
-    def factory(cb: Callable[[Any], None]) -> FakeReader:
-        callbacks.append(cb)
-        return FakeReader(cb)
+    await run_until(sup.run, lambda: data == ["a", "b"])
 
-    supervisor = ReaderSupervisor(factory, on_data=data.append, on_error=lambda err: None)
-    supervisor.start()
-    assert wait_for(lambda: bool(callbacks))
-    supervisor.stop()
-    callbacks[0]("late")
-    assert data == []
+    assert len(errors) == 1
+    assert isinstance(errors[0], ReaderSilentError)
+    assert len(readers.created) == 1  # silence alone does not reopen the port
 
 
-def test_restart_reopens_reader_without_reporting_an_error() -> None:
-    readers: list[FakeReader] = []
-    errors: list[Exception] = []
+async def test_first_reading_after_silence_is_forwarded_right_away() -> None:
+    readers = Readers({"items": ["a", "b", 0.1, "c", "d", "e", "f"]})
+    sup, data, _ = supervisor(readers, stale_after=0.05, every=3)
 
-    def factory(cb: Callable[[Any], None]) -> FakeReader:
-        reader = FakeReader(cb)
-        readers.append(reader)
-        return reader
+    await run_until(sup.run, lambda: len(data) == 3)
 
-    supervisor = ReaderSupervisor(
-        factory, on_data=lambda d: None, on_error=errors.append, retry_seconds=0.01
-    )
-    supervisor.start()
-    try:
-        assert wait_for(lambda: len(readers) == 1 and readers[0].started.is_set())
-        supervisor.restart("no telegram")
-        assert wait_for(lambda: len(readers) == 2 and readers[1].started.is_set())
-        assert readers[0].stopped.is_set()
-        assert errors == []
-    finally:
-        supervisor.stop()
+    assert data == ["a", "c", "f"]
 
 
-def test_restart_without_running_reader_is_a_no_op() -> None:
-    supervisor = ReaderSupervisor(
-        lambda cb: FakeReader(cb), on_data=lambda d: None, on_error=lambda e: None
-    )
-    supervisor.restart("not started")
-    assert not supervisor.is_running()
+async def test_silence_is_reported_again_after_data_resumed() -> None:
+    readers = Readers({"items": ["a", 0.1, "b", 0.1, "c"]})
+    sup, data, errors = supervisor(readers, stale_after=0.05)
+
+    await run_until(sup.run, lambda: data == ["a", "b", "c"])
+
+    assert len(errors) == 2
+
+
+async def test_hung_reader_is_restarted_without_an_error() -> None:
+    readers = Readers({"items": ["a"]}, {"items": ["b"]})
+    sup, data, errors = supervisor(readers, restart_after=0.05)
+
+    await run_until(sup.run, lambda: data == ["a", "b"])
+
+    assert readers.created[0].cancelled
+    assert errors == []
+
+
+async def test_restart_window_starts_again_with_each_reader() -> None:
+    """A silent meter is reopened every ``restart_after``, not in a tight loop."""
+    readers = Readers({})  # never delivers anything
+    sup, _, _ = supervisor(readers, restart_after=0.05, retry_seconds=0.0)
+    loop = asyncio.get_running_loop()
+    end = loop.time() + 0.27
+
+    await run_until(sup.run, lambda: loop.time() >= end)
+
+    assert 3 <= len(readers.created) <= 6
+
+
+async def test_stale_and_restart_together() -> None:
+    readers = Readers({}, {}, {"items": ["late"]})
+    sup, data, errors = supervisor(readers, stale_after=0.03, restart_after=0.06)
+
+    await run_until(sup.run, lambda: data == ["late"])
+
+    # Reported once while silent, not again for every reopened port.
+    assert [type(err) for err in errors] == [ReaderSilentError]
+    assert len(readers.created) == 3
+
+
+async def test_probe_returns_first_reading() -> None:
+    readers = Readers({"items": ["a", "b"]})
+
+    assert await probe(readers, timeout=1.0) == "a"
+    assert readers.created[0].cancelled
+
+
+async def test_probe_raises_reader_error() -> None:
+    with pytest.raises(OSError, match="no port"):
+        await probe(Readers({"fail": OSError("no port")}), timeout=1.0)
+
+
+async def test_probe_returns_none_on_timeout() -> None:
+    readers = Readers()
+
+    assert await probe(readers, timeout=0.05) is None
+    assert readers.created[0].cancelled
+
+
+async def test_probe_returns_none_when_reader_ends_without_data() -> None:
+    assert await probe(Readers({"block": False}), timeout=1.0) is None
+
+
+async def test_cancel_and_wait_does_not_swallow_the_callers_cancellation() -> None:
+    inner = asyncio.create_task(asyncio.sleep(10))
+
+    async def outer() -> None:
+        await cancel_and_wait(inner)
+        await asyncio.sleep(10)
+
+    task = asyncio.create_task(outer())
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    task.cancel()
+    await asyncio.wait({task})
+
+    assert inner.cancelled()
+    assert task.cancelled()

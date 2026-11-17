@@ -9,4 +9,8 @@ pycryptodomex>=3.24
 pyserial>=3.5
 beautifulsoup4>=4.12
 lxml>=5.0
+pyserial-asyncio-fast>=0.16
+# The migration tests build the add-on's discovery messages with its own
+# MQTT code; the integration itself does not use MQTT.
+aiomqtt>=2.4
 pytest-homeassistant-custom-component==0.13.375

@@ -7,13 +7,16 @@ tests/fixtures/obis_frames.py); real telegrams are still wanted.
 
 from __future__ import annotations
 
-from collections import deque
+import logging
 
 import pytest
 import serial
 
 from meter.profile import ObisProfile, get_profile
+from meter.obis import reader as obis_reader
 from meter.obis.reader import ObisMeterReader
+from meter.serial.transport import PortClosedError
+from tests.fake_port import EOF, FakePort, chunks, run_until
 from meter.obis.registers import FIELDS, ObisMeterData
 from tests.fixtures.obis_frames import (
     DSMR_EXPECTED,
@@ -36,32 +39,14 @@ from tests.fixtures.obis_frames import (
 OBIS_PROFILES = ["steiermark", "steiermark_sagemcom", "salzburg", "tirol", "h1"]
 
 
-class FakeSerial:
-    """Hands out ``payload`` in small chunks, then stops the reader."""
-
-    def __init__(self, payload: bytes, reader_ref: list, chunk: int = 9) -> None:
-        self._chunks = deque(payload[i : i + chunk] for i in range(0, len(payload), chunk))
-        self._reader_ref = reader_ref
-        self.in_waiting = chunk
-
-    def read(self, size: int = 1) -> bytes:
-        if not self._chunks:
-            self._reader_ref[0].stop()
-            return b""
-        return self._chunks.popleft()
-
-    def close(self) -> None:
-        pass
-
-
-def run_reader(meter_type: str, payload: bytes, key_hex: str = TEST_KEY_HEX) -> list:
+async def run_reader(meter_type: str, payload: bytes, key_hex: str = TEST_KEY_HEX) -> list:
+    """Feed ``payload`` in small chunks through the profile's reader."""
     received: list = []
-    profile = get_profile(meter_type)
-    reader = profile.create_reader({"dlms": {"key": key_hex}}, received.append)
+    reader = get_profile(meter_type).create_reader({"dlms": {"key": key_hex}}, received.append)
     assert isinstance(reader, ObisMeterReader)
-    ref = [reader]
-    reader._serial_factory = lambda: FakeSerial(payload, ref)
-    reader.start()
+    reader._open_stream = FakePort([*chunks(payload, 9), EOF])
+    task = await run_until(reader.run, lambda: False)
+    assert isinstance(task.exception(), PortClosedError)
     return received
 
 
@@ -72,53 +57,74 @@ def expected_dict(values: dict, meter_time: str | None) -> dict:
 
 
 @pytest.mark.parametrize("meter_type", ["salzburg", "tirol"])
-def test_kaifa_profiles_decode_segmented_mbus(meter_type: str) -> None:
-    received = run_reader(meter_type, kaifa_mbus_stream() * 2)
+async def test_kaifa_profiles_decode_segmented_mbus(meter_type: str) -> None:
+    received = await run_reader(meter_type, kaifa_mbus_stream() * 2)
     assert len(received) == 2
     assert all(isinstance(d, ObisMeterData) for d in received)
     assert received[0].to_dict() == expected_dict(KAIFA_EXPECTED, TIMESTAMP_ISO)
     assert received[0].meter_id == "KFM1200200012345"
 
 
-def test_steiermark_e450_decodes_hdlc_block_transfer() -> None:
-    received = run_reader("steiermark", b"\x00\x01" + e450_hdlc_stream())
+async def test_steiermark_e450_decodes_hdlc_block_transfer() -> None:
+    received = await run_reader("steiermark", b"\x00\x01" + e450_hdlc_stream())
     assert [d.to_dict() for d in received] == [expected_dict(E450_EXPECTED, TIMESTAMP_ISO)]
 
 
 @pytest.mark.parametrize("meter_type", ["h1", "steiermark_sagemcom"])
-def test_p1_profiles_decode_encrypted_dsmr(meter_type: str) -> None:
-    received = run_reader(meter_type, encrypted_dsmr() + encrypted_dsmr())
+async def test_p1_profiles_decode_encrypted_dsmr(meter_type: str) -> None:
+    received = await run_reader(meter_type, encrypted_dsmr() + encrypted_dsmr())
     assert len(received) == 2
     assert received[0].to_dict() == expected_dict(DSMR_EXPECTED, DSMR_TIME_ISO)
 
 
-def test_h1_accepts_plain_dsmr_and_hdlc_wrapped_dlms() -> None:
+async def test_h1_accepts_plain_dsmr_and_hdlc_wrapped_dlms() -> None:
     hdlc = hdlc_ui_frame(b"\xe6\xe7\x00" + envelope(kaifa_apdu(), security_control=0x30))
     raw_dlms = envelope(kaifa_apdu(), security_control=0x30)
-    received = run_reader("h1", dsmr_telegram() + hdlc + raw_dlms)
+    received = await run_reader("h1", dsmr_telegram() + hdlc + raw_dlms)
     assert len(received) == 3
     assert received[1].to_dict() == expected_dict(KAIFA_EXPECTED, TIMESTAMP_ISO)
     assert received[2].to_dict() == received[1].to_dict()
 
 
-def test_wrong_key_decodes_nothing_and_hints_at_key() -> None:
+async def test_wrong_key_decodes_nothing_and_hints_at_key() -> None:
     received: list = []
     reader = get_profile("tirol").create_reader(
         {"dlms": {"key": "00" * 16}}, received.append
     )
     assert isinstance(reader, ObisMeterReader)
-    ref = [reader]
-    reader._serial_factory = lambda: FakeSerial(kaifa_mbus_stream(), ref)
-    reader.start()
+    reader._open_stream = FakePort([*chunks(kaifa_mbus_stream(), 9), EOF])
+    await run_until(reader.run, lambda: False)
     assert received == []
     assert reader.diagnostic_hint() is not None
     assert "key" in (reader.diagnostic_hint() or "")
 
 
-def test_garbled_telegram_does_not_stop_the_reader() -> None:
+async def test_repeated_decode_failures_end_the_reader() -> None:
+    bad = gbt_hdlc_frames(envelope(kaifa_apdu(), bytes(16), security_control=0x30))
+    reader = get_profile("steiermark").create_reader(
+        {"dlms": {"key": TEST_KEY_HEX}}, lambda data: None
+    )
+    assert isinstance(reader, ObisMeterReader)
+    reader._open_stream = FakePort([bad] * obis_reader.MAX_CONSECUTIVE_FAILURES)
+    task = await run_until(reader.run, lambda: False)
+    assert isinstance(task.exception(), ValueError)
+
+
+async def test_heartbeat_reports_the_failing_layer(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr(obis_reader, "HEARTBEAT_SECONDS", 0.02)
+    reader = get_profile("h1").create_reader({"dlms": {"key": ""}}, lambda data: None)
+    reader._open_stream = FakePort([b"\x00\x01\x02"])
+    with caplog.at_level(logging.INFO, logger="meter.obis.reader"):
+        await run_until(reader.run, lambda: "reader diagnostic" in caplog.text)
+    assert "no complete telegram" in caplog.text
+
+
+async def test_garbled_telegram_does_not_stop_the_reader() -> None:
     good = gbt_hdlc_frames(envelope(kaifa_apdu(), TEST_KEY, security_control=0x30))
     bad = gbt_hdlc_frames(envelope(kaifa_apdu(), bytes(16), security_control=0x30))
-    received = run_reader("steiermark", bad + good)
+    received = await run_reader("steiermark", bad + good)
     assert len(received) == 1
 
 

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import threading
+import importlib.util
+import sys
 from collections.abc import Callable, Iterator
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -38,6 +40,19 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     yield
 
 
+def sample_telegram() -> Any:
+    """An encrypted Burgenland telegram (add-on test fixture, same key)."""
+    path = Path(__file__).parents[1] / "smartmeter/tests/fixtures/bgld_sample_frame.py"
+    spec = importlib.util.spec_from_file_location("bgld_sample_frame", path)
+    assert spec is not None and spec.loader is not None
+    module = sys.modules.get(spec.name)
+    if module is None:
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module  # dataclasses look their module up
+        spec.loader.exec_module(module)
+    return module.build_sample_telegram()
+
+
 def sample_reading() -> Any:
     from custom_components.smartmeter_at.meter.bgld.data import MeterData
 
@@ -45,18 +60,19 @@ def sample_reading() -> Any:
 
 
 class FakeReader:
-    """Delivers one reading, then blocks until stopped."""
+    """Delivers one reading, then reads on until cancelled."""
 
     def __init__(self, callback: Callable[[Any], None]) -> None:
         self.callback = callback
-        self.stopped = threading.Event()
+        self.cancelled = False
 
-    def start(self) -> None:
+    async def run(self) -> None:
         self.callback(sample_reading())
-        self.stopped.wait(5)
-
-    def stop(self) -> None:
-        self.stopped.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            self.cancelled = True
+            raise
 
 
 @pytest.fixture

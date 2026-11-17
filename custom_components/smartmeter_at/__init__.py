@@ -35,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartMeterConfigEntry) -
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # Start after the platforms so the device exists when the first reading
     # (with the meter serial number) arrives.
-    coordinator.start()
+    coordinator.async_start()
 
     async def _async_stop(_event: Event) -> None:
         await coordinator.async_stop()
@@ -46,7 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartMeterConfigEntry) -
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: SmartMeterConfigEntry) -> bool:
-    """Unload a config entry and stop its reader thread."""
+    """Unload a config entry, stop the reader and close the port."""
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         await entry.runtime_data.async_stop()

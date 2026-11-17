@@ -19,7 +19,8 @@
     "gurux-dlms==1.0.197",
     "pycryptodomex>=3.24",
     "beautifulsoup4>=4.12",
-    "lxml>=5.0"
+    "lxml>=5.0",
+    "pyserial-asyncio-fast>=0.16"
   ],
   "version": "0.9.0"
 }

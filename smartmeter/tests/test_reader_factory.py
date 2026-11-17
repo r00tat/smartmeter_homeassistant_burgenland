@@ -30,19 +30,19 @@ def test_noe_profile_returns_noe_meter_reader() -> None:
 def test_noe_profile_applies_default_baudrate() -> None:
     cfg = {"dlms": {"key": VALID_KEY, "port": "/dev/ttyUSB0"}}
     reader = build_reader(cfg, get_profile("noe_evn"), callback=_noop)
-    assert reader.baudrate == 2400
+    assert reader.settings.baudrate == 2400
 
 
 def test_noe_profile_respects_explicit_baudrate_override() -> None:
     cfg = {"dlms": {"key": VALID_KEY, "port": "/dev/ttyUSB0", "baudrate": 9600}}
     reader = build_reader(cfg, get_profile("noe_evn"), callback=_noop)
-    assert reader.baudrate == 9600
+    assert reader.settings.baudrate == 9600
 
 
 def test_burgenland_profile_applies_default_baudrate() -> None:
     cfg = {"dlms": {"key": VALID_KEY, "port": "/dev/ttyUSB0"}}
     reader = build_reader(cfg, get_profile("burgenland"), callback=_noop)
-    assert reader.baudrate == 9600
+    assert reader.settings.baudrate == 9600
 
 
 def test_data_types_are_distinct() -> None:

@@ -100,9 +100,7 @@ async def async_probe(hass: HomeAssistant, core: Core, data: dict[str, Any]) -> 
     """Read one telegram with the given settings (``None`` on timeout)."""
     profile = core.profile.get_profile(data[CONF_METER_TYPE])
     timeout = max(MIN_PROBE_SECONDS, PROBE_TELEGRAMS * profile.push_interval_seconds)
-    return await hass.async_add_executor_job(
-        core.supervisor.probe, build_reader_factory(profile, data), timeout
-    )
+    return await core.supervisor.probe(build_reader_factory(profile, data), timeout)
 
 
 def _user_schema(meter_types: list[str], ports: list[str]) -> vol.Schema:
