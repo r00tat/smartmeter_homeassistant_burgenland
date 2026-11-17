@@ -159,27 +159,31 @@ Arbeitsstands, nicht die Version von PyPI:
 | Variante | Testen mit |
 | --- | --- |
 | Integration | `./dev.sh`, siehe [oben](#integration-lokal-testen) |
-| Add-on | `./dev-addon.sh` auf einem Home Assistant mit Supervisor |
+| Add-on | Klon in `/addons` auf dem Home-Assistant-Host, siehe [unten](#add-on) |
 | Standalone-Container | `build:`-Block in `smartmeter/docker-compose.standalone.yml` |
 | Standalone ohne Docker | `smartmeter/smartmeter.sh`, siehe [Installation](installation.md#systemd-ohne-docker) |
 
 ### Add-on
 
-`./dev-addon.sh` kopiert `smartmeter/` samt Library per SSH nach
-`/addons/smartmeter_dev` auf dem Home-Assistant-Host. Dabei entfernt es
-`image:` aus `config.yaml`, damit der Supervisor das Add-on selbst baut, hängt
-„(dev)“ an den Namen und setzt die Version auf `X.Y.Z-dev.<commit>`.
+Den Klon auf dem Home-Assistant-Host nach `/addons` legen, z.B. mit dem
+Add-on *Terminal & SSH*, und `image:` deaktivieren. Ohne `image:` baut der
+Supervisor das Add-on selbst aus `smartmeter/`; die Library liegt in
+`smartmeter/smartmeter-austria/` und kommt so aus demselben Stand.
 
-Voraussetzungen: das Add-on *Terminal & SSH* (oder *Advanced SSH & Web
-Terminal*) mit `rsync` und SSH-Schlüssel für `root`, lokal `yq`. Ziel und Port
-über `HA_HOST` (Standard `root@homeassistant.local`) und `HA_SSH_PORT`.
+```bash
+cd /addons
+git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
+# für einen Branch: git clone -b <branch> …
+sed -i 's/^image:/# image:/' smartmeter-src/smartmeter/config.yaml
+```
 
-1. `./dev-addon.sh` ausführen.
-2. Beim ersten Mal unter *Einstellungen → Add-ons → Add-on-Store* bei
-   *Lokale Add-ons* „Smartmeter Burgenland MQTT (dev)“ installieren und
-   konfigurieren.
-3. Nach jeder Änderung `./dev-addon.sh` erneut ausführen; es aktualisiert das
-   Add-on und baut es neu (`ha addons update local_smartmeter_bgld_mqtt`).
+1. Unter *Einstellungen → Add-ons → Add-on-Store* über *⋮ → Nach Updates
+   suchen* den Store neu laden. Das Add-on erscheint unter *Lokale Add-ons*;
+   installieren und konfigurieren.
+2. Nach einer Änderung `git pull --autostash` (behält das auskommentierte
+   `image:`) und im Add-on auf *Neu erstellen* klicken, oder
+   `ha addons rebuild local_smartmeter_bgld_mqtt`. Hat sich `version` in
+   `config.yaml` geändert, bietet der Supervisor stattdessen ein Update an.
 
 Das lokale Add-on (`local_smartmeter_bgld_mqtt`) steht neben dem
 veröffentlichten. Nicht beide gleichzeitig mit demselben Lesekopf starten.

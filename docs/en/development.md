@@ -153,26 +153,31 @@ working tree, not the version on PyPI:
 | Variant | Test with |
 | --- | --- |
 | Integration | `./dev.sh`, see [above](#testing-the-integration-locally) |
-| Add-on | `./dev-addon.sh` on a Home Assistant with Supervisor |
+| Add-on | clone in `/addons` on the Home Assistant host, see [below](#add-on) |
 | Standalone container | `build:` block in `smartmeter/docker-compose.standalone.yml` |
 | Standalone without Docker | `smartmeter/smartmeter.sh`, see [installation](installation.md#systemd-without-docker) |
 
 ### Add-on
 
-`./dev-addon.sh` copies `smartmeter/` including the library over SSH to
-`/addons/smartmeter_dev` on the Home Assistant host. It removes `image:` from
-`config.yaml` so the Supervisor builds the add-on itself, appends "(dev)" to
-the name and sets the version to `X.Y.Z-dev.<commit>`.
+Put the clone into `/addons` on the Home Assistant host, e.g. with the
+*Terminal & SSH* add-on, and disable `image:`. Without `image:` the
+Supervisor builds the add-on itself from `smartmeter/`; the library lives in
+`smartmeter/smartmeter-austria/`, so it comes from the same checkout.
 
-Requirements: the *Terminal & SSH* (or *Advanced SSH & Web Terminal*) add-on
-with `rsync` and an SSH key for `root`, and `yq` locally. Set target and port
-with `HA_HOST` (default `root@homeassistant.local`) and `HA_SSH_PORT`.
+```bash
+cd /addons
+git clone https://github.com/r00tat/smartmeter_homeassistant_burgenland.git smartmeter-src
+# for a branch: git clone -b <branch> …
+sed -i 's/^image:/# image:/' smartmeter-src/smartmeter/config.yaml
+```
 
-1. Run `./dev-addon.sh`.
-2. The first time, install and configure "Smartmeter Burgenland MQTT (dev)"
-   under *Settings → Add-ons → Add-on Store*, section *Local add-ons*.
-3. After every change run `./dev-addon.sh` again; it updates and rebuilds the
-   add-on (`ha addons update local_smartmeter_bgld_mqtt`).
+1. Reload the store under *Settings → Add-ons → Add-on Store* with
+   *⋮ → Check for updates*. The add-on shows up under *Local add-ons*;
+   install and configure it.
+2. After a change, run `git pull --autostash` (keeps the commented-out
+   `image:`) and click *Rebuild* on the add-on, or run
+   `ha addons rebuild local_smartmeter_bgld_mqtt`. If `version` in
+   `config.yaml` changed, the Supervisor offers an update instead.
 
 The local add-on (`local_smartmeter_bgld_mqtt`) sits next to the published
 one. Do not run both with the same reading head at the same time.
