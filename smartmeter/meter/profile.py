@@ -227,7 +227,7 @@ _PROFILES: dict[str, MeterProfile] = {
             data_factory=WienMeterData,
         ),
         # The profiles below follow the operators' published specifications
-        # but have not been verified with a real telegram yet (see README).
+        # but have not been verified with a real telegram yet (see docs/zaehler.md).
         ObisProfile(
             name="steiermark",
             manufacturer="Landis+Gyr",

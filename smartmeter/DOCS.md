@@ -23,7 +23,7 @@ Supported meters (select via `meter_type`):
 
 Implemented from the grid operators' specifications but **not yet tested
 with a real meter** (please report your results, see
-[Real data wanted](https://github.com/r00tat/smartmeter_homeassistant_burgenland#real-data-wanted)):
+[Real data wanted](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/meters.md#real-data-wanted)):
 
 - `steiermark` — Energienetze Steiermark, Landis+Gyr E450 on the wired M-Bus
   customer interface (RJ12) at 2400 baud (8E1). Use the GUEK from the
@@ -43,7 +43,7 @@ The wired M-Bus interfaces need an M-Bus slave adapter (M-Bus to USB); the
 DSMR P1 interfaces need a P1 cable. `interface_type` is ignored by these
 profiles.
 
-You can read more about the underlying python program at the [github page](https://github.com/r00tat/smartmeter_homeassistant_burgenland).
+Full documentation (German, with English versions) is on the [GitHub page](https://github.com/r00tat/smartmeter_homeassistant_burgenland). If the reading head is connected to the Home Assistant device, the [Home Assistant integration](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/installation.md#integration-marketplace) reads the meter without MQTT; it can [take over this add-on's sensors](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/migration.md).
 
 ## Meter selection
 

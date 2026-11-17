@@ -5,9 +5,9 @@ values as Home Assistant sensors. The meter is read directly on the Home
 Assistant host: no MQTT broker and no add-on are needed, and the integration
 also works with Home Assistant Container and Core.
 
-This directory is the integration (domain `smartmeter_at`). The repository
-README covers the add-on, the standalone reader and the meter interfaces in
-detail: <https://github.com/r00tat/smartmeter_homeassistant_burgenland>.
+This directory is the integration (domain `smartmeter_at`). Full
+documentation, also in German: <https://github.com/r00tat/smartmeter_homeassistant_burgenland>
+(meter details: [meters](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/meters.md)).
 
 ## Supported meters
 
@@ -41,8 +41,8 @@ and unit (Wh), so dashboards, automations, the energy dashboard, history and
 statistics keep working. The add-on device is removed. Do not start the add-on
 again afterwards. If you added the integration without taking over, stop the
 add-on and use *Configure* → *Take over the add-on sensors* later; the
-integration's own sensors are then replaced by the add-on's entity ids. Details: *Switching from the add-on* in the repository
-README.
+integration's own sensors are then replaced by the add-on's entity ids.
+Details: [migration](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/migration.md).
 
 ## Installation
 
@@ -80,8 +80,8 @@ dangling, so use one of these:
   inside `/config` and the link relative, otherwise it is dangling inside the
   Home Assistant container.
 
-Restart Home Assistant after installing or updating. See *Integration
-Development* in the repository README for details.
+Restart Home Assistant after installing or updating. Details:
+[development](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/development.md#on-a-real-home-assistant).
 
 ## Configuration
 
@@ -144,6 +144,6 @@ logger:
 
 `./dev.sh` in the repository root starts a Home Assistant test instance in
 Docker with this integration mirrored into it. The tests live in
-`tests_integration/`. See *Integration Development* in the repository README.
+`tests_integration/`. See [development](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/development.md).
 
 Issues: <https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues>

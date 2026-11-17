@@ -69,7 +69,7 @@ class ObisMeterReader:
         while True:
             chunk = await read_some(stream)
             self._bytes_read += len(chunk)
-            # Raw capture for reports of untested meters (see README).
+            # Raw capture for reports of untested meters (see docs/zaehler.md).
             log.debug("raw bytes: %s", chunk.hex())
             for unit in framer.feed(chunk):
                 self._units += 1
