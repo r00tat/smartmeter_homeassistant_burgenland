@@ -50,7 +50,8 @@ class ReaderSupervisor:
     """Run one reader at a time until cancelled.
 
     ``on_data`` receives every ``every``-th reading (the count starts again
-    with each new reader and after a silence), ``on_error`` every failure.
+    with each new reader and after a silence), ``on_skipped`` the readings in
+    between (e.g. to log them), ``on_error`` every failure.
     """
 
     def __init__(
@@ -62,12 +63,14 @@ class ReaderSupervisor:
         retry_seconds: float = 10.0,
         stale_after: float | None = None,
         restart_after: float | None = None,
+        on_skipped: Callable[[Any], None] | None = None,
     ) -> None:
         if every < 1:
             raise ValueError("every must be >= 1")
         self._factory = reader_factory
         self._on_data = on_data
         self._on_error = on_error
+        self._on_skipped = on_skipped
         self._every = every
         self._retry_seconds = retry_seconds
         self._stale_after = stale_after
@@ -170,13 +173,15 @@ class ReaderSupervisor:
             self._stale = False
             self._count = 0
             self._resumed.set()
-        if self._count % self._every == 0:
-            try:
-                self._on_data(data)
-            except Exception:
-                # Must not reach the reader, which counts exceptions as parse failures.
-                log.exception("on_data callback failed")
+        callback = self._on_data if self._count % self._every == 0 else self._on_skipped
         self._count += 1
+        if callback is None:
+            return
+        try:
+            callback(data)
+        except Exception:
+            # Must not reach the reader, which counts exceptions as parse failures.
+            log.exception("meter data callback failed")
 
 
 async def probe(reader_factory: ReaderFactory, timeout: float) -> Any | None:

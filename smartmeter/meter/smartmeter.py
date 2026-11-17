@@ -71,6 +71,7 @@ class SmartMqttMeter:
         self.supervisor = ReaderSupervisor(
             self.create_reader,
             on_data=self.got_meter_data,
+            on_skipped=self.skipped_meter_data,
             on_error=self.reader_failed,
             every=self.publish_interval,
             retry_seconds=RETRY_SECONDS,
@@ -85,6 +86,9 @@ class SmartMqttMeter:
     def got_meter_data(self, data: Any) -> None:
         log.info("got meter data, publishing to mqtt: %s", data)
         self.mqtt.publish_status(data)
+
+    def skipped_meter_data(self, data: Any) -> None:
+        log.info("got meter data, skipping: %s", data)
 
     def reader_failed(self, error: Exception) -> None:
         log.warning("no current meter data (%s), marking sensors unavailable", error)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import signal
 import sys
@@ -124,6 +125,38 @@ async def test_telegrams_are_published_and_shutdown_goes_offline(
     assert port.closed == 1
     discovery = json.loads(broker.payloads("homeassistant/device/smartmeter/config")[-1])
     assert discovery["device"]["sn"] == "1LGZ0012345678"
+
+
+async def test_every_reading_is_logged_also_between_publishes(
+    broker: FakeBroker,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Regression: readings that are not published must still be logged."""
+    monkeypatch.setattr(serial_read, "OPTICAL_IDLE_GAP_SECONDS", 0.02)
+    sample = build_sample_telegram()
+    steps: list = []
+    for _ in range(4):
+        steps += [sample.frame, 0.1]
+    meter, _ = e2e_meter(broker, FakePort(steps))
+    meter.supervisor._every = 2  # publish every 2nd reading
+
+    with caplog.at_level(logging.INFO, logger="meter.smartmeter"):
+        task = asyncio.create_task(meter.run())
+        try:
+            await broker.wait_for(lambda: caplog.text.count("got meter data") == 4)
+        finally:
+            meter.stop()
+            await asyncio.wait_for(task, 3)
+
+    lines = [r.getMessage() for r in caplog.records if "got meter data" in r.getMessage()]
+    assert [line.split(":")[0] for line in lines] == [
+        "got meter data, publishing to mqtt",
+        "got meter data, skipping",
+        "got meter data, publishing to mqtt",
+        "got meter data, skipping",
+    ]
+    assert all("U(236V" in line for line in lines)
 
 
 async def test_port_failure_marks_sensors_unavailable_and_recovers(

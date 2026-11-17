@@ -77,6 +77,31 @@ async def test_forwards_every_nth_reading() -> None:
     assert errors == []
 
 
+async def test_skipped_readings_go_to_on_skipped() -> None:
+    skipped: list[Any] = []
+    sup, data, _ = supervisor(
+        Readers({"items": [0, 1, 2, 3, 4, 5]}), every=3, on_skipped=skipped.append
+    )
+
+    await run_until(sup.run, lambda: len(data) + len(skipped) == 6)
+
+    assert data == [0, 3]
+    assert skipped == [1, 2, 4, 5]
+
+
+async def test_failing_on_skipped_does_not_reach_the_reader() -> None:
+    def on_skipped(data: Any) -> None:
+        raise RuntimeError("callback bug")
+
+    readers = Readers({"items": [0, 1, 2, 3]})
+    sup, data, errors = supervisor(readers, every=2, on_skipped=on_skipped)
+
+    await run_until(sup.run, lambda: data == [0, 2])
+
+    assert errors == []
+    assert len(readers.created) == 1
+
+
 async def test_restarts_reader_after_failure() -> None:
     readers = Readers({"fail": OSError("port gone")}, {"items": ["ok"]})
     sup, data, errors = supervisor(readers)
