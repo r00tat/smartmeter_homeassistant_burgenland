@@ -214,3 +214,9 @@ sudo systemctl enable --now smartmeter
 `/home/pi/smartmeter_homeassistant_burgenland` and the user `pi`; adjust the
 file first for other paths. Status: `sudo systemctl status smartmeter`, logs:
 `journalctl -u smartmeter -f`.
+
+On every start `smartmeter.sh` installs the dependencies and the
+`smartmeter-austria` library straight from the repository's `packages/`
+(editable, not from PyPI). To update, run
+`git pull && sudo systemctl restart smartmeter`; the service always runs
+exactly the checked-out code.
