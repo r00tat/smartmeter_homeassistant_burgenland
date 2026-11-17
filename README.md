@@ -117,5 +117,6 @@ Alle Optionen (TLS, Intervall, serielle Einstellungen) stehen in
 - [Umstieg vom Add-on auf die Integration](docs/umstieg.md)
 - [Fehlerbehebung](docs/fehlerbehebung.md): Fehlermeldungen, Debug-Logs, Verhalten bei Ausfällen
 - [Entwicklung](docs/entwicklung.md): Architektur, lokale Testumgebung, neuen Zähler hinzufügen
+- [Python-Library `smartmeter-austria`](smartmeter/smartmeter-austria/README.md): der Zähler-Code für eigene Projekte, auf [PyPI](https://pypi.org/project/smartmeter-austria/)
 
 Fragen und Fehler: [GitHub Issues](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues)

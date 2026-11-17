@@ -1,3 +1,5 @@
+# Build context is smartmeter/:
+#   docker build -f Dockerfile.standalone .
 ARG BUILD_FROM=python:3.15-slim
 FROM $BUILD_FROM
 
@@ -5,9 +7,11 @@ ENV LANG=C.UTF-8
 
 WORKDIR /app
 
-COPY requirements.txt fix_source_encoding.py ./
-RUN pip install --no-cache-dir -r requirements.txt && \
-    python3 fix_source_encoding.py gurux_dlms gurux_common
+COPY requirements.txt ./
+COPY smartmeter-austria /tmp/smartmeter-austria
+RUN pip install --no-cache-dir -r requirements.txt /tmp/smartmeter-austria && \
+    python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common && \
+    rm -rf /tmp/smartmeter-austria
 
 COPY meter ./meter/
 # fail the build (and the PR test build) if the app cannot even be imported,

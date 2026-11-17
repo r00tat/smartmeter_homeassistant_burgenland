@@ -11,7 +11,9 @@ services:
 
     # Uncomment the block below (and comment out the image: line above) to build
     # locally from the repo instead of pulling the published image.
-    # Run docker compose from inside the smartmeter/ directory in that case.
+    # Run docker compose from inside the smartmeter/ directory in that case;
+    # the image installs the smartmeter-austria library from
+    # smartmeter-austria/ of the checkout.
     #
     # build:
     #   context: .

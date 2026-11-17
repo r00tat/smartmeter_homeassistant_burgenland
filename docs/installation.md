@@ -69,9 +69,9 @@ deaktiviert; sie lassen sich auf der Geräteseite aktivieren.
 
 ### Manuell installieren
 
-`custom_components/smartmeter_at/` enthält Symlinks (`meter/`,
-`fix_source_encoding.py`) in das Verzeichnis `smartmeter/`. Nur dieses
-Verzeichnis zu kopieren hinterlässt also kaputte Links. Stattdessen:
+Die Integration ist nur das Verzeichnis `custom_components/smartmeter_at/`;
+den Zähler-Code installiert Home Assistant als Python-Paket
+[`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/) von PyPI.
 
 - `smartmeter_at.zip` aus einem
   [Release](https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases)
@@ -215,3 +215,9 @@ sudo systemctl enable --now smartmeter
 `/home/pi/smartmeter_homeassistant_burgenland` und den Benutzer `pi`; bei
 anderen Pfaden die Datei vorher anpassen. Status:
 `sudo systemctl status smartmeter`, Logs: `journalctl -u smartmeter -f`.
+
+`smartmeter.sh` installiert bei jedem Start die Abhängigkeiten und die
+Library `smartmeter-austria` direkt aus `smartmeter/smartmeter-austria/` des Repositorys
+(editierbar, nicht von PyPI). Aktualisieren heißt daher nur
+`git pull && sudo systemctl restart smartmeter`; es läuft immer genau der
+ausgecheckte Stand.

@@ -1,15 +1,9 @@
-# Same requirements as custom_components/smartmeter_at/manifest.json; the
-# add-on's requirements.txt cannot be reused because Home Assistant pins an
-# older paho-mqtt than the add-on (the integration does not use MQTT).
-gurux-common==1.0.13
-gurux-dlms==1.0.197
-pycryptodomex>=3.24
-# Ships with Home Assistant at runtime (hassfest forbids it in the manifest),
-# but the test environment does not pull it in.
-pyserial>=3.5
-beautifulsoup4>=4.12
-lxml>=5.0
-pyserial-asyncio-fast>=0.16
+# Test environment for the Home Assistant integration. Install together with
+# the local library, which brings the integration's runtime requirements:
+#   uv pip install -r requirements-ha-test.txt -e smartmeter/smartmeter-austria
+# Home Assistant's own pins (e.g. paho-mqtt) differ from the add-on's, so the
+# add-on requirements are not reused here.
+#
 # The migration tests build the add-on's discovery messages with its own
 # MQTT code; the integration itself does not use MQTT.
 aiomqtt>=2.4

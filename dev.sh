@@ -1,9 +1,11 @@
 #!/bin/bash
 # Starts a Home Assistant test instance in a container and syncs the
-# smartmeter_at integration into its config directory.
+# smartmeter_at integration and the smartmeter-austria library from the
+# working tree into its config directory.
 set -euo pipefail
 
 COMPONENT="smartmeter_at"
+LIBRARY="smartmeter-austria"
 DOCKER_NAME="smartmeter-ha-dev"
 IMAGE="ghcr.io/home-assistant/home-assistant:stable"
 # Host port. Inside the container Home Assistant always listens on 8123.
@@ -78,17 +80,29 @@ if [[ -L "config/custom_components/$COMPONENT" ]]; then
   warn "config/custom_components/$COMPONENT is a symlink - remove it first."
   exit 1
 fi
-# -L resolves the symlinks to smartmeter/meter: relative links would point
-# outside the mounted config directory and break inside the container.
 # --delete so files removed in the repo do not linger and get loaded.
-rsync -aL --delete --exclude '__pycache__' \
+rsync -a --delete --exclude '__pycache__' \
   "custom_components/$COMPONENT/" "config/custom_components/$COMPONENT/"
 info "$(find "config/custom_components/$COMPONENT" -name '*.py' | wc -l | tr -d ' ') Python files mirrored"
 
+# The manifest pins smartmeter-austria; Home Assistant would install that
+# version from PyPI. The container installs this copy at every start instead
+# (see STARTUP below), so library changes show up without a release.
+log "Syncing smartmeter/$LIBRARY to config/.dev/"
+mkdir -p config/.dev
+rsync -a --delete --exclude '__pycache__' --exclude 'tests' --exclude 'scripts' \
+  "smartmeter/$LIBRARY/" "config/.dev/$LIBRARY/"
+
 # --- Container ---------------------------------------------------------------
+
+# Install the synced library, then hand over to the image's own entrypoint.
+# Runs again on every docker restart. The version equals the manifest pin, so
+# Home Assistant treats the requirement as installed and keeps this copy.
+STARTUP="uv pip install --quiet --reinstall-package $LIBRARY /config/.dev/$LIBRARY && exec /init"
 
 DOCKER_RUN_ARGS=(
   --name "$DOCKER_NAME"
+  --entrypoint /bin/sh
   -e TZ=Europe/Vienna
   -v "$PWD/config:/config"
   # Publish on localhost only - the test instance does not belong in the LAN.
@@ -116,11 +130,15 @@ if [[ -n "$container_id" && "$RECREATE" -eq 0 ]]; then
     --format '{{with index .HostConfig.PortBindings "8123/tcp"}}{{(index . 0).HostPort}}{{end}}')"
   current_device="$(docker inspect "$container_id" \
     --format '{{range .HostConfig.Devices}}{{.PathOnHost}}{{end}}')"
+  current_cmd="$(docker inspect "$container_id" --format '{{join .Config.Cmd " "}}')"
   if [[ "$current_port" != "$HTTP_PORT" ]]; then
     warn "Existing container publishes port ${current_port:-<none>}, wanted $HTTP_PORT - recreating it."
     RECREATE=1
   elif [[ "$current_device" != "$SERIAL_DEVICE" ]]; then
     warn "Existing container has serial device '${current_device}', wanted '${SERIAL_DEVICE}' - recreating it."
+    RECREATE=1
+  elif [[ "$current_cmd" != "-c $STARTUP" ]]; then
+    warn "Existing container does not install the local $LIBRARY at startup - recreating it."
     RECREATE=1
   fi
 fi
@@ -137,7 +155,7 @@ fi
 if [[ -z "$container_id" ]]; then
   log "Starting new container $DOCKER_NAME"
   info "image: $IMAGE"
-  docker run -d "${DOCKER_RUN_ARGS[@]}" "$IMAGE" >/dev/null
+  docker run -d "${DOCKER_RUN_ARGS[@]}" "$IMAGE" -c "$STARTUP" >/dev/null
 else
   log "Restarting existing container $DOCKER_NAME"
   docker restart "$DOCKER_NAME" >/dev/null

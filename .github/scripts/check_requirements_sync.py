@@ -1,44 +1,40 @@
-"""Fail if manifest.json pins gurux differently from smartmeter/requirements.txt."""
+"""Fail if the integration does not pin the library version of this commit.
+
+The integration installs the reader core from PyPI (``smartmeter-austria``);
+the release workflow sets the library version and the manifest pin to the
+release tag. Between releases both must still agree, otherwise a HACS
+install of this commit would load a different library than the one tested.
+"""
 
 from __future__ import annotations
 
 import json
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PINNED = ("gurux-common", "gurux-dlms")
-
-
-def pins(lines: list[str]) -> dict[str, str]:
-    """Return the gurux pins found in requirement lines."""
-    result = {}
-    for line in lines:
-        name, sep, version = line.strip().partition("==")
-        if sep and name in PINNED:
-            result[name] = version
-    return result
+LIBRARY = "smartmeter-austria"
 
 
 def main() -> int:
-    """Compare the add-on and integration pins and return an exit code."""
-    addon = pins((ROOT / "smartmeter/requirements.txt").read_text().splitlines())
+    """Compare the manifest pin with the library version and return an exit code."""
+    pyproject = tomllib.loads(
+        (ROOT / "smartmeter/smartmeter-austria/pyproject.toml").read_text()
+    )
+    version = pyproject["project"]["version"]
     manifest = json.loads(
         (ROOT / "custom_components/smartmeter_at/manifest.json").read_text()
     )
-    integration = pins(manifest["requirements"])
-    if addon != integration:
-        print(f"gurux pins differ: add-on {addon}, integration {integration}")
+    expected = f"{LIBRARY}=={version}"
+    pins = [req for req in manifest["requirements"] if req.startswith(f"{LIBRARY}")]
+    if pins != [expected]:
+        print(f"manifest.json requirements {manifest['requirements']} lack {expected!r}")
         return 1
-    test_lines = {
-        line.strip()
-        for line in (ROOT / "requirements-ha-test.txt").read_text().splitlines()
-    }
-    missing = [req for req in manifest["requirements"] if req not in test_lines]
-    if missing:
-        print(f"requirements-ha-test.txt lacks manifest requirements: {missing}")
+    if manifest["version"] != version:
+        print(f"manifest.json version {manifest['version']} != library version {version}")
         return 1
-    print(f"gurux pins in sync: {addon}")
+    print(f"integration pins {expected}")
     return 0
 
 

@@ -7,12 +7,12 @@ import logging
 from typing import Any
 
 import yaml
+from smartmeter_austria.config_validation import DEFAULT_METER_TYPE, validate_config
+from smartmeter_austria.profile import MeterDataCallback, MeterReaderLike, get_profile
+from smartmeter_austria.supervisor import ReaderSupervisor
 
-from .config_validation import DEFAULT_METER_TYPE, validate_config
 from .mqtt.device import SmartMeterDevice
-from .profile import MeterDataCallback, MeterReaderLike, get_profile
 from .reader_factory import build_reader
-from .supervisor import ReaderSupervisor
 
 log = logging.getLogger("meter.smartmeter")
 

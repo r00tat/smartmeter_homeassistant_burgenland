@@ -12,15 +12,15 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from fake_port import FakePort  # library test helper, see conftest.py
+from fixtures.bgld_sample_frame import build_sample_telegram
+from smartmeter_austria.serial import read as serial_read
+from smartmeter_austria.supervisor import cancel_and_wait
 
 from meter import smartmeter as smartmeter_mod
 from meter.__main__ import main
-from meter.serial import read as serial_read
 from meter.smartmeter import SmartMqttMeter
-from meter.supervisor import cancel_and_wait
 from tests.fake_broker import FakeBroker
-from tests.fake_port import FakePort
-from tests.fixtures.bgld_sample_frame import build_sample_telegram
 
 VALID_KEY = "000102030405060708090A0B0C0D0E0F"
 

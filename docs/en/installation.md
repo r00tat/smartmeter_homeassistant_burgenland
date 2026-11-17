@@ -69,9 +69,9 @@ default; enable them on the device page.
 
 ### Manual installation
 
-`custom_components/smartmeter_at/` contains symlinks (`meter/`,
-`fix_source_encoding.py`) into the `smartmeter/` directory. Copying only this
-directory therefore leaves dangling links. Instead:
+The integration is only the directory `custom_components/smartmeter_at/`;
+Home Assistant installs the meter code as the Python package
+[`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/) from PyPI.
 
 - unpack `smartmeter_at.zip` from a
   [release](https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases)
@@ -214,3 +214,9 @@ sudo systemctl enable --now smartmeter
 `/home/pi/smartmeter_homeassistant_burgenland` and the user `pi`; adjust the
 file first for other paths. Status: `sudo systemctl status smartmeter`, logs:
 `journalctl -u smartmeter -f`.
+
+On every start `smartmeter.sh` installs the dependencies and the
+`smartmeter-austria` library straight from the repository's `smartmeter/smartmeter-austria/`
+(editable, not from PyPI). To update, run
+`git pull && sudo systemctl restart smartmeter`; the service always runs
+exactly the checked-out code.

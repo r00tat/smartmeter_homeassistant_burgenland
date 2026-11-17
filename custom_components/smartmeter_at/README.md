@@ -58,9 +58,10 @@ Details: [migration](https://github.com/r00tat/smartmeter_homeassistant_burgenla
 
 ### Manual
 
-`meter/` and `fix_source_encoding.py` in this directory are symlinks into the
-repository's `smartmeter/` directory. Copying only this directory leaves them
-dangling, so use one of these:
+The meter code is not part of this directory: Home Assistant installs it
+from PyPI as [`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/)
+(see `requirements` in `manifest.json`). Install the integration with one of
+these:
 
 - Download `smartmeter_at.zip` from a
   [release](https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases)
@@ -137,7 +138,7 @@ For debug logging add this to `configuration.yaml`:
 logger:
   logs:
     custom_components.smartmeter_at: debug
-    meter: debug
+    smartmeter_austria: debug
 ```
 
 ## Development

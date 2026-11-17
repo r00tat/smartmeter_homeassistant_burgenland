@@ -48,7 +48,7 @@ Telegramme, die sich nicht entschlüsseln lassen (Schlüssel).
 logger:
   logs:
     custom_components.smartmeter_at: debug
-    meter: debug
+    smartmeter_austria: debug
 ```
 
 **Add-on und Container** – `logging: DEBUG` in der Konfiguration.
@@ -57,7 +57,7 @@ Mit Debug-Logs schreibt der serielle Transport jeden empfangenen Block als
 eigene Zeile, für alle Zählertypen:
 
 ```text
-DEBUG:meter.serial.raw:rx +12.345s 24 bytes: 7ea08bceff0313ee…
+DEBUG:smartmeter_austria.serial.raw:rx +12.345s 24 bytes: 7ea08bceff0313ee…
 ```
 
 `+12.345s` ist die Zeit seit dem Öffnen des Ports. Diese Zeilen enthalten

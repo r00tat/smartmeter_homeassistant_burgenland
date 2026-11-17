@@ -12,10 +12,11 @@ import json
 import logging
 from typing import Any, Protocol
 
+from smartmeter_austria.profile import MeterProfile, get_profile
+from smartmeter_austria.sensor_spec import SensorSpec
+
 from ..config import get_sw_version
-from ..profile import MeterProfile, get_profile
 from .client import Message, MqttClient
-from .sensor_spec import SensorSpec
 
 log = logging.getLogger("meter.mqtt.device")
 

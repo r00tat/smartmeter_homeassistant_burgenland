@@ -47,7 +47,7 @@ meter type) or telegrams that cannot be decrypted (key).
 logger:
   logs:
     custom_components.smartmeter_at: debug
-    meter: debug
+    smartmeter_austria: debug
 ```
 
 **Add-on and container** – `logging: DEBUG` in the configuration.
@@ -56,7 +56,7 @@ With debug logs the serial transport writes every received chunk as its own
 line, for every meter type:
 
 ```text
-DEBUG:meter.serial.raw:rx +12.345s 24 bytes: 7ea08bceff0313ee…
+DEBUG:smartmeter_austria.serial.raw:rx +12.345s 24 bytes: 7ea08bceff0313ee…
 ```
 
 `+12.345s` is the time since the port was opened. These lines hold every

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .profile import MeterDataCallback, MeterProfile, MeterReaderLike
+from smartmeter_austria.profile import MeterDataCallback, MeterProfile, MeterReaderLike
 
 
 def build_reader(

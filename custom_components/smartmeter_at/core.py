@@ -1,6 +1,6 @@
-"""Import the meter core lazily, after making gurux importable.
+"""Import the smartmeter-austria library lazily, after making gurux importable.
 
-The core imports gurux-dlms at import time. gurux-dlms 1.0.197 ships a
+The library imports gurux-dlms at import time. gurux-dlms 1.0.197 ships a
 Latin-1 source file that Python 3.15 rejects; the add-on images re-encode
 it at build time, the integration has to do it at runtime because Home
 Assistant installs the requirements itself.
@@ -17,7 +17,8 @@ from types import ModuleType
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
-from . import fix_source_encoding
+from smartmeter_austria import fix_source_encoding
+
 from .const import DATA_CORE
 
 _LOGGER = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ def ensure_gurux_importable() -> None:
 def load_core() -> Core:
     """Blocking: fix gurux if needed and import the core modules."""
     ensure_gurux_importable()
-    from .meter import config_validation, profile, supervisor
+    from smartmeter_austria import config_validation, profile, supervisor
 
     return Core(profile=profile, supervisor=supervisor, config_validation=config_validation)
 

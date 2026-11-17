@@ -1,0 +1,13 @@
+# Build context of the add-on and standalone images (also for a local
+# Supervisor build). Only send what the Dockerfiles copy.
+*
+!requirements.txt
+!run.sh
+!config.yaml
+!standalone-entrypoint.sh
+!meter
+!smartmeter-austria
+smartmeter-austria/tests
+smartmeter-austria/scripts
+**/__pycache__
+**/*.pyc
