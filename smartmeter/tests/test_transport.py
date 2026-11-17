@@ -50,12 +50,44 @@ async def test_bytes_written_to_the_line_are_read(pty: tuple[int, str]) -> None:
         assert await asyncio.wait_for(read_some(stream), 2) == b"hello"
 
 
+def open_fds_to(path: str) -> int:
+    """How many file descriptors of this process point to ``path``."""
+    count = 0
+    for fd in os.listdir("/proc/self/fd"):
+        try:
+            if os.readlink(f"/proc/self/fd/{fd}") == path:
+                count += 1
+        except OSError:
+            pass
+    return count
+
+
 async def test_port_is_closed_on_exit_and_can_be_reopened(pty: tuple[int, str]) -> None:
     master, name = pty
     for _ in range(2):
         async with open_serial(settings_for(name)) as stream:
+            assert open_fds_to(name) == 1
             os.write(master, b"x")
             assert await asyncio.wait_for(read_some(stream), 2) == b"x"
+        assert open_fds_to(name) == 0
+
+
+async def test_cancelled_reader_closes_the_port(pty: tuple[int, str]) -> None:
+    _, name = pty
+
+    async def read_forever() -> None:
+        async with open_serial(settings_for(name)) as stream:
+            await read_some(stream)
+
+    task = asyncio.create_task(read_forever())
+    async with asyncio.timeout(2):
+        while open_fds_to(name) == 0:
+            await asyncio.sleep(0.01)
+    task.cancel()
+    await asyncio.wait({task})
+
+    assert task.cancelled()
+    assert open_fds_to(name) == 0
 
 
 async def test_missing_port_raises() -> None:

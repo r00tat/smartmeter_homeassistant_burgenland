@@ -81,8 +81,12 @@ async def test_supervisor_watches_for_a_silent_meter(hass: HomeAssistant) -> Non
     assert coordinator._supervisor._restart_after == RESTART_AFTER_SECONDS
 
 
-async def test_silent_meter_goes_unavailable_and_recovers(hass: HomeAssistant) -> None:
-    """The supervisor's silence report reaches the entities through on_error."""
+async def test_supervisor_callbacks_drive_availability(hass: HomeAssistant) -> None:
+    """Wiring only: on_error/on_data reach the coordinator.
+
+    The real watchdog end to end is covered by
+    test_sensor.test_silent_meter_makes_entities_unavailable_until_data_returns.
+    """
     entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA)
     entry.add_to_hass(hass)
     core = await async_load_core(hass)

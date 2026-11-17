@@ -6,6 +6,8 @@ import asyncio
 import json
 import os
 import signal
+import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -182,3 +184,44 @@ def test_main_returns_an_error_for_an_invalid_config(tmp_path) -> None:
     config_file.write_text("mqtt: {}\ndlms: {key: short}\n")
 
     assert main(["-c", str(config_file)]) == 1
+
+
+async def test_addon_process_end_to_end(broker: FakeBroker, tmp_path) -> None:
+    """``python -m meter`` as a real process: pty meter, MQTT, SIGTERM."""
+    sample = build_sample_telegram()
+    master, slave = os.openpty()
+    pty_name = os.ttyname(slave)
+    os.close(slave)
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        f"mqtt: {{host: 127.0.0.1, port: {broker.port}, publish_interval: 1}}\n"
+        f"dlms: {{key: {sample.key_hex}, port: {pty_name}}}\n"
+    )
+    proc = await asyncio.create_subprocess_exec(
+        sys.executable, "-m", "meter", "-c", str(config_file),
+        cwd=Path(__file__).parents[1],
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    try:
+        await broker.wait_for(lambda: "smartmeter/availability" in broker.topics(), timeout=20)
+        for _ in range(2):
+            os.write(master, sample.frame)
+            await asyncio.sleep(0.4)  # > optical idle gap: separate telegrams
+        await broker.wait_for(lambda: len(broker.payloads("smartmeter/state")) == 2)
+
+        proc.send_signal(signal.SIGTERM)
+        exit_code = await asyncio.wait_for(proc.wait(), 10)
+    finally:
+        if proc.returncode is None:
+            proc.kill()
+            await proc.wait()
+        os.close(master)
+    output = (await proc.stdout.read()).decode() if proc.stdout else ""
+
+    assert exit_code == 0, output
+    assert json.loads(broker.payloads("smartmeter/state")[0])["u1"] == 236
+    assert broker.payloads("smartmeter/availability")[-1] == "offline"
+    await broker.wait_for(lambda: broker.clean_disconnects == 1)
+    assert broker.connections[0].will == ("smartmeter/availability", b"offline", False)
+    assert "received signal SIGTERM" in output

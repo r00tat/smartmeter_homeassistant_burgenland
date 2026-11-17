@@ -62,6 +62,14 @@ class FakeBroker:
                 await writer.wait_closed()
         self._writers.clear()
 
+    async def send(self, topic: str, payload: bytes) -> None:
+        """Deliver a QoS 0 PUBLISH to every connected client."""
+        body = len(topic).to_bytes(2, "big") + topic.encode() + payload
+        packet = bytes([PUBLISH << 4]) + _encode_length(len(body)) + body
+        for writer in list(self._writers):
+            writer.write(packet)
+            await writer.drain()
+
     def topics(self) -> list[str]:
         return [p.topic for p in self.published]
 
@@ -113,6 +121,15 @@ async def _read_packet(reader: asyncio.StreamReader) -> tuple[int, int, bytes]:
         if not byte & 0x80:
             break
     return header >> 4, header & 0x0F, await reader.readexactly(length)
+
+
+def _encode_length(length: int) -> bytes:
+    encoded = bytearray()
+    while True:
+        byte, length = length % 128, length // 128
+        encoded.append(byte | (0x80 if length else 0))
+        if not length:
+            return bytes(encoded)
 
 
 def _parse_connect(body: bytes) -> Connection:

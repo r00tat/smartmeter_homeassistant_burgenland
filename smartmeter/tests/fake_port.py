@@ -54,8 +54,11 @@ class FakePort:
             yield stream
         finally:
             feeder.cancel()
+            await asyncio.wait({feeder})
             self.is_open = False
             self.closed += 1
+            if not feeder.cancelled() and feeder.exception() is not None:
+                raise AssertionError("bad FakePort script") from feeder.exception()
 
 
 async def _feed(stream: asyncio.StreamReader, steps: Sequence[Step]) -> None:

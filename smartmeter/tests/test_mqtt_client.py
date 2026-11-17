@@ -87,6 +87,7 @@ async def test_readings_are_published_with_serial_number_discovery(broker: FakeB
     try:
         await broker.wait_for(lambda: device.connected)
         device.publish_status(Reading(value=1))
+        await broker.wait_for(lambda: len(broker.payloads(STATE)) == 1)
         device.publish_status(Reading(value=2))
         await broker.wait_for(lambda: len(broker.payloads(STATE)) == 2)
     finally:
@@ -164,7 +165,9 @@ async def test_availability_follows_the_meter(broker: FakeBroker) -> None:
     try:
         await broker.wait_for(lambda: device.connected)
         device.publish_status(Reading())
+        await broker.wait_for(lambda: len(broker.payloads(STATE)) == 1)
         device.set_available(False)
+        await broker.wait_for(lambda: broker.payloads(AVAILABILITY)[-1] == "offline")
         device.publish_status(Reading())
         await broker.wait_for(lambda: len(broker.payloads(STATE)) == 2)
     finally:
@@ -177,23 +180,122 @@ async def test_availability_follows_the_meter(broker: FakeBroker) -> None:
 
 async def test_subscriptions_are_renewed_and_dispatched(broker: FakeBroker) -> None:
     device = make_device(broker)
-    device.subscribe("smartmeter/set", lambda message: None)
+    received: list[bytes] = []
+
+    def handler(message) -> None:
+        received.append(message.payload)
+        if message.payload == b"boom":
+            raise RuntimeError("handler bug")
+
+    device.subscribe("smartmeter/set", handler)
     task = asyncio.create_task(device.run())
     try:
-        await broker.wait_for(lambda: broker.subscriptions == ["smartmeter/set"])
+        await broker.wait_for(lambda: device.connected)
+        assert broker.subscriptions == ["smartmeter/set"]
+        await broker.send("smartmeter/set", b"boom")  # must not end the connection
+        await broker.send("smartmeter/set", b"one")
+        await broker.wait_for(lambda: received == [b"boom", b"one"])
+        assert len(broker.connections) == 1
+        await broker.drop_clients()
+        await broker.wait_for(lambda: len(broker.subscriptions) == 2)
+        await broker.wait_for(lambda: device.connected)
+        await broker.send("smartmeter/set", b"two")
+        await broker.wait_for(lambda: received[-1] == b"two")
     finally:
         await cancel_and_wait(task)
 
 
-def test_full_outbox_drops_the_oldest_message() -> None:
+def test_outbox_keeps_only_the_latest_message_per_topic() -> None:
+    device = MqttClient({"host": "mqtt.local"})
+    device.publish("state", "1")
+    device.publish("availability", "offline")
+    device.publish("state", "2")
+    device.publish("availability", "online")
+
+    assert device.pending() == [("state", "2", False), ("availability", "online", False)]
+
+
+def test_full_outbox_drops_the_oldest_topic() -> None:
     device = MqttClient({"host": "mqtt.local"})
     for i in range(client_mod.OUTBOX_SIZE + 1):
-        device.publish("t", str(i))
+        device.publish(f"t{i}", str(i))
 
-    first = device._outbox.get_nowait()
+    pending = device.pending()
 
-    assert first == ("t", "1", False)
-    assert device._outbox.qsize() == client_mod.OUTBOX_SIZE - 1
+    assert len(pending) == client_mod.OUTBOX_SIZE
+    assert pending[0] == ("t1", "1", False)
+
+
+class _StuckClient:
+    """publish() fails with ``error`` or hangs until cancelled."""
+
+    def __init__(self, error: BaseException | None = None) -> None:
+        self.error = error
+        self.started = asyncio.Event()
+
+    async def publish(self, topic, payload, retain=False) -> None:
+        self.started.set()
+        if self.error is not None:
+            raise self.error
+        await asyncio.Event().wait()
+
+
+async def test_message_stays_queued_in_order_when_publishing_fails() -> None:
+    device = MqttClient({"host": "mqtt.local"})
+    device.publish("availability", "offline")
+    device.publish("state", "1")
+
+    with pytest.raises(client_mod.aiomqtt.MqttError):
+        await device._send_outbox(_StuckClient(client_mod.aiomqtt.MqttError("gone")))
+
+    assert device.pending() == [("availability", "offline", False), ("state", "1", False)]
+
+
+async def test_message_stays_queued_when_cancelled_mid_publish() -> None:
+    device = MqttClient({"host": "mqtt.local"})
+    device.publish("state", "1")
+    client = _StuckClient()
+    task = asyncio.create_task(device._send_outbox(client))
+    await client.started.wait()
+
+    await cancel_and_wait(task)
+
+    assert device.pending() == [("state", "1", False)]
+
+
+async def test_newer_message_queued_during_publish_is_sent_next() -> None:
+    device = MqttClient({"host": "mqtt.local"})
+    sent: list[tuple[str, str]] = []
+
+    class Client:
+        async def publish(self, topic, payload, retain=False) -> None:
+            if payload == "1":
+                device.publish("state", "2")  # arrives while "1" is in flight
+            sent.append((topic, payload))
+
+    device.publish("state", "1")
+    task = asyncio.create_task(device._send_outbox(Client()))
+    async with asyncio.timeout(1):
+        while len(sent) < 2:
+            await asyncio.sleep(0.01)
+    await cancel_and_wait(task)
+
+    assert sent == [("state", "1"), ("state", "2")]
+    assert device.pending() == []
+
+
+async def test_reading_queued_during_broker_restart_is_delivered(broker: FakeBroker) -> None:
+    device = make_device(broker)
+    device.reconnect_seconds = 0.2
+    task = asyncio.create_task(device.run())
+    try:
+        await broker.wait_for(lambda: device.connected)
+        await broker.drop_clients()
+        await broker.wait_for(lambda: not device.connected)
+        device.publish_status(Reading(value=42))  # while disconnected
+        await broker.wait_for(lambda: '{"value": 42}' in broker.payloads(STATE))
+    finally:
+        await cancel_and_wait(task)
 
 
 def test_host_is_required() -> None:

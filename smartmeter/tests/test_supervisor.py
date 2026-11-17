@@ -213,14 +213,21 @@ async def test_hung_reader_is_restarted_without_an_error() -> None:
 
 async def test_restart_window_starts_again_with_each_reader() -> None:
     """A silent meter is reopened every ``restart_after``, not in a tight loop."""
-    readers = Readers({})  # never delivers anything
-    sup, _, _ = supervisor(readers, restart_after=0.05, retry_seconds=0.0)
     loop = asyncio.get_running_loop()
-    end = loop.time() + 0.27
+    started: list[float] = []
 
-    await run_until(sup.run, lambda: loop.time() >= end)
+    def factory(callback: Callable[[Any], None]) -> FakeReader:
+        started.append(loop.time())
+        return FakeReader(callback)  # never delivers anything
 
-    assert 3 <= len(readers.created) <= 6
+    sup = ReaderSupervisor(
+        factory, lambda d: None, lambda e: None, retry_seconds=0.0, restart_after=0.05
+    )
+
+    await run_until(sup.run, lambda: len(started) >= 4)
+
+    gaps = [b - a for a, b in zip(started, started[1:], strict=False)]
+    assert all(gap >= 0.045 for gap in gaps), gaps
 
 
 async def test_stale_and_restart_together() -> None:
