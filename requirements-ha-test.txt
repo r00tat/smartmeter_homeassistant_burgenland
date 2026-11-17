@@ -1,6 +1,6 @@
 # Test environment for the Home Assistant integration. Install together with
 # the local library, which brings the integration's runtime requirements:
-#   uv pip install -r requirements-ha-test.txt -e packages/smartmeter-austria
+#   uv pip install -r requirements-ha-test.txt -e smartmeter/smartmeter-austria
 # Home Assistant's own pins (e.g. paho-mqtt) differ from the add-on's, so the
 # add-on requirements are not reused here.
 #

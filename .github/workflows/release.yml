@@ -34,9 +34,9 @@ jobs:
             "$manifest" > "$manifest.tmp"
           mv "$manifest.tmp" "$manifest"
           sed -i -E "s/^version = \".*\"$/version = \"$RELEASE_TAG\"/" \
-            "${{ github.workspace }}/packages/smartmeter-austria/pyproject.toml"
+            "${{ github.workspace }}/smartmeter/smartmeter-austria/pyproject.toml"
           grep -q "^version = \"$RELEASE_TAG\"$" \
-            "${{ github.workspace }}/packages/smartmeter-austria/pyproject.toml"
+            "${{ github.workspace }}/smartmeter/smartmeter-austria/pyproject.toml"
           python3 .github/scripts/check_requirements_sync.py
 
       - name: "✏️ Generate release changelog"
@@ -62,7 +62,7 @@ jobs:
         with:
           branch: main
           commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
-          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md custom_components/smartmeter_at/manifest.json packages/smartmeter-austria/pyproject.toml
+          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md custom_components/smartmeter_at/manifest.json smartmeter/smartmeter-austria/pyproject.toml
 
       - name: "Determine release commit"
         id: release-sha
@@ -100,7 +100,7 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           python3 -m pip install uv twine
-          uv build packages/smartmeter-austria --out-dir dist
+          uv build smartmeter/smartmeter-austria --out-dir dist
           python3 -m twine check --strict dist/*
           ls dist/ | grep -F -- "-$RELEASE_TAG"
 
@@ -131,8 +131,7 @@ jobs:
         uses: home-assistant/builder/actions/build-image@2026.09.0
         with:
           arch: ${{ matrix.arch }}
-          context: .
-          file: smartmeter/Dockerfile
+          context: smartmeter
           image: docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_${{ matrix.arch }}
           image-tags: |
             ${{ github.event.release.tag_name }}
@@ -172,7 +171,7 @@ jobs:
       - name: "Build and push standalone image"
         uses: docker/build-push-action@v7
         with:
-          context: .
+          context: smartmeter
           file: smartmeter/Dockerfile.standalone
           platforms: linux/amd64,linux/arm64
           push: true

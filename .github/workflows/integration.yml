@@ -55,7 +55,7 @@ jobs:
           python3 -m pip install uv &&
           uv venv -p "$(command -v python3)" &&
           source .venv/bin/activate &&
-          uv pip install -r requirements-ha-test.txt -e packages/smartmeter-austria ruff
+          uv pip install -r requirements-ha-test.txt -e smartmeter/smartmeter-austria ruff
 
       - name: "Apply the gurux fix-up"
         run: |

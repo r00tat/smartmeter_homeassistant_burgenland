@@ -28,7 +28,7 @@ jobs:
           python3 -m pip install uv &&
           uv venv &&
           source .venv/bin/activate &&
-          uv pip install -r smartmeter/requirements-dev.txt -e packages/smartmeter-austria
+          uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
 
       - name: "Apply the same gurux fix-up as the Dockerfiles"
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: "Lint"
         run: |
           source .venv/bin/activate &&
-          python3 -m ruff check packages/smartmeter-austria smartmeter
+          python3 -m ruff check smartmeter
 
       - name: "Type check"
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: "Test"
         run: |
           source .venv/bin/activate &&
-          (cd packages/smartmeter-austria && python3 -m pytest tests/ -v) &&
+          (cd smartmeter/smartmeter-austria && python3 -m pytest tests/ -v) &&
           (cd smartmeter && python3 -m pytest tests/ -v)
 
   build-library:
@@ -68,7 +68,7 @@ jobs:
       - name: "Build sdist and wheel"
         run: |
           python3 -m pip install uv twine &&
-          uv build packages/smartmeter-austria --out-dir dist &&
+          uv build smartmeter/smartmeter-austria --out-dir dist &&
           python3 -m twine check --strict dist/*
 
       - name: "Check the wheel contents"
@@ -99,8 +99,7 @@ jobs:
         uses: home-assistant/builder/actions/build-image@2026.09.0
         with:
           arch: ${{ matrix.arch }}
-          context: .
-          file: smartmeter/Dockerfile
+          context: smartmeter
           image: docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_${{ matrix.arch }}
           image-tags: test
           version: test
@@ -127,7 +126,7 @@ jobs:
       - name: "Test build standalone image"
         uses: docker/build-push-action@v7
         with:
-          context: .
+          context: smartmeter
           file: smartmeter/Dockerfile.standalone
           platforms: linux/amd64,linux/arm64
           push: false

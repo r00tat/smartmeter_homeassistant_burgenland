@@ -216,7 +216,7 @@ file first for other paths. Status: `sudo systemctl status smartmeter`, logs:
 `journalctl -u smartmeter -f`.
 
 On every start `smartmeter.sh` installs the dependencies and the
-`smartmeter-austria` library straight from the repository's `packages/`
+`smartmeter-austria` library straight from the repository's `smartmeter/smartmeter-austria/`
 (editable, not from PyPI). To update, run
 `git pull && sudo systemctl restart smartmeter`; the service always runs
 exactly the checked-out code.

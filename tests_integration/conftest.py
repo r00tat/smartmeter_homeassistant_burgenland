@@ -20,7 +20,7 @@ from custom_components.smartmeter_at.const import (
     CONF_PORT,
 )
 
-# Same values as packages/smartmeter-austria/tests/fixtures/bgld_sample_frame.EXPECTED_VALUES.
+# Same values as smartmeter/smartmeter-austria/tests/fixtures/bgld_sample_frame.EXPECTED_VALUES.
 METER_VALUES: list[Any] = [
     236, 235, 237, 512, 48, 1999, 3314, 0, 49244276, 1234567, 17, 195, 304,
     b"1LGZ0012345678",
@@ -43,7 +43,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 def sample_telegram() -> Any:
     """An encrypted Burgenland telegram (add-on test fixture, same key)."""
-    path = Path(__file__).parents[1] / "packages/smartmeter-austria/tests/fixtures/bgld_sample_frame.py"
+    path = Path(__file__).parents[1] / "smartmeter/smartmeter-austria/tests/fixtures/bgld_sample_frame.py"
     spec = importlib.util.spec_from_file_location("bgld_sample_frame", path)
     assert spec is not None and spec.loader is not None
     module = sys.modules.get(spec.name)

@@ -39,7 +39,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
-Source = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/main/packages/smartmeter-austria"
+Source = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/main/smartmeter/smartmeter-austria"
 Issues = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues"
 Changelog = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases"
 

@@ -88,10 +88,10 @@ info "$(find "config/custom_components/$COMPONENT" -name '*.py' | wc -l | tr -d 
 # The manifest pins smartmeter-austria; Home Assistant would install that
 # version from PyPI. The container installs this copy at every start instead
 # (see STARTUP below), so library changes show up without a release.
-log "Syncing packages/$LIBRARY to config/.dev/"
+log "Syncing smartmeter/$LIBRARY to config/.dev/"
 mkdir -p config/.dev
 rsync -a --delete --exclude '__pycache__' --exclude 'tests' --exclude 'scripts' \
-  "packages/$LIBRARY/" "config/.dev/$LIBRARY/"
+  "smartmeter/$LIBRARY/" "config/.dev/$LIBRARY/"
 
 # --- Container ---------------------------------------------------------------
 

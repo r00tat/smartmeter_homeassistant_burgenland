@@ -20,7 +20,7 @@ LIBRARY = "smartmeter-austria"
 def main() -> int:
     """Compare the manifest pin with the library version and return an exit code."""
     pyproject = tomllib.loads(
-        (ROOT / "packages/smartmeter-austria/pyproject.toml").read_text()
+        (ROOT / "smartmeter/smartmeter-austria/pyproject.toml").read_text()
     )
     version = pyproject["project"]["version"]
     manifest = json.loads(

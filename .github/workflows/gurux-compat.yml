@@ -38,12 +38,12 @@ jobs:
           python3 -m pip install uv &&
           uv venv -p "$(command -v python3)" &&
           source .venv/bin/activate &&
-          uv pip install -r smartmeter/requirements-dev.txt -e packages/smartmeter-austria
+          uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
 
       - name: "Lint"
         run: |
           source .venv/bin/activate &&
-          python3 -m ruff check packages/smartmeter-austria smartmeter
+          python3 -m ruff check smartmeter
 
       - name: "Type check"
         run: |
@@ -78,7 +78,7 @@ jobs:
           python3 -m pip install uv &&
           uv venv -p "$(command -v python3)" &&
           source .venv/bin/activate &&
-          uv pip install -r smartmeter/requirements-dev.txt -e packages/smartmeter-austria
+          uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
 
       - name: "Apply the same gurux fix-up as the Dockerfiles"
         run: |
@@ -88,7 +88,7 @@ jobs:
       - name: "Test"
         run: |
           source .venv/bin/activate &&
-          (cd packages/smartmeter-austria && python3 -m pytest tests/ -v) &&
+          (cd smartmeter/smartmeter-austria && python3 -m pytest tests/ -v) &&
           (cd smartmeter && python3 -m pytest tests/ -v)
 
   latest-gurux:
@@ -112,7 +112,7 @@ jobs:
           python3 -m pip install uv &&
           uv venv -p "$(command -v python3)" &&
           source .venv/bin/activate &&
-          uv pip install -r smartmeter/requirements-dev.txt -e packages/smartmeter-austria &&
+          uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria &&
           uv pip install --upgrade --no-deps gurux-dlms gurux-common &&
           uv pip show gurux-dlms gurux-common | grep -E "^(Name|Version)" | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -129,7 +129,7 @@ jobs:
         continue-on-error: true
         run: |
           source .venv/bin/activate &&
-          cd packages/smartmeter-austria &&
+          cd smartmeter/smartmeter-austria &&
           python3 -m pytest -v -rf tests/test_gurux_contract.py tests/test_dlms_read.py tests/test_noe_pipeline.py tests/test_noe_reader.py tests/test_noe_obis.py 2>&1 | tee "$GITHUB_WORKSPACE/pytest.log"
           exit "${PIPESTATUS[0]}"
 

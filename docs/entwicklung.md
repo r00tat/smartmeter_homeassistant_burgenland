@@ -6,7 +6,7 @@
 
 | Pfad | Inhalt |
 | --- | --- |
-| `packages/smartmeter-austria/` | Library [`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/) (Import `smartmeter_austria`): serieller Transport, Leser pro Zählertyp, Supervisor; Tests in `tests/` |
+| `smartmeter/smartmeter-austria/` | Library [`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/) (Import `smartmeter_austria`): serieller Transport, Leser pro Zählertyp, Supervisor; Tests in `tests/` |
 | `smartmeter/` | Add-on und Standalone-Image: MQTT-Bridge in `meter/`, Dockerfiles, `config.yaml`, Tests in `tests/` |
 | `custom_components/smartmeter_at/` | Home-Assistant-Integration, Tests in `tests_integration/` |
 | `docs/` | Dokumentation (Deutsch, englisch unter `docs/en/`) |
@@ -48,7 +48,7 @@ serieller Port ──(pyserial-asyncio-fast)──> reader.run() ──Callback�
 ## Tests
 
 Die Tests brauchen weder Hardware noch einen Broker: ein geskripteter Port
-(`packages/smartmeter-austria/tests/fake_port.py`), ein kleiner MQTT-Broker
+(`smartmeter/smartmeter-austria/tests/fake_port.py`), ein kleiner MQTT-Broker
 (`smartmeter/tests/fake_broker.py`) und Pseudo-Terminals für den echten
 seriellen Transport.
 
@@ -56,10 +56,10 @@ Library und Add-on (Python 3.15, im Repository-Root):
 
 ```bash
 uv venv && source .venv/bin/activate
-uv pip install -r smartmeter/requirements-dev.txt -e packages/smartmeter-austria
+uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
 python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
-ruff check packages/smartmeter-austria smartmeter && mypy --config-file mypy.ini
-(cd packages/smartmeter-austria && pytest tests)
+ruff check smartmeter && mypy --config-file mypy.ini
+(cd smartmeter/smartmeter-austria && pytest tests)
 (cd smartmeter && pytest tests)
 ```
 
@@ -68,7 +68,7 @@ venv); die Library kommt editierbar aus dem Repository:
 
 ```bash
 uv venv .venv-ha && source .venv-ha/bin/activate
-uv pip install -r requirements-ha-test.txt -e packages/smartmeter-austria ruff
+uv pip install -r requirements-ha-test.txt -e smartmeter/smartmeter-austria ruff
 python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
 python3 .github/scripts/check_requirements_sync.py
 ruff check custom_components tests_integration && pytest tests_integration
@@ -97,7 +97,7 @@ Messwerten als Ergebnis.
 ## Integration lokal testen
 
 Die Integration verlangt in `manifest.json` die Library in genau der Version
-aus `packages/smartmeter-austria/pyproject.toml`. Home Assistant installiert
+aus `smartmeter/smartmeter-austria/pyproject.toml`. Home Assistant installiert
 sie von PyPI. Änderungen an der Library in einem Branch sieht Home Assistant
 deshalb erst nach einem Release, außer die Library wird wie bei `./dev.sh`
 selbst installiert.
@@ -151,20 +151,52 @@ einem anderen Rechner
 `rsync -a --delete --exclude __pycache__ custom_components/smartmeter_at/ root@homeassistant.local:/config/custom_components/smartmeter_at/`
 (das SSH-Add-on braucht `rsync`) oder mit `scp -r`.
 
-## Add-on-Images bauen
+## Add-on und Standalone lokal testen
 
-Die Release-Pipeline baut und veröffentlicht die Images. Der Build-Kontext
-ist das Repository-Root, damit das Image die Library aus demselben Commit
-installiert:
+Alle Varianten verwenden die Library aus `smartmeter/smartmeter-austria/` des
+Arbeitsstands, nicht die Version von PyPI:
+
+| Variante | Testen mit |
+| --- | --- |
+| Integration | `./dev.sh`, siehe [oben](#integration-lokal-testen) |
+| Add-on | `./dev-addon.sh` auf einem Home Assistant mit Supervisor |
+| Standalone-Container | `build:`-Block in `smartmeter/docker-compose.standalone.yml` |
+| Standalone ohne Docker | `smartmeter/smartmeter.sh`, siehe [Installation](installation.md#systemd-ohne-docker) |
+
+### Add-on
+
+`./dev-addon.sh` kopiert `smartmeter/` samt Library per SSH nach
+`/addons/smartmeter_dev` auf dem Home-Assistant-Host. Dabei entfernt es
+`image:` aus `config.yaml`, damit der Supervisor das Add-on selbst baut, hängt
+„(dev)“ an den Namen und setzt die Version auf `X.Y.Z-dev.<commit>`.
+
+Voraussetzungen: das Add-on *Terminal & SSH* (oder *Advanced SSH & Web
+Terminal*) mit `rsync` und SSH-Schlüssel für `root`, lokal `yq`. Ziel und Port
+über `HA_HOST` (Standard `root@homeassistant.local`) und `HA_SSH_PORT`.
+
+1. `./dev-addon.sh` ausführen.
+2. Beim ersten Mal unter *Einstellungen → Add-ons → Add-on-Store* bei
+   *Lokale Add-ons* „Smartmeter Burgenland MQTT (dev)“ installieren und
+   konfigurieren.
+3. Nach jeder Änderung `./dev-addon.sh` erneut ausführen; es aktualisiert das
+   Add-on und baut es neu (`ha addons update local_smartmeter_bgld_mqtt`).
+
+Das lokale Add-on (`local_smartmeter_bgld_mqtt`) steht neben dem
+veröffentlichten. Nicht beide gleichzeitig mit demselben Lesekopf starten.
+
+### Images ohne Supervisor bauen
+
+Build-Kontext ist `smartmeter/`, wie beim Supervisor:
 
 ```bash
-docker build -f smartmeter/Dockerfile -t smartmeter-addon .
-docker build -f smartmeter/Dockerfile.standalone -t smartmeter-standalone .
+docker build -t smartmeter-addon smartmeter
+docker build -f smartmeter/Dockerfile.standalone -t smartmeter-standalone smartmeter
 ```
 
-Ein Supervisor, der das Add-on lokal aus `smartmeter/` baut (Add-on-Devcontainer
-ohne `image:` in `config.yaml`), findet die Library dort nicht. Für lokale
-Add-on-Tests das Image wie oben bauen.
+Die Release-Pipeline baut und veröffentlicht die Images.
+`cd smartmeter && DOCKERHUB_USER=… DOCKERHUB_PASSWORD=… ./build_images.sh`
+baut sie bei Bedarf manuell mit dem Home-Assistant-Builder für alle
+Architekturen und lädt sie auf Docker Hub.
 
 ## Release
 
@@ -172,7 +204,7 @@ Ein GitHub-Release mit dem Tag `X.Y.Z` (ohne `v`) startet
 `.github/workflows/release.yml`:
 
 1. Die Version wird in `smartmeter/config.yaml`, `manifest.json` (Version und
-   Pin `smartmeter-austria==X.Y.Z`) und `packages/smartmeter-austria/pyproject.toml`
+   Pin `smartmeter-austria==X.Y.Z`) und `smartmeter/smartmeter-austria/pyproject.toml`
    gesetzt und auf `main` committet.
 2. Die Library wird gebaut und per
    [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) auf PyPI
@@ -191,7 +223,7 @@ Environment `pypi`. Im GitHub-Repository das Environment `pypi` anlegen
 ## Einen neuen Zähler hinzufügen
 
 Alles, was die Kundenschnittstelle eines Zählers ausmacht, steht in seinem
-Profil in `packages/smartmeter-austria/src/smartmeter_austria/profile.py`: serielle Einstellungen,
+Profil in `smartmeter/smartmeter-austria/src/smartmeter_austria/profile.py`: serielle Einstellungen,
 Sendeintervall, welcher Leser die Leitung verarbeitet, wie aus einem
 Telegramm ein `MeterData`-Objekt wird, sowie Gerätedaten und Sensoren für Home
 Assistant.

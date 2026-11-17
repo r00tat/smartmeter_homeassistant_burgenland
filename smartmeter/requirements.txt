@@ -1,5 +1,5 @@
 # Add-on / standalone app only. The reader core comes from the
-# smartmeter-austria library in packages/smartmeter-austria, which the
+# smartmeter-austria library in smartmeter/smartmeter-austria, which the
 # Dockerfiles install from the same commit.
 aiomqtt~=2.5
 PyYAML~=6.0
