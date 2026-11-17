@@ -23,7 +23,7 @@ Supported meters (select via `meter_type`):
 
 Implemented from the grid operators' specifications but **not yet tested
 with a real meter** (please report your results, see
-[Real data wanted](https://github.com/r00tat/smartmeter_homeassistant_burgenland#real-data-wanted)):
+[Real data wanted](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/meters.md#real-data-wanted)):
 
 - `steiermark` — Energienetze Steiermark, Landis+Gyr E450 on the wired M-Bus
   customer interface (RJ12) at 2400 baud (8E1). Use the GUEK from the
@@ -43,7 +43,7 @@ The wired M-Bus interfaces need an M-Bus slave adapter (M-Bus to USB); the
 DSMR P1 interfaces need a P1 cable. `interface_type` is ignored by these
 profiles.
 
-You can read more about the underlying python program at the [github page](https://github.com/r00tat/smartmeter_homeassistant_burgenland).
+Full documentation (German, with English versions) is on the [GitHub page](https://github.com/r00tat/smartmeter_homeassistant_burgenland). If the reading head is connected to the Home Assistant device, the [Home Assistant integration](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/installation.md#integration-marketplace) reads the meter without MQTT; it can [take over this add-on's sensors](https://github.com/r00tat/smartmeter_homeassistant_burgenland/blob/main/docs/en/migration.md).
 
 ## Meter selection
 
@@ -79,6 +79,23 @@ H1), tariff 1/2 energy (Steiermark), and, disabled by default, reactive
 energy and power. Values a meter does not send are published as `null`.
 With `logging: DEBUG` the raw serial bytes and every telegram are logged
 as hex — please attach them when you report a problem.
+
+## Availability and recovery
+
+The add-on recovers on its own, so no restart automation is needed:
+
+- If the serial port fails (for example the USB adapter was unplugged), the
+  sensors are marked unavailable and the port is opened again every 10
+  seconds until it works.
+- If no telegram arrives for about a minute (six missed telegrams, at least
+  60 seconds), the sensors are marked unavailable until the next telegram.
+- If the port stays open but no telegram arrives for 5 minutes (for example a
+  hung USB adapter), the port is closed and opened again.
+- If the MQTT broker is unreachable or restarts, the add-on reconnects every
+  10 seconds and announces the device again. Readings received in the
+  meantime are queued (up to 100 messages).
+- The MQTT last will marks the sensors unavailable if the add-on stops
+  without a clean shutdown.
 
 ## Optional MQTT TLS
 

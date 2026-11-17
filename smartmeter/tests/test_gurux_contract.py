@@ -31,7 +31,10 @@ from meter.dlms.read import (
     parse_pyhiscal_dlms_data,
     parse_xml,
 )
+from meter.serial import read as serial_read
 from meter.serial.read import PARSE_ERRORS, MeterReader
+from meter.serial.transport import PortClosedError
+from tests.fake_port import EOF, SETTINGS, FakePort, run_until
 from tests.fixtures.bgld_sample_frame import (
     EXPECTED_VALUES,
     build_apdu,
@@ -226,41 +229,42 @@ def test_corrupted_telegram_raises(decode) -> None:
 # --- through the serial reader ----------------------------------------------
 
 
-def run_reader(frames: list[bytes], interface_type: str) -> list[MeterData]:
+async def run_reader(steps: list, interface_type: str) -> list[MeterData]:
+    """Feed ``steps`` through the reader built for a real port; end on EOF."""
     received: list[MeterData] = []
     reader = MeterReader(
         key=TELEGRAM.key_hex,
+        settings=SETTINGS,
         interface_type=interface_type,
+        hdlc_frame_size=len(TELEGRAM.frame),
         callback=received.append,
+        open_stream=FakePort([*steps, EOF]),
     )
-    pending = list(frames)
-
-    def read_frame(_min_size: int) -> bytes:
-        if not pending:
-            reader.stop()
-            return b""
-        return pending.pop(0)
-
-    reader._read_frame = read_frame  # type: ignore[method-assign]
-    if interface_type == "OPTICAL":
-        reader.optical_loop()
-    else:
-        reader.physical_loop()
+    task = await run_until(reader.run, lambda: False)
+    assert isinstance(task.exception(), PortClosedError)
     return received
 
 
 @pytest.mark.parametrize("interface_type", ["OPTICAL", "PHYSICAL"])
-def test_reader_survives_garbage_and_keeps_decoding(interface_type: str) -> None:
+async def test_reader_survives_garbage_and_keeps_decoding(
+    interface_type: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(serial_read, "OPTICAL_IDLE_GAP_SECONDS", 0.02)
     corrupted = bytearray(TELEGRAM.frame)
     corrupted[40] ^= 0xFF
-    frames = [
+    steps = [
+        # one telegram delivered in two USB chunks
         TELEGRAM.frame[:13],
         TELEGRAM.frame[13:],
+        0.1,
         bytes(corrupted),
+        0.1,
         TELEGRAM.frame,
+        0.1,
         TELEGRAM.frame,
+        0.1,
     ]
 
-    received = run_reader(frames, interface_type)
+    received = await run_reader(steps, interface_type)
 
-    assert [d.to_dict() for d in received] == [EXPECTED_DICT, EXPECTED_DICT]
+    assert [d.to_dict() for d in received] == [EXPECTED_DICT] * 3

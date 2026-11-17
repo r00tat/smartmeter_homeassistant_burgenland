@@ -1,6 +1,6 @@
 """Tests for the config and options flow."""
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import serial
@@ -225,6 +225,6 @@ def test_list_ports_prefers_by_id_link(tmp_path, monkeypatch) -> None:
 )
 async def test_probe_timeout_per_profile(hass: HomeAssistant, meter_type, timeout) -> None:
     core = await async_load_core(hass)
-    with patch.object(core.supervisor, "probe", return_value=None) as probe:
+    with patch.object(core.supervisor, "probe", AsyncMock(return_value=None)) as probe:
         await cf.async_probe(hass, core, {**ENTRY_DATA, "meter_type": meter_type})
     assert probe.call_args.args[1] == timeout

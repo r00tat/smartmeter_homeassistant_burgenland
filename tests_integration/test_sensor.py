@@ -1,5 +1,6 @@
 """Tests for entry setup and the sensor entities."""
 
+import asyncio
 import logging
 from typing import Any
 from unittest.mock import patch
@@ -14,10 +15,7 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.smartmeter_at.const import DOMAIN
-from custom_components.smartmeter_at.coordinator import (
-    STALE_CHECK_INTERVAL,
-    SmartMeterCoordinator,
-)
+from custom_components.smartmeter_at.coordinator import SmartMeterCoordinator
 from custom_components.smartmeter_at.core import async_load_core
 from custom_components.smartmeter_at.sensor import description_from_spec
 
@@ -83,7 +81,7 @@ async def test_unload_stops_reader(hass: HomeAssistant, fake_readers) -> None:
     entry = await _setup(hass)
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert entry.state is ConfigEntryState.NOT_LOADED
-    assert all(reader.stopped.is_set() for reader in fake_readers)
+    assert all(reader.cancelled for reader in fake_readers)
 
 
 @pytest.mark.parametrize(
@@ -110,23 +108,20 @@ async def test_stop_event_then_unload_is_clean(
     entry = await _setup(hass)
     hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
     await hass.async_block_till_done()
-    assert all(reader.stopped.is_set() for reader in fake_readers)
+    assert all(reader.cancelled for reader in fake_readers)
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
-    assert all(reader.stopped.is_set() for reader in fake_readers)
+    assert all(reader.cancelled for reader in fake_readers)
 
 
 class _FailingReader:
     """Raises on start, like a serial port that cannot be opened."""
 
-    def start(self) -> None:
+    async def run(self) -> None:
         raise OSError("port gone")
 
-    def stop(self) -> None:
-        pass
 
-
-async def test_error_then_recovery_through_thread_path(hass: HomeAssistant) -> None:
+async def test_error_then_recovery_through_the_supervisor(hass: HomeAssistant) -> None:
     readers: list[Any] = []
 
     def factory(callback: Any) -> Any:
@@ -154,63 +149,77 @@ async def test_error_then_recovery_through_thread_path(hass: HomeAssistant) -> N
             await wait_for_data(entry.runtime_data)
             await hass.async_block_till_done()
             assert len(readers) >= 2
-            set_error.assert_called()  # the failure went through the thread path
+            set_error.assert_called()  # the failure was reported
+            assert isinstance(set_error.call_args.args[1], OSError)
             assert entry.runtime_data.last_update_success
             assert _state(hass, entry, "_voltage_l1").state == "236"
         finally:
             assert await hass.config_entries.async_unload(entry.entry_id)
 
 
-async def test_silent_meter_makes_entities_unavailable(
-    hass: HomeAssistant, fake_readers
+class _PausingReader:
+    """One reading, ``pause`` seconds of silence, another reading, silence."""
+
+    def __init__(self, callback: Any, pause: float) -> None:
+        self.callback = callback
+        self.pause = pause
+
+    async def run(self) -> None:
+        self.callback(sample_reading())
+        await asyncio.sleep(self.pause)
+        self.callback(sample_reading())
+        await asyncio.Event().wait()
+
+
+async def test_silent_meter_makes_entities_unavailable_until_data_returns(
+    hass: HomeAssistant,
 ) -> None:
-    entry = await _setup(hass)
-    coordinator = entry.runtime_data
-    try:
-        coordinator.async_check_stale()
-        assert coordinator.last_update_success  # fresh data is not stale
-
-        coordinator._last_data -= coordinator.stale_after + 1
-        coordinator.async_check_stale()
-        await hass.async_block_till_done()
-        assert not coordinator.last_update_success
-        assert _state(hass, entry, "_voltage_l1").state == "unavailable"
-
-        coordinator._async_handle_data(sample_reading())
-        await hass.async_block_till_done()
-        assert coordinator.last_update_success
-        assert _state(hass, entry, "_voltage_l1").state == "236"
-    finally:
-        assert await hass.config_entries.async_unload(entry.entry_id)
-
-
-async def test_staleness_is_reported_once_per_period(
-    hass: HomeAssistant, fake_readers
-) -> None:
-    entry = await _setup(hass)
-    coordinator = entry.runtime_data
-    try:
-        coordinator._last_data -= coordinator.stale_after + 1
-        with patch.object(
-            coordinator, "async_set_update_error", wraps=coordinator.async_set_update_error
-        ) as set_error:
-            coordinator.async_check_stale()
-            coordinator.async_check_stale()
-        assert set_error.call_count == 1
-    finally:
-        assert await hass.config_entries.async_unload(entry.entry_id)
-
-
-async def test_stale_check_is_scheduled_and_cancelled(
-    hass: HomeAssistant, fake_readers
-) -> None:
-    with patch(
-        "custom_components.smartmeter_at.coordinator.async_track_time_interval"
-    ) as track:
-        entry = await _setup(hass)
+    core = await async_load_core(hass)
+    entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, title="Smart Meter")
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.smartmeter_at.coordinator.build_reader_factory",
+            return_value=lambda callback: _PausingReader(callback, pause=0.4),
+        ),
+        patch.object(core.profile.MeterProfile, "stale_after_seconds", 0.1),
+        patch.object(
+            SmartMeterCoordinator,
+            "async_set_update_error",
+            autospec=True,
+            side_effect=SmartMeterCoordinator.async_set_update_error,
+        ) as set_error,
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        coordinator = entry.runtime_data
         try:
-            track.assert_called_once()
-            assert track.call_args.args[2] == STALE_CHECK_INTERVAL
+            await wait_for_data(coordinator)
+            await hass.async_block_till_done()
+            assert _state(hass, entry, "_voltage_l1").state == "236"
+
+            await _wait(lambda: not coordinator.last_update_success)
+            await hass.async_block_till_done()
+            assert _state(hass, entry, "_voltage_l1").state == "unavailable"
+
+            await _wait(lambda: coordinator.last_update_success)
+            await hass.async_block_till_done()
+            assert _state(hass, entry, "_voltage_l1").state == "236"
+            # reported once per silence, not on every watchdog wake-up
+            assert set_error.call_count == 1
         finally:
             assert await hass.config_entries.async_unload(entry.entry_id)
-    track.return_value.assert_called_once()
+
+
+async def _wait(predicate: Any, timeout: float = 3.0) -> None:
+    async with asyncio.timeout(timeout):
+        while not predicate():
+            await asyncio.sleep(0.01)
+
+
+async def test_unload_cancels_the_reader(hass: HomeAssistant, fake_readers) -> None:
+    entry = await _setup(hass)
+    await wait_for_data(entry.runtime_data)
+    assert not fake_readers[0].cancelled
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    assert fake_readers[0].cancelled
+    assert entry.state is ConfigEntryState.NOT_LOADED

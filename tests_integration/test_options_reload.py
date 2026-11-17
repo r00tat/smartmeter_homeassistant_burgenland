@@ -23,7 +23,7 @@ async def test_options_change_reloads_running_entry(hass: HomeAssistant, fake_re
         )
         assert result["type"] is FlowResultType.CREATE_ENTRY
         await hass.async_block_till_done()
-        assert first.stopped.is_set()
+        assert first.cancelled
         assert len(fake_readers) == 2
     finally:
         assert await hass.config_entries.async_unload(entry.entry_id)

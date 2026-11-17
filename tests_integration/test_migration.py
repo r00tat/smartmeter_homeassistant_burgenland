@@ -38,26 +38,16 @@ pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
 
 def addon_discovery(device_id: str = ADDON_DEVICE_ID) -> list[tuple[str, str]]:
     """The discovery messages the add-on publishes, built by its own code."""
-    from custom_components.smartmeter_at.meter.mqtt import client as mqtt_client
     from custom_components.smartmeter_at.meter.mqtt import device as mqtt_device
     from custom_components.smartmeter_at.meter.profile import get_profile
 
-    def fake_connect(self: Any) -> None:
-        self.topic_prefix = self.config.get("prefix", "")
-        self.device_id = self.config.get("device_id", "smartmeter")
-
-    published: list[tuple[str, str]] = []
-    with (
-        patch.object(mqtt_client.MqttClient, "connect_mqtt", fake_connect),
-        patch.object(mqtt_device, "get_sw_version", return_value="0.8.1"),
-    ):
+    with patch.object(mqtt_device, "get_sw_version", return_value="0.8.1"):
         device = mqtt_device.SmartMeterDevice(
-            {"device_id": device_id, "sensors_migrated": True}, get_profile("burgenland")
+            {"host": "mqtt.local", "device_id": device_id, "sensors_migrated": True},
+            get_profile("burgenland"),
         )
-    device.publish = lambda topic, payload, *a, **k: published.append((topic, payload))
     device.serial_number = "1LGZ0012345678"
-    device.ha_discovery()
-    return published
+    return [(topic, payload) for topic, payload, _ in device.discovery_messages()]
 
 
 @pytest.fixture

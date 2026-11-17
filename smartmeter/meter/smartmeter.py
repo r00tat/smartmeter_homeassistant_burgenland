@@ -1,19 +1,28 @@
-"""combine the serial read functionality with the mqtt functionality"""
+"""Combine the serial reader with the MQTT publisher on one event loop."""
 
+from __future__ import annotations
+
+import asyncio
 import logging
-import threading
 from typing import Any
 
 import yaml
 
 from .config_validation import DEFAULT_METER_TYPE, validate_config
 from .mqtt.device import SmartMeterDevice
-from .profile import MeterReaderLike, get_profile
+from .profile import MeterDataCallback, MeterReaderLike, get_profile
 from .reader_factory import build_reader
+from .supervisor import ReaderSupervisor
 
 log = logging.getLogger("meter.smartmeter")
 
 _SECRET_KEYS = ("key", "password")
+
+# Seconds to wait before a failed reader is started again.
+RETRY_SECONDS = 10.0
+# Reopen the port when no telegram arrived for this long: a hung USB
+# adapter can keep the port open without delivering data.
+RESTART_AFTER_SECONDS = 300.0
 
 
 def _redact(cfg: dict) -> dict:
@@ -27,20 +36,15 @@ class SmartMqttMeter:
     def __init__(self, config: dict) -> None:
         validate_config(config)
         self.config = config
-        self.reader: MeterReaderLike | None = None
-        self.mqtt: SmartMeterDevice | None = None
-        self.reader_thread: threading.Thread | None = None
-        self.mqtt_thread: threading.Thread | None = None
-        self.counter = 0
         self.publish_interval = 6
-        self._stop = threading.Event()
+        self._stop = asyncio.Event()
 
         self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         log.info("starting setup")
         meter_type = self.config.get("meter_type", DEFAULT_METER_TYPE)
-        profile = get_profile(meter_type)
+        self.profile = profile = get_profile(meter_type)
         log.info(
             "meter profile: %s (%s %s)",
             profile.name,
@@ -49,13 +53,6 @@ class SmartMqttMeter:
         )
         dlms_config = self.config.get("dlms", {})
         log.info("dlms config \n%s", yaml.safe_dump(_redact(dlms_config)))
-        self.reader = build_reader(
-            self.config,
-            profile,
-            callback=self.got_meter_data,
-        )
-        # The reader opens the port itself in ``start()``; opening it here too
-        # left two handles on the same device (and logged the connect twice).
 
         mqtt_config = self.config.get("mqtt", {})
         log.info("mqtt config: \n%s", yaml.safe_dump(_redact(mqtt_config)))
@@ -70,61 +67,46 @@ class SmartMqttMeter:
             self.publish_interval,
             publish_seconds,
         )
-
+        # The supervisor opens the port only when ``run`` starts it.
+        self.supervisor = ReaderSupervisor(
+            self.create_reader,
+            on_data=self.got_meter_data,
+            on_skipped=self.skipped_meter_data,
+            on_error=self.reader_failed,
+            every=self.publish_interval,
+            retry_seconds=RETRY_SECONDS,
+            stale_after=profile.stale_after_seconds,
+            restart_after=RESTART_AFTER_SECONDS,
+        )
         log.info("setup complete")
 
-    def got_meter_data(self, data: Any):
-        log.info(
-            "got meter data, "
-            f"{'publishing to mqtt' if self.counter % self.publish_interval == 0 else 'skipping'}"
-            f": {data}"
-        )
-        if self.counter % self.publish_interval == 0 and self.mqtt is not None:
-            self.mqtt.publish_status(data)
-        self.counter += 1
+    def create_reader(self, callback: MeterDataCallback) -> MeterReaderLike:
+        return build_reader(self.config, self.profile, callback=callback)
 
-    SHUTDOWN_TIMEOUT_SECONDS = 10
+    def got_meter_data(self, data: Any) -> None:
+        log.info("got meter data, publishing to mqtt: %s", data)
+        self.mqtt.publish_status(data)
 
-    def start(self):
-        if self.reader is None or self.mqtt is None:
-            raise RuntimeError("setup() must be called before start()")
-        try:
-            self.reader_thread = threading.Thread(target=self.reader.start)
-            self.mqtt_thread = threading.Thread(target=self.mqtt.start)
+    def skipped_meter_data(self, data: Any) -> None:
+        log.info("got meter data, skipping: %s", data)
 
-            log.info("start reading from serial port and sending to mqtt")
-            self.reader_thread.start()
-            self.mqtt_thread.start()
+    def reader_failed(self, error: Exception) -> None:
+        log.warning("no current meter data (%s), marking sensors unavailable", error)
+        if self.mqtt.available:
+            self.mqtt.set_available(False)
 
-            log.info("waiting for serial port to complete")
-            while not self._stop.is_set():
-                if not self.reader_thread.is_alive():
-                    log.info("reader thread exited, shutting down")
-                    break
-                if not self.mqtt_thread.is_alive():
-                    log.info("mqtt thread exited, shutting down")
-                    break
-                self._stop.wait(timeout=1.0)
-        finally:
-            self.stop()
+    async def run(self) -> None:
+        """Read and publish until ``stop()``; raise if a component crashes."""
+        log.info("start reading from serial port and sending to mqtt")
+        async with asyncio.TaskGroup() as tasks:
+            reader = tasks.create_task(self.supervisor.run(), name="smartmeter-supervisor")
+            mqtt = tasks.create_task(self.mqtt.run(), name="smartmeter-mqtt")
+            await self._stop.wait()
+            log.info("shutting down")
+            reader.cancel()
+            mqtt.cancel()
+        log.info("shutdown complete")
 
-    def stop(self):
-        """Signal all components to stop and wait for shutdown."""
-        already_stopping = self._stop.is_set()
+    def stop(self) -> None:
+        """Ask ``run`` to stop the reader and disconnect from MQTT."""
         self._stop.set()
-        if self.reader:
-            self.reader.stop()
-        if self.mqtt:
-            self.mqtt.stop()
-
-        if already_stopping:
-            return
-        for thread in (self.reader_thread, self.mqtt_thread):
-            if thread is not None and thread.is_alive():
-                thread.join(timeout=self.SHUTDOWN_TIMEOUT_SECONDS)
-                if thread.is_alive():
-                    log.warning(
-                        "thread %s did not exit within %ds",
-                        thread.name,
-                        self.SHUTDOWN_TIMEOUT_SECONDS,
-                    )

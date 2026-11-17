@@ -40,6 +40,7 @@ from .obis.sensors import (
     build_sensor_specs,
 )
 from .serial.read import MeterReader as HdlcMeterReader
+from .serial.transport import SerialSettings
 from .wien.data import MeterData as WienMeterData
 from .wien.sensors import SENSOR_SPECS as WIEN_SENSORS
 
@@ -49,25 +50,15 @@ _PARITY_NAME_TO_LETTER = {v.upper(): k for k, v in serial.PARITY_NAMES.items()}
 
 
 class MeterReaderLike(Protocol):
-    """What ``SmartMqttMeter`` needs from a reader."""
+    """A reader reads until it is cancelled and raises on any fault.
 
-    def start(self) -> None: ...
-    def stop(self) -> None: ...
+    Readers never retry on their own: ``meter.supervisor`` opens a new one.
+    """
+
+    async def run(self) -> None: ...
 
 
 MeterDataCallback = Callable[[Any], None]
-
-
-@dataclass(frozen=True)
-class SerialSettings:
-    """Effective serial line settings: profile defaults plus user overrides."""
-
-    port: str
-    baudrate: int
-    bytesize: int
-    parity: str  # pyserial letter, e.g. "N" or "E"
-    stopbits: int
-    timeout: float
 
 
 def _parity_letter(value: str) -> str:
@@ -114,12 +105,20 @@ class MeterProfile(ABC):
             bytesize=int(_override(dlms, "bytesize", self.default_bytesize)),
             parity=_parity_letter(_override(dlms, "parity", self.default_parity)),
             stopbits=int(_override(dlms, "stopbits", self.default_stopbits)),
-            timeout=float(_override(dlms, "timeout", 1.0)),
         )
 
     def readings_per_publish(self, publish_interval_seconds: float) -> int:
         """Number of received telegrams per MQTT publish (at least 1)."""
         return max(1, math.ceil(publish_interval_seconds / self.push_interval_seconds))
+
+    @property
+    def stale_after_seconds(self) -> float:
+        """Silence after which the readings count as unavailable.
+
+        Six missed telegrams, but at least a minute, so a single garbled
+        telegram or a short hiccup does not flap the sensors.
+        """
+        return max(60.0, 6 * self.push_interval_seconds)
 
     @abstractmethod
     def create_reader(
@@ -142,17 +141,11 @@ class HdlcDlmsProfile(MeterProfile):
         self, config: dict, callback: MeterDataCallback
     ) -> HdlcMeterReader:
         dlms = config.get("dlms") or {}
-        settings = self.serial_settings(config)
         return HdlcMeterReader(
             key=dlms.get("key") or "",
-            port=settings.port,
-            baudrate=settings.baudrate,
-            bytesize=settings.bytesize,
-            parity=settings.parity,
-            stopbits=settings.stopbits,
+            settings=self.serial_settings(config),
             interface_type=config.get("interface_type") or "OPTICAL",
-            hdlc_frame_size=dlms.get("hdlc_frame_size", 120),
-            timeout=settings.timeout,
+            hdlc_frame_size=int(dlms.get("hdlc_frame_size") or 120),
             callback=callback,
             data_factory=self.data_factory,
         )
@@ -166,15 +159,9 @@ class MBusDlmsProfile(MeterProfile):
         self, config: dict, callback: MeterDataCallback
     ) -> NoeMeterReader:
         dlms = config.get("dlms") or {}
-        settings = self.serial_settings(config)
         return NoeMeterReader(
             key_hex=dlms.get("key") or "",
-            port=settings.port,
-            baudrate=settings.baudrate,
-            bytesize=settings.bytesize,
-            parity=settings.parity,
-            stopbits=settings.stopbits,
-            timeout=settings.timeout,
+            settings=self.serial_settings(config),
             callback=callback,
         )
 
@@ -199,16 +186,10 @@ class ObisProfile(MeterProfile):
         self, config: dict, callback: MeterDataCallback
     ) -> ObisMeterReader:
         dlms = config.get("dlms") or {}
-        settings = self.serial_settings(config)
         return ObisMeterReader(
             key_hex=dlms.get("key") or "",
             framer_factory=self.framer,
-            port=settings.port,
-            baudrate=settings.baudrate,
-            bytesize=settings.bytesize,
-            parity=settings.parity,
-            stopbits=settings.stopbits,
-            timeout=settings.timeout,
+            settings=self.serial_settings(config),
             callback=callback,
         )
 
@@ -246,7 +227,7 @@ _PROFILES: dict[str, MeterProfile] = {
             data_factory=WienMeterData,
         ),
         # The profiles below follow the operators' published specifications
-        # but have not been verified with a real telegram yet (see README).
+        # but have not been verified with a real telegram yet (see docs/zaehler.md).
         ObisProfile(
             name="steiermark",
             manufacturer="Landis+Gyr",

@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-import os
-import logging
+"""Manual test: print the readings of a Burgenland meter on /dev/ttyUSB0."""
 
-from .read import MeterReader
+import asyncio
+import logging
+import os
+
 from ..bgld.data import MeterData
+from ..profile import get_profile
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("meter.serial.test")
 
-log.info("starting communication")
 
-key = os.environ["DLMS_ENCRYPTION_KEY"]
-
-
-def reader_callback(data: MeterData):
+def reader_callback(data: MeterData) -> None:
     """Callback method for meter data."""
-    pass
+    log.info("reading: %s", data)
 
 
-try:
-    reader = MeterReader(key, "/dev/ttyUSB0", callback=reader_callback)
+async def main() -> None:
+    """Read until interrupted."""
+    log.info("starting communication")
+    config = {"dlms": {"key": os.environ["DLMS_ENCRYPTION_KEY"], "port": "/dev/ttyUSB0"}}
+    reader = get_profile("burgenland").create_reader(config, reader_callback)
+    await reader.run()
 
-    reader.start()
 
-finally:
-    reader.disconnect()
+asyncio.run(main())

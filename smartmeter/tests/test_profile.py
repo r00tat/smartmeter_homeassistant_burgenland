@@ -143,7 +143,7 @@ def test_create_reader_uses_profile_interface(meter_type: str, reader_type: type
         {"dlms": {"key": VALID_KEY}}, lambda _d: None
     )
     assert isinstance(reader, reader_type)
-    assert reader.parity == get_profile(meter_type).default_parity
+    assert reader.settings.parity == get_profile(meter_type).default_parity
 
 
 def test_meter_types_are_consistent_across_config_files() -> None:
