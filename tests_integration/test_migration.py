@@ -23,7 +23,7 @@ from custom_components.smartmeter_at.const import (
     DOMAIN,
 )
 
-from .conftest import ENTRY_DATA, sample_reading, wait_for_data
+from .conftest import ENTRY_DATA, addon_module, sample_reading, wait_for_data
 
 FLOW = "custom_components.smartmeter_at.config_flow"
 ADDON_DEVICE_ID = "smartmeter"
@@ -38,8 +38,9 @@ pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
 
 def addon_discovery(device_id: str = ADDON_DEVICE_ID) -> list[tuple[str, str]]:
     """The discovery messages the add-on publishes, built by its own code."""
-    from custom_components.smartmeter_at.meter.mqtt import device as mqtt_device
-    from custom_components.smartmeter_at.meter.profile import get_profile
+    from smartmeter_austria.profile import get_profile
+
+    mqtt_device = addon_module("meter.mqtt.device")
 
     with patch.object(mqtt_device, "get_sw_version", return_value="0.8.1"):
         device = mqtt_device.SmartMeterDevice(

@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "smartmeter-austria"
+# Set by the release workflow to the GitHub release tag; the add-on, the
+# Home Assistant integration and this library share one version.
+version = "0.9.0"
+description = "Read Austrian smart meters (Burgenland, Niederösterreich, Wien, Steiermark, Salzburg, Tirol) from their customer interface"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "Paul Wölfel" }]
+requires-python = ">=3.13"
+keywords = ["smart meter", "dlms", "obis", "m-bus", "austria", "home assistant"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Home Automation",
+    "Typing :: Typed",
+]
+dependencies = [
+    # gurux changes behaviour even in patch releases (#98, #105): exact pins,
+    # checked against the newest release by .github/workflows/gurux-compat.yml.
+    "gurux-common==1.0.13",
+    "gurux-dlms==1.0.197",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "pycryptodomex>=3.24",
+    "pyserial>=3.5",
+    "pyserial-asyncio-fast>=0.16",
+]
+
+[project.urls]
+Homepage = "https://github.com/r00tat/smartmeter_homeassistant_burgenland"
+Source = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/main/packages/smartmeter-austria"
+Issues = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues"
+Changelog = "https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/smartmeter_austria"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

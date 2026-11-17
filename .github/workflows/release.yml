@@ -26,9 +26,18 @@ jobs:
         run: |
           yq -i '.version=strenv(RELEASE_TAG)' \
             "${{ github.workspace }}/smartmeter/config.yaml"
+          # The integration pins the library release of the same tag.
           manifest="${{ github.workspace }}/custom_components/smartmeter_at/manifest.json"
-          jq --arg v "$RELEASE_TAG" '.version=$v' "$manifest" > "$manifest.tmp"
+          jq --arg v "$RELEASE_TAG" '.version=$v
+            | .requirements |= map(if startswith("smartmeter-austria==")
+                                   then "smartmeter-austria==" + $v else . end)' \
+            "$manifest" > "$manifest.tmp"
           mv "$manifest.tmp" "$manifest"
+          sed -i -E "s/^version = \".*\"$/version = \"$RELEASE_TAG\"/" \
+            "${{ github.workspace }}/packages/smartmeter-austria/pyproject.toml"
+          grep -q "^version = \"$RELEASE_TAG\"$" \
+            "${{ github.workspace }}/packages/smartmeter-austria/pyproject.toml"
+          python3 .github/scripts/check_requirements_sync.py
 
       - name: "✏️ Generate release changelog"
         id: changelog
@@ -53,7 +62,7 @@ jobs:
         with:
           branch: main
           commit_message: "Update version to ${{ github.event.release.tag_name }} and update CHANGELOG.md"
-          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md custom_components/smartmeter_at/manifest.json
+          file_pattern: smartmeter/config.yaml smartmeter/CHANGELOG.md custom_components/smartmeter_at/manifest.json packages/smartmeter-austria/pyproject.toml
 
       - name: "Determine release commit"
         id: release-sha
@@ -62,6 +71,41 @@ jobs:
         run: |
           # Without changes no commit is made; fall back to the checked-out commit.
           echo "sha=${COMMIT_HASH:-$(git rev-parse HEAD)}" >> "$GITHUB_OUTPUT"
+
+  pypi:
+    name: "Publish smartmeter-austria to PyPI"
+    needs: prepare
+    runs-on: "ubuntu-latest"
+    # PyPI Trusted Publishing: no token, PyPI trusts this workflow and
+    # environment (configured once on pypi.org, see docs/en/development.md).
+    environment:
+      name: pypi
+      url: https://pypi.org/project/smartmeter-austria/${{ github.event.release.tag_name }}/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: "Checkout the release commit"
+        uses: "actions/checkout@v7.0.1"
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.15"
+
+      - name: "Build sdist and wheel"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python3 -m pip install uv twine
+          uv build packages/smartmeter-austria --out-dir dist
+          python3 -m twine check --strict dist/*
+          ls dist/ | grep -F -- "-$RELEASE_TAG"
+
+      - name: "Publish to PyPI"
+        uses: pypa/gh-action-pypi-publish@v1.14.3
 
   build:
     name: "Build ${{ matrix.arch }} image"
@@ -87,7 +131,8 @@ jobs:
         uses: home-assistant/builder/actions/build-image@2026.09.0
         with:
           arch: ${{ matrix.arch }}
-          context: smartmeter
+          context: .
+          file: smartmeter/Dockerfile
           image: docker.io/paulwoelfel/smartmeter_homeassistant_burgenland_${{ matrix.arch }}
           image-tags: |
             ${{ github.event.release.tag_name }}
@@ -127,7 +172,7 @@ jobs:
       - name: "Build and push standalone image"
         uses: docker/build-push-action@v7
         with:
-          context: smartmeter
+          context: .
           file: smartmeter/Dockerfile.standalone
           platforms: linux/amd64,linux/arm64
           push: true
@@ -137,7 +182,9 @@ jobs:
 
   integration-zip:
     name: "Attach HACS zip"
-    needs: prepare
+    # The zip pins smartmeter-austria of this release: only publish it once
+    # Home Assistant can install that version from PyPI.
+    needs: [prepare, pypi]
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
@@ -147,13 +194,12 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
-      - name: "Build smartmeter_at.zip (symlinks resolved)"
+      - name: "Build smartmeter_at.zip"
         run: |
           cd custom_components/smartmeter_at
-          zip -r ../../smartmeter_at.zip . \
-            -x '__pycache__/*' '*/__pycache__/*' 'meter/__main__.py' 'meter/dlms/test*.py' 'meter/serial/test.py'
+          zip -r ../../smartmeter_at.zip . -x '__pycache__/*' '*/__pycache__/*'
           cd ../..
-          unzip -l smartmeter_at.zip | grep -E 'manifest.json|meter/profile.py|fix_source_encoding.py'
+          unzip -l smartmeter_at.zip | grep -E 'manifest.json'
 
       - name: "Upload to the release"
         env:

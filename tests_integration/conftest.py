@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import importlib.util
 import sys
 from collections.abc import Callable, Iterator
@@ -19,7 +20,7 @@ from custom_components.smartmeter_at.const import (
     CONF_PORT,
 )
 
-# Same values as smartmeter/tests/fixtures/bgld_sample_frame.EXPECTED_VALUES.
+# Same values as packages/smartmeter-austria/tests/fixtures/bgld_sample_frame.EXPECTED_VALUES.
 METER_VALUES: list[Any] = [
     236, 235, 237, 512, 48, 1999, 3314, 0, 49244276, 1234567, 17, 195, 304,
     b"1LGZ0012345678",
@@ -42,7 +43,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 def sample_telegram() -> Any:
     """An encrypted Burgenland telegram (add-on test fixture, same key)."""
-    path = Path(__file__).parents[1] / "smartmeter/tests/fixtures/bgld_sample_frame.py"
+    path = Path(__file__).parents[1] / "packages/smartmeter-austria/tests/fixtures/bgld_sample_frame.py"
     spec = importlib.util.spec_from_file_location("bgld_sample_frame", path)
     assert spec is not None and spec.loader is not None
     module = sys.modules.get(spec.name)
@@ -53,8 +54,16 @@ def sample_telegram() -> Any:
     return module.build_sample_telegram()
 
 
+def addon_module(name: str) -> Any:
+    """Import a module of the MQTT add-on (``smartmeter/meter``)."""
+    addon_root = str(Path(__file__).parents[1] / "smartmeter")
+    if addon_root not in sys.path:
+        sys.path.append(addon_root)
+    return importlib.import_module(name)
+
+
 def sample_reading() -> Any:
-    from custom_components.smartmeter_at.meter.bgld.data import MeterData
+    from smartmeter_austria.bgld.data import MeterData
 
     return MeterData(list(METER_VALUES))
 

@@ -69,9 +69,9 @@ deaktiviert; sie lassen sich auf der Geräteseite aktivieren.
 
 ### Manuell installieren
 
-`custom_components/smartmeter_at/` enthält Symlinks (`meter/`,
-`fix_source_encoding.py`) in das Verzeichnis `smartmeter/`. Nur dieses
-Verzeichnis zu kopieren hinterlässt also kaputte Links. Stattdessen:
+Die Integration ist nur das Verzeichnis `custom_components/smartmeter_at/`;
+den Zähler-Code installiert Home Assistant als Python-Paket
+[`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/) von PyPI.
 
 - `smartmeter_at.zip` aus einem
   [Release](https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases)

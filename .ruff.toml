@@ -58,6 +58,10 @@ ignore = [
     "D101", # Missing docstring in public class
     "D103", # Missing docstring in public function
 ]
+"packages/smartmeter-austria/tests/*" = [
+    "D101", # Missing docstring in public class
+    "D103", # Missing docstring in public function
+]
 "tests_integration/*" = [
     "D101", # Missing docstring in public class
     "D103", # Missing docstring in public function

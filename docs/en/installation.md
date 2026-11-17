@@ -69,9 +69,9 @@ default; enable them on the device page.
 
 ### Manual installation
 
-`custom_components/smartmeter_at/` contains symlinks (`meter/`,
-`fix_source_encoding.py`) into the `smartmeter/` directory. Copying only this
-directory therefore leaves dangling links. Instead:
+The integration is only the directory `custom_components/smartmeter_at/`;
+Home Assistant installs the meter code as the Python package
+[`smartmeter-austria`](https://pypi.org/project/smartmeter-austria/) from PyPI.
 
 - unpack `smartmeter_at.zip` from a
   [release](https://github.com/r00tat/smartmeter_homeassistant_burgenland/releases)

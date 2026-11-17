@@ -1,11 +1,12 @@
 """Unit tests for the reader factory used by SmartMqttMeter."""
 
-from meter.bgld.data import MeterData as BgldMeterData
-from meter.noe.data import MeterData as NoeMeterData
-from meter.noe.read import NoeMeterReader
-from meter.profile import get_profile
+from smartmeter_austria.bgld.data import MeterData as BgldMeterData
+from smartmeter_austria.noe.data import MeterData as NoeMeterData
+from smartmeter_austria.noe.read import NoeMeterReader
+from smartmeter_austria.profile import get_profile
+from smartmeter_austria.serial.read import MeterReader as SerialMeterReader
+
 from meter.reader_factory import build_reader
-from meter.serial.read import MeterReader as SerialMeterReader
 
 
 VALID_KEY = "000102030405060708090A0B0C0D0E0F"

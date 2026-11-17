@@ -110,5 +110,6 @@ All options (TLS, interval, serial settings) are listed in
 - [Switching from the add-on to the integration](docs/en/migration.md)
 - [Troubleshooting](docs/en/troubleshooting.md): error messages, debug logs, behaviour on failures
 - [Development](docs/en/development.md): architecture, local test setup, adding a meter
+- [Python library `smartmeter-austria`](packages/smartmeter-austria/README.md): the meter code for your own projects, on [PyPI](https://pypi.org/project/smartmeter-austria/)
 
 Questions and bugs: [GitHub Issues](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues)

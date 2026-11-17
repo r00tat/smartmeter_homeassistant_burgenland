@@ -7,6 +7,8 @@ import os
 
 import yaml
 from jsonschema import Draft202012Validator
+from smartmeter_austria.config_validation import VALID_METER_TYPES
+from smartmeter_austria.profile import known_meter_types
 
 _HERE = os.path.dirname(os.path.dirname(__file__))  # smartmeter/
 _SCHEMA = os.path.join(_HERE, "config.schema.json")
@@ -54,3 +56,29 @@ def test_schema_accepts_single_letter_parity() -> None:
     }
     errors = list(Draft202012Validator(_schema()).iter_errors(cfg))
     assert not errors, f"single-letter parity should be valid: {errors}"
+
+
+def test_meter_types_are_consistent_across_config_files() -> None:
+    known = set(known_meter_types())
+    assert set(VALID_METER_TYPES) == known
+
+    with open(os.path.join(_HERE, "config.schema.json"), encoding="utf-8") as fh:
+        schema = json.load(fh)
+    assert set(schema["properties"]["meter_type"]["enum"]) == known
+
+    with open(os.path.join(_HERE, "config.yaml"), encoding="utf-8") as fh:
+        addon = yaml.safe_load(fh)
+    listed = addon["schema"]["meter_type"]
+    assert listed.startswith("list(") and listed.endswith(")?")
+    assert set(listed[len("list(") : -len(")?")].split("|")) == known
+
+
+def test_addon_options_leave_serial_defaults_to_the_profile() -> None:
+    # If the add-on options pinned baudrate/parity, Home Assistant would always
+    # send them and the profile defaults (e.g. 2400 8E1 for noe_evn) never apply.
+    with open(os.path.join(_HERE, "config.yaml"), encoding="utf-8") as fh:
+        addon = yaml.safe_load(fh)
+    dlms_options = addon["options"]["dlms"]
+    for key in ("baudrate", "bytesize", "parity", "stopbits"):
+        assert key not in dlms_options
+        assert key in addon["schema"]["dlms"]

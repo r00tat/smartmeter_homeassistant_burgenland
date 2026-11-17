@@ -8,12 +8,12 @@ from collections.abc import AsyncIterator
 from unittest.mock import patch
 
 import pytest
+from smartmeter_austria.profile import get_profile
+from smartmeter_austria.supervisor import cancel_and_wait
 
 from meter.mqtt import client as client_mod
 from meter.mqtt.client import MqttClient
 from meter.mqtt.device import SmartMeterDevice
-from meter.profile import get_profile
-from meter.supervisor import cancel_and_wait
 from tests.fake_broker import FakeBroker
 
 STATE = "smartmeter/state"

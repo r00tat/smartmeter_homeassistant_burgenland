@@ -1,0 +1,94 @@
+import logging
+
+from bs4 import BeautifulSoup
+from gurux_common import GXCommon
+from gurux_dlms import (
+    GXByteBuffer,
+    GXDLMSTranslator,
+    GXDLMSTranslatorMessage,
+    GXReplyData,
+)
+from gurux_dlms.enums import InterfaceType, Security, TranslatorOutputType
+from gurux_dlms.secure import GXDLMSSecureClient
+
+log = logging.getLogger("smartmeter_austria.dlms.read")
+
+
+def parse_dlms_data(data: bytes, key: str):
+    """Parse DLMS data."""
+    bb = GXByteBuffer(data)
+    cl = GXDLMSSecureClient()
+    data = GXReplyData()
+    notify = GXReplyData()
+    # cl.interfaceType = InterfaceType.PDU
+    cl.interfaceType = InterfaceType.HDLC
+    cl.ciphering.security = Security.ENCRYPTION
+    # key as hex str
+    cl.ciphering.blockCipherKey = GXCommon.hexToBytes(key)
+    # plaintext = cl.getData(bb, data, notify)
+    cl.getData(bb, data, notify)
+    # notify.value is an instance of type GXStructure, which is a list
+    # log.info("notify.value: %s", notify.value)
+    # notify.data are the decryted hex values of the body
+    # log.info("notify data: %s", notify.data)
+    # log.info("plain: %s", plaintext)
+
+    # or plaintext?
+    return notify
+
+
+def parse_pyhiscal_dlms_data(data: bytes, key: str):
+    """Parse DLMS data from an phyisical interface."""
+    tr = GXDLMSTranslator()
+    tr.blockCipherKey = GXByteBuffer(key)
+    tr.comments = True
+    msg = GXDLMSTranslatorMessage()
+    msg.message = GXByteBuffer(data)
+    # Pin the framing to HDLC. Without this, ``interfaceType`` stays ``None`` and
+    # ``findNextFrame`` scans the buffer trying every framing; a misaligned byte
+    # can match ``isWirelessMBusData`` and enter the wireless M-Bus branch, which
+    # calls the broken ``_GXCommon.decryptManufacturer`` (removed in gurux-dlms
+    # >= 1.0.193) and raises AttributeError. Our serial meters are always HDLC.
+    # See https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues/98
+    msg.interfaceType = InterfaceType.HDLC
+    xml = ""
+    pdu = GXByteBuffer()
+    tr.completePdu = True
+    while tr.findNextFrame(msg, pdu):
+        pdu.clear()
+        xml += tr.messageToXml(msg)
+    return xml
+
+
+def convert_to_xml(notify: GXReplyData):
+    """Convert parsed data to xml."""
+    t = GXDLMSTranslator(TranslatorOutputType.SIMPLE_XML)
+    xml = t.dataToXml(notify.data)
+    # log.info("xml: %s", xml)
+    return xml
+
+
+def parse_xml(xml: str) -> list:
+    """Parsing xml response"""
+    soup = BeautifulSoup(xml, "xml")
+    struct = soup.find("Structure")
+
+    all_values: list = []
+    if struct is None:
+        log.debug("no <Structure> element found")
+        return all_values
+
+    log.debug("struct: %s", struct)
+    for child in struct.findChildren():
+        parsed_value: int | bytearray | None = None
+        if child.name.startswith("UInt"):
+            parsed_value = int(child["Value"], 16)
+
+        if child.name.startswith("OctetString"):
+            parsed_value = bytearray.fromhex(child["Value"])
+
+        if parsed_value is not None:
+            all_values.append(parsed_value)
+
+    log.debug("all values: %s", all_values)
+    return all_values

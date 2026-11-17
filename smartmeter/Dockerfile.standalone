@@ -1,3 +1,5 @@
+# Build context is the repository root:
+#   docker build -f smartmeter/Dockerfile.standalone .
 ARG BUILD_FROM=python:3.15-slim
 FROM $BUILD_FROM
 
@@ -5,15 +7,17 @@ ENV LANG=C.UTF-8
 
 WORKDIR /app
 
-COPY requirements.txt fix_source_encoding.py ./
-RUN pip install --no-cache-dir -r requirements.txt && \
-    python3 fix_source_encoding.py gurux_dlms gurux_common
+COPY smartmeter/requirements.txt ./
+COPY packages/smartmeter-austria /tmp/smartmeter-austria
+RUN pip install --no-cache-dir -r requirements.txt /tmp/smartmeter-austria && \
+    python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common && \
+    rm -rf /tmp/smartmeter-austria
 
-COPY meter ./meter/
+COPY smartmeter/meter ./meter/
 # fail the build (and the PR test build) if the app cannot even be imported,
 # e.g. a dependency that is incompatible with the base image's Python (#128)
 RUN python3 -c "import meter.smartmeter"
-COPY config.yaml ./
-COPY --chmod=755 standalone-entrypoint.sh ./
+COPY smartmeter/config.yaml ./
+COPY --chmod=755 smartmeter/standalone-entrypoint.sh ./
 
 ENTRYPOINT ["/app/standalone-entrypoint.sh"]
