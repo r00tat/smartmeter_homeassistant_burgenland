@@ -129,8 +129,10 @@ Community-Projekte berichten von AES-GCM). So kannst du helfen:
 1. Debug-Logs einschalten (siehe [fehlerbehebung.md](fehlerbehebung.md#debug-logs))
    und den passenden Zählertyp eine Minute laufen lassen.
 2. Ein [Issue](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues)
-   anlegen mit Netzbetreiber, Zählermodell, den Logzeilen `raw bytes:` bzw.
-   `telegram (…):` und der Info, ob Werte in Home Assistant ankamen.
+   anlegen mit Netzbetreiber, Zählermodell, den Logzeilen `rx +…s … bytes: …`
+   (Logger `meter.serial.raw`) und der Info, ob Werte in Home Assistant
+   ankamen. Diese Zeilen enthalten alle empfangenen Bytes samt Zeitabstand;
+   daraus lässt sich der Datenstrom exakt nachspielen.
 3. Wenn möglich die Aufzeichnung samt Schlüssel anhängen, damit daraus ein
    Test werden kann. Der Schlüssel entschlüsselt nur die Kundenschnittstelle
    deines eigenen Zählers, und du kannst danach beim Netzbetreiber einen neuen

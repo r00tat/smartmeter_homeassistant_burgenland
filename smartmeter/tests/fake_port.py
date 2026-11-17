@@ -76,6 +76,18 @@ async def _feed(stream: asyncio.StreamReader, steps: Sequence[Step]) -> None:
             raise TypeError(f"unknown step {step!r}")
 
 
+def steps_from_capture(captured: Sequence[tuple[float, bytes]]) -> list[Step]:
+    """Replay chunks from ``meter.serial.rawlog.parse`` with their timing."""
+    steps: list[Step] = []
+    previous = 0.0
+    for at, data in captured:
+        if at > previous:
+            steps.append(at - previous)
+        steps.append(data)
+        previous = at
+    return steps
+
+
 def chunks(data: bytes, size: int, pause: float = 0.0) -> list[Step]:
     """``data`` in pieces of ``size`` bytes, ``pause`` seconds apart."""
     steps: list[Step] = []

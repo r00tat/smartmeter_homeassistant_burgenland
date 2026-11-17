@@ -51,5 +51,17 @@ logger:
     meter: debug
 ```
 
-**Add-on und Container** – `logging: DEBUG` in der Konfiguration. Die Logs
-zeigen dann die rohen seriellen Bytes und jedes Telegramm als Hex.
+**Add-on und Container** – `logging: DEBUG` in der Konfiguration.
+
+Mit Debug-Logs schreibt der serielle Transport jeden empfangenen Block als
+eigene Zeile, für alle Zählertypen:
+
+```text
+DEBUG:meter.serial.raw:rx +12.345s 24 bytes: 7ea08bceff0313ee…
+```
+
+`+12.345s` ist die Zeit seit dem Öffnen des Ports. Diese Zeilen enthalten
+jedes Byte, auch solche, die ein Leser verwirft (z.B. beim Suchen des
+Telegrammanfangs oder bei einem kaputten Frame). Bei Fehlerberichten bitte
+diese Zeilen mitschicken. Zusätzlich loggen die Leser jedes erkannte
+Telegramm und die entschlüsselten Werte.

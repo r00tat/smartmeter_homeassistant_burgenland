@@ -7,6 +7,9 @@ timeout and no polling; a reader simply awaits the next chunk.
 
 A port that disappears (USB adapter unplugged) ends the stream with an
 error right away instead of after the next read timeout.
+
+With debug logging on, every chunk the port delivers is logged with its
+time since the port was opened (see ``rawlog``), for every meter type.
 """
 
 from __future__ import annotations
@@ -21,7 +24,10 @@ from typing import Protocol
 
 import serial_asyncio_fast
 
+from . import rawlog
+
 log = logging.getLogger("meter.serial.transport")
+raw_log = logging.getLogger(rawlog.LOGGER_NAME)
 
 # Upper bound for one ``read`` call; the meters push a few hundred bytes.
 READ_CHUNK = 4096
@@ -83,14 +89,38 @@ async def _close(writer: asyncio.StreamWriter) -> None:
             await writer.wait_closed()
 
 
+class _LoggingProtocol(asyncio.StreamReaderProtocol):
+    """Stream protocol that logs every received chunk (debug only)."""
+
+    def __init__(self, reader: asyncio.StreamReader) -> None:
+        super().__init__(reader)
+        self._opened = 0.0
+
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        self._opened = asyncio.get_running_loop().time()
+        super().connection_made(transport)
+
+    def data_received(self, data: bytes) -> None:
+        if raw_log.isEnabledFor(logging.DEBUG):
+            elapsed = asyncio.get_running_loop().time() - self._opened
+            raw_log.debug("%s", rawlog.format_chunk(elapsed, data))
+        super().data_received(data)
+
+
 async def _open(settings: SerialSettings) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-    return await serial_asyncio_fast.open_serial_connection(
-        url=settings.port,
+    loop = asyncio.get_running_loop()
+    reader = asyncio.StreamReader()
+    protocol = _LoggingProtocol(reader)
+    transport, _ = await serial_asyncio_fast.create_serial_connection(
+        loop,
+        lambda: protocol,
+        settings.port,
         baudrate=settings.baudrate,
         bytesize=settings.bytesize,
         parity=settings.parity,
         stopbits=settings.stopbits,
     )
+    return reader, asyncio.StreamWriter(transport, protocol, reader, loop)
 
 
 @asynccontextmanager

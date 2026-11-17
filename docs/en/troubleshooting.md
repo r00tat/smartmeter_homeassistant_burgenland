@@ -50,5 +50,17 @@ logger:
     meter: debug
 ```
 
-**Add-on and container** – `logging: DEBUG` in the configuration. The logs
-then show the raw serial bytes and every telegram as hex.
+**Add-on and container** – `logging: DEBUG` in the configuration.
+
+With debug logs the serial transport writes every received chunk as its own
+line, for every meter type:
+
+```text
+DEBUG:meter.serial.raw:rx +12.345s 24 bytes: 7ea08bceff0313ee…
+```
+
+`+12.345s` is the time since the port was opened. These lines hold every
+byte, including what a reader drops (e.g. while looking for the start of a
+telegram, or a broken frame). Please include them when you report a problem.
+The readers additionally log every recognised telegram and the decoded
+values.

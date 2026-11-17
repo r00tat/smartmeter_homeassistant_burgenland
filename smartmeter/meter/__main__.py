@@ -31,7 +31,9 @@ def _stop(meter: SmartMqttMeter, signum: int) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     """Load the config and run the reader; return the exit code."""
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s:%(name)s:%(message)s"
+    )
     parser = argparse.ArgumentParser(
         description="Connect the smart meter via MQTT to Home Assistant"
     )

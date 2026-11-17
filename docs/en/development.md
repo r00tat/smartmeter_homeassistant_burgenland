@@ -65,6 +65,25 @@ python3 smartmeter/fix_source_encoding.py gurux_dlms gurux_common
 ruff check custom_components tests_integration && pytest tests_integration
 ```
 
+### Turning a debug log into a test
+
+The `meter.serial.raw` lines (see
+[troubleshooting.md](troubleshooting.md#debug-logs)) can be replayed directly,
+including the pauses:
+
+```python
+from meter.serial import rawlog
+from tests.fake_port import EOF, FakePort, run_until, steps_from_capture
+
+captured = rawlog.parse(open("report.log").read())
+reader = get_profile("noe_evn").create_reader({"dlms": {"key": KEY}}, received.append)
+reader._open_stream = FakePort([*steps_from_capture(captured), 0.3, EOF])
+await run_until(reader.run, lambda: False)
+```
+
+`tests/test_rawlog.py` shows the full round trip: a real pseudo terminal is
+read, the log captured and replayed, with the same readings as the result.
+
 ## Testing the integration locally
 
 Always work with the whole repository: copying only

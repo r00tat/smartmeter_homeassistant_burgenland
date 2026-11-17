@@ -125,8 +125,10 @@ community projects report AES-GCM). How you can help:
 1. Enable debug logs (see [troubleshooting.md](troubleshooting.md#debug-logs))
    and let the matching meter type run for a minute.
 2. Open an [issue](https://github.com/r00tat/smartmeter_homeassistant_burgenland/issues)
-   with grid operator, meter model, the `raw bytes:` / `telegram (…):` log
-   lines and whether values showed up in Home Assistant.
+   with grid operator, meter model, the `rx +…s … bytes: …` log lines
+   (logger `meter.serial.raw`) and whether values showed up in Home
+   Assistant. These lines hold every received byte with its timing, so the
+   data stream can be replayed exactly.
 3. If you can, attach the capture together with its key so it can become a
    test. The key only decrypts the customer interface of your own meter, and
    you can have your grid operator issue a new one afterwards. Without the key,
