@@ -15,7 +15,7 @@
     "gurux_common"
   ],
   "requirements": [
-    "smartmeter-austria==0.9.0"
+    "smartmeter-austria==1.0.0"
   ],
-  "version": "0.9.0"
+  "version": "1.0.0"
 }

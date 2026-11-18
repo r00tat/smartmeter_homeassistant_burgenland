@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "smartmeter-austria"
 # Set by the release workflow to the GitHub release tag; the add-on, the
 # Home Assistant integration and this library share one version.
-version = "0.9.0"
+version = "1.0.0"
 description = "Read Austrian smart meters (Burgenland, Niederösterreich, Wien, Steiermark, Salzburg, Tirol) from their customer interface"
 readme = "README.md"
 license = "GPL-3.0-only"

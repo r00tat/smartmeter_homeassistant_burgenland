@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/1.0.0) (2026-11-18)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.9.0b1...1.0.0)
+
+**Merged pull requests:**
+
+- fix\(standalone\): find uv under systemd and pin the venv to Python 3.15 [\#138](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/138) ([r00tat](https://github.com/r00tat))
+- build\(deps\): bump the dependencies group with 3 updates [\#137](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/137) ([dependabot[bot]](https://github.com/apps/dependabot))
+- refactor: move the reader core into the smartmeter-austria library \(PyPI\) [\#136](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/136) ([r00tat](https://github.com/r00tat))
+- refactor: asyncio instead of threads; docs: German README, details in docs/ [\#135](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/135) ([r00tat](https://github.com/r00tat))
+- docs: install the integration via the Home Assistant Marketplace [\#134](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/134) ([r00tat](https://github.com/r00tat))
+
 ## [0.9.0b1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/0.9.0b1) (2026-11-16)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.9.0...0.9.0b1)
