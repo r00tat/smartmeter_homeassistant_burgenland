@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/1.0.1) (2026-11-20)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/1.0.0...1.0.1)
+
+**Merged pull requests:**
+
+- chore\(hacs\): set country to AT in hacs.json [\#139](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/139) ([r00tat](https://github.com/r00tat))
+
 ## [1.0.0](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/1.0.0) (2026-11-18)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/0.9.0b1...1.0.0)
