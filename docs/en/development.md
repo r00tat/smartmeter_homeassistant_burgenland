@@ -54,7 +54,6 @@ Library and add-on (Python 3.15, from the repository root):
 ```bash
 uv venv && source .venv/bin/activate
 uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
-python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
 ruff check smartmeter && mypy --config-file mypy.ini
 (cd smartmeter/smartmeter-austria && pytest tests)
 (cd smartmeter && pytest tests)
@@ -66,7 +65,6 @@ venv); the library is installed editable from the repository:
 ```bash
 uv venv .venv-ha && source .venv-ha/bin/activate
 uv pip install -r requirements-ha-test.txt -e smartmeter/smartmeter-austria ruff
-python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
 python3 .github/scripts/check_requirements_sync.py
 ruff check custom_components tests_integration && pytest tests_integration
 ```

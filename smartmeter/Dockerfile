@@ -14,7 +14,6 @@ COPY requirements.txt ./
 COPY smartmeter-austria /tmp/smartmeter-austria
 RUN apk add --no-cache libxml2 libxslt && \
     pip install --no-cache-dir -r requirements.txt /tmp/smartmeter-austria && \
-    python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common && \
     rm -rf /tmp/smartmeter-austria
 
 COPY run.sh config.yaml ./

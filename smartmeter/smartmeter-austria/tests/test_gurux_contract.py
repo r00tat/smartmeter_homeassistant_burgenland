@@ -1,7 +1,7 @@
 """Contract tests for the parts of gurux-dlms the add-on relies on.
 
 gurux-dlms has repeatedly changed behaviour in patch releases (#98, #105) and
-1.0.197 does not even import on Python 3.15 without a fix-up (#128). These
+1.0.194 to 1.0.197 do not even import on Python 3.15 (#128). These
 tests pin down every gurux interface and behaviour the readers depend on, so
 a gurux upgrade or a new Python version in the base image is caught in CI
 instead of on a user's meter.
