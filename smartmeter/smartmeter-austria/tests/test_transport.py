@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import stat
 from collections.abc import Iterator
 
 import pytest
@@ -52,13 +53,18 @@ async def test_bytes_written_to_the_line_are_read(pty: tuple[int, str]) -> None:
 
 def open_fds_to(path: str) -> int:
     """How many file descriptors of this process point to ``path``."""
+    # Compare device numbers instead of resolving /proc/self/fd links, which
+    # only exist on Linux; /dev/fd lists this process's descriptors on Linux
+    # and macOS alike. A pty slave is a character device, so st_rdev is unique.
+    target = os.stat(path).st_rdev
     count = 0
-    for fd in os.listdir("/proc/self/fd"):
+    for fd in os.listdir("/dev/fd"):
         try:
-            if os.readlink(f"/proc/self/fd/{fd}") == path:
-                count += 1
-        except OSError:
-            pass
+            st = os.fstat(int(fd))
+        except OSError:  # e.g. the descriptor listdir used for /dev/fd itself
+            continue
+        if stat.S_ISCHR(st.st_mode) and st.st_rdev == target:
+            count += 1
     return count
 
 
