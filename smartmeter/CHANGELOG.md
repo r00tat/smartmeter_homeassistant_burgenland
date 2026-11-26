@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/1.0.2) (2026-11-26)
+
+[Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/1.0.1...1.0.2)
+
+**Merged pull requests:**
+
+- fix\(gurux\): pin gurux-dlms 1.0.200 and stop rewriting installed packages [\#141](https://github.com/r00tat/smartmeter_homeassistant_burgenland/pull/141) ([r00tat](https://github.com/r00tat))
+
 ## [1.0.1](https://github.com/r00tat/smartmeter_homeassistant_burgenland/tree/1.0.1) (2026-11-20)
 
 [Full Changelog](https://github.com/r00tat/smartmeter_homeassistant_burgenland/compare/1.0.0...1.0.1)
