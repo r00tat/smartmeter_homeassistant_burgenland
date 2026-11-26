@@ -30,11 +30,10 @@ Core (ohne Supervisor).
 
 ### Installieren
 
-1. Auf den Button oben klicken, oder *Einstellungen → Marketplace → Aus Link
-   hinzufügen* → `https://github.com/r00tat/smartmeter_homeassistant_burgenland`.
-   Der Marketplace ist seit Home Assistant 2026.11 eingebaut und ersetzt HACS.
-   Auf älteren Versionen öffnet der Button HACS; dort *HACS → ⋮ →
-   Benutzerdefinierte Repositories*, Kategorie *Integration*.
+1. Auf den Button oben klicken, oder unter *Einstellungen → Marketplace*
+   nach *Smartmeter Austria* suchen. Der Marketplace ist seit Home Assistant
+   2026.11 eingebaut und ersetzt HACS. Auf älteren Versionen öffnet der
+   Button HACS; dort ebenfalls nach *Smartmeter Austria* suchen.
 2. *Smartmeter Austria* installieren und Home Assistant neu starten.
 
 Marketplace und HACS installieren die Integration aus der Datei
