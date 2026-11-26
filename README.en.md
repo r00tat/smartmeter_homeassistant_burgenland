@@ -48,16 +48,17 @@ Other ways (Home Assistant add-on, systemd without Docker) are described in
 Reads the meter directly in Home Assistant, without MQTT broker and without
 add-on. Works with Home Assistant OS, Container and Core.
 
-1. Click the badge above, or *Settings → Marketplace → Add from link* →
-   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`.
+1. Click the badge above, or search for *Smartmeter Austria* under
+   *Settings → Marketplace*.
 2. Install *Smartmeter Austria* and restart Home Assistant.
 3. *Settings → Devices & services → Add integration → Smartmeter Austria*.
 4. Enter grid operator, serial port and key. The integration reads one
    telegram before it saves the entry, so a wrong key or port shows up right
    away.
 
-Before Home Assistant 2026.11 the badge opens HACS. There add the repository
-under *HACS → ⋮ → Custom repositories* (category *Integration*).
+Before Home Assistant 2026.11 the badge opens HACS; search for *Smartmeter
+Austria* there as well. A custom repository is no longer needed, the
+integration is in the default list.
 
 Using the add-on so far? The integration takes over its sensors including
 history and statistics: [docs/en/migration.md](docs/en/migration.md).

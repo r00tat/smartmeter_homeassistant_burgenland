@@ -30,11 +30,10 @@ broker and no add-on, and also runs with Home Assistant Container and Core
 
 ### Install
 
-1. Click the badge above, or *Settings → Marketplace → Add from link* →
-   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`.
-   The Marketplace is built into Home Assistant since 2026.11 and replaces
-   HACS. On older versions the badge opens HACS; there use *HACS → ⋮ →
-   Custom repositories*, category *Integration*.
+1. Click the badge above, or search for *Smartmeter Austria* under
+   *Settings → Marketplace*. The Marketplace is built into Home Assistant
+   since 2026.11 and replaces HACS. On older versions the badge opens HACS;
+   search for *Smartmeter Austria* there as well.
 2. Install *Smartmeter Austria* and restart Home Assistant.
 
 The Marketplace and HACS install the integration from the

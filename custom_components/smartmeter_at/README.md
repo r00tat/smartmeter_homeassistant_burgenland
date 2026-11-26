@@ -50,10 +50,9 @@ Details: [migration](https://github.com/r00tat/smartmeter_homeassistant_burgenla
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=r00tat&repository=smartmeter_homeassistant_burgenland&category=integration)
 
-1. Click the badge above, or Settings → Marketplace → *Add from link* →
-   `https://github.com/r00tat/smartmeter_homeassistant_burgenland`.
-   Before Home Assistant 2026.11 the badge opens HACS instead; there use
-   HACS → ⋮ → *Custom repositories*, category *Integration*.
+1. Click the badge above, or search for *Smartmeter Austria* under
+   Settings → Marketplace. Before Home Assistant 2026.11 the badge opens
+   HACS instead; search for *Smartmeter Austria* there.
 2. Install *Smartmeter Austria* and restart Home Assistant.
 
 ### Manual

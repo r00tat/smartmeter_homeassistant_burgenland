@@ -53,8 +53,8 @@ Weitere Wege (Home-Assistant-Add-on, systemd ohne Docker) beschreibt
 Liest den Zähler direkt in Home Assistant, ohne MQTT-Broker und ohne Add-on.
 Funktioniert mit Home Assistant OS, Container und Core.
 
-1. Auf den Button oben klicken, oder *Einstellungen → Marketplace → Aus Link
-   hinzufügen* → `https://github.com/r00tat/smartmeter_homeassistant_burgenland`.
+1. Auf den Button oben klicken, oder unter *Einstellungen → Marketplace*
+   nach *Smartmeter Austria* suchen.
 2. *Smartmeter Austria* installieren und Home Assistant neu starten.
 3. *Einstellungen → Geräte & Dienste → Integration hinzufügen →
    Smartmeter Austria*.
@@ -62,9 +62,9 @@ Funktioniert mit Home Assistant OS, Container und Core.
    vor dem Speichern ein Telegramm, ein falscher Schlüssel oder Port fällt also
    sofort auf.
 
-Vor Home Assistant 2026.11 öffnet der Button HACS. Dort das Repository unter
-*HACS → ⋮ → Benutzerdefinierte Repositories* (Kategorie *Integration*)
-hinzufügen.
+Vor Home Assistant 2026.11 öffnet der Button HACS; dort ebenfalls nach
+*Smartmeter Austria* suchen. Ein benutzerdefiniertes Repository ist nicht
+mehr nötig, die Integration ist in der Standardliste.
 
 Du nutzt bisher das Add-on? Die Integration übernimmt dessen Sensoren samt
 Verlauf und Statistik: [docs/umstieg.md](docs/umstieg.md).
