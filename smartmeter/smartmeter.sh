@@ -22,7 +22,5 @@ fi
 # shellcheck source=/dev/null
 source .venv/bin/activate
 uv pip install --quiet -r requirements.txt -e ./smartmeter-austria
-# gurux ships Latin-1 sources; rewrite them once so Python can import them.
-python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
 
 exec python3 -m meter -c "$PWD/smartmeter-config.yaml"

@@ -60,15 +60,6 @@ asyncio.run(main())
 `smartmeter_austria.supervisor.ReaderSupervisor` restarts a failed reader,
 throttles the callback and reopens a port that stopped delivering data.
 
-### gurux-dlms on Python 3.15
-
-gurux-dlms 1.0.197 ships a Latin-1 encoded source file that Python 3.15
-refuses to import. Run the fix-up once after installing:
-
-```bash
-python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
-```
-
 ## Versioning
 
 The library is released together with the integration and the add-on: one

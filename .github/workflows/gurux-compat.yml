@@ -80,11 +80,6 @@ jobs:
           source .venv/bin/activate &&
           uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
 
-      - name: "Apply the same gurux fix-up as the Dockerfiles"
-        run: |
-          source .venv/bin/activate &&
-          python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
-
       - name: "Test"
         run: |
           source .venv/bin/activate &&
@@ -115,11 +110,6 @@ jobs:
           uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria &&
           uv pip install --upgrade --no-deps gurux-dlms gurux-common &&
           uv pip show gurux-dlms gurux-common | grep -E "^(Name|Version)" | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - name: "Apply the gurux fix-up"
-        run: |
-          source .venv/bin/activate &&
-          python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
 
       # Informational only: a failure means the next gurux upgrade needs work,
       # not that this change is broken. The job stays green and reports a

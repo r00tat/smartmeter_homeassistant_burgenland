@@ -5,6 +5,7 @@ returns the profile of a grid operator's meter, ``create_reader`` builds an
 asyncio reader for it. The package is shared by the Home Assistant
 integration ``smartmeter_at`` and the MQTT add-on of the same repository.
 
-Importing this package does not import gurux-dlms; see
-``smartmeter_austria.fix_source_encoding`` for why that matters.
+Importing this package does not import gurux-dlms, so callers can defer
+the slow gurux import (the Home Assistant integration does it off the
+event loop).
 """

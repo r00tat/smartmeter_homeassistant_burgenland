@@ -30,11 +30,6 @@ jobs:
           source .venv/bin/activate &&
           uv pip install -r smartmeter/requirements-dev.txt -e smartmeter/smartmeter-austria
 
-      - name: "Apply the same gurux fix-up as the Dockerfiles"
-        run: |
-          source .venv/bin/activate &&
-          python3 -m smartmeter_austria.fix_source_encoding gurux_dlms gurux_common
-
       - name: "Lint"
         run: |
           source .venv/bin/activate &&
